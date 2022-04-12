@@ -1,0 +1,639 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/core/ext/xds/xds_http_rbac_filter.cc</title>
+  <link rel="stylesheet" type="text/css" href="../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../index.html">top level</a> - <a href="index.html">src/core/ext/xds</a> - xds_http_rbac_filter.cc<span style="font-size: 80%;"> (source / <a href="xds_http_rbac_filter.cc.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">284</td>
+            <td class="headerCovTableEntry">361</td>
+            <td class="headerCovTableEntryMed">78.7 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-12 14:35:39</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">18</td>
+            <td class="headerCovTableEntry">20</td>
+            <td class="headerCovTableEntryHi">90.0 %</td>
+          </tr>
+          <tr><td><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<a name="2"><span class="lineNum">       2 </span>            : // Copyright 2021 gRPC authors.</a>
+<a name="3"><span class="lineNum">       3 </span>            : //</a>
+<a name="4"><span class="lineNum">       4 </span>            : // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="5"><span class="lineNum">       5 </span>            : // you may not use this file except in compliance with the License.</a>
+<a name="6"><span class="lineNum">       6 </span>            : // You may obtain a copy of the License at</a>
+<a name="7"><span class="lineNum">       7 </span>            : //</a>
+<a name="8"><span class="lineNum">       8 </span>            : //     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="9"><span class="lineNum">       9 </span>            : //</a>
+<a name="10"><span class="lineNum">      10 </span>            : // Unless required by applicable law or agreed to in writing, software</a>
+<a name="11"><span class="lineNum">      11 </span>            : // distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="12"><span class="lineNum">      12 </span>            : // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="13"><span class="lineNum">      13 </span>            : // See the License for the specific language governing permissions and</a>
+<a name="14"><span class="lineNum">      14 </span>            : // limitations under the License.</a>
+<a name="15"><span class="lineNum">      15 </span>            : //</a>
+<a name="16"><span class="lineNum">      16 </span>            : </a>
+<a name="17"><span class="lineNum">      17 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #include &quot;src/core/ext/xds/xds_http_rbac_filter.h&quot;</a>
+<a name="20"><span class="lineNum">      20 </span>            : </a>
+<a name="21"><span class="lineNum">      21 </span>            : #include &quot;absl/strings/str_format.h&quot;</a>
+<a name="22"><span class="lineNum">      22 </span>            : #include &quot;envoy/config/core/v3/address.upb.h&quot;</a>
+<a name="23"><span class="lineNum">      23 </span>            : #include &quot;envoy/config/rbac/v3/rbac.upb.h&quot;</a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &quot;envoy/config/route/v3/route_components.upb.h&quot;</a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &quot;envoy/extensions/filters/http/rbac/v3/rbac.upb.h&quot;</a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &quot;envoy/extensions/filters/http/rbac/v3/rbac.upbdefs.h&quot;</a>
+<a name="27"><span class="lineNum">      27 </span>            : #include &quot;envoy/type/matcher/v3/metadata.upb.h&quot;</a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &quot;envoy/type/matcher/v3/path.upb.h&quot;</a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &quot;envoy/type/matcher/v3/regex.upb.h&quot;</a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &quot;envoy/type/matcher/v3/string.upb.h&quot;</a>
+<a name="31"><span class="lineNum">      31 </span>            : #include &quot;envoy/type/v3/range.upb.h&quot;</a>
+<a name="32"><span class="lineNum">      32 </span>            : #include &quot;google/protobuf/wrappers.upb.h&quot;</a>
+<a name="33"><span class="lineNum">      33 </span>            : </a>
+<a name="34"><span class="lineNum">      34 </span>            : #include &quot;src/core/ext/filters/rbac/rbac_filter.h&quot;</a>
+<a name="35"><span class="lineNum">      35 </span>            : #include &quot;src/core/ext/filters/rbac/rbac_service_config_parser.h&quot;</a>
+<a name="36"><span class="lineNum">      36 </span>            : #include &quot;src/core/ext/xds/upb_utils.h&quot;</a>
+<a name="37"><span class="lineNum">      37 </span>            : #include &quot;src/core/lib/channel/channel_args.h&quot;</a>
+<a name="38"><span class="lineNum">      38 </span>            : </a>
+<a name="39"><span class="lineNum">      39 </span>            : namespace grpc_core {</a>
+<a name="40"><span class="lineNum">      40 </span>            : </a>
+<a name="41"><span class="lineNum">      41 </span>            : const char* kXdsHttpRbacFilterConfigName =</a>
+<a name="42"><span class="lineNum">      42 </span>            :     &quot;envoy.extensions.filters.http.rbac.v3.RBAC&quot;;</a>
+<a name="43"><span class="lineNum">      43 </span>            : </a>
+<a name="44"><span class="lineNum">      44 </span>            : const char* kXdsHttpRbacFilterConfigOverrideName =</a>
+<a name="45"><span class="lineNum">      45 </span>            :     &quot;envoy.extensions.filters.http.rbac.v3.RBACPerRoute&quot;;</a>
+<a name="46"><span class="lineNum">      46 </span>            : </a>
+<a name="47"><span class="lineNum">      47 </span>            : namespace {</a>
+<a name="48"><span class="lineNum">      48 </span>            : </a>
+<a name="49"><span class="lineNum">      49 </span><span class="lineNoCov">          0 : Json ParseRegexMatcherToJson(</span></a>
+<a name="50"><span class="lineNum">      50 </span>            :     const envoy_type_matcher_v3_RegexMatcher* regex_matcher) {</a>
+<a name="51"><span class="lineNum">      51 </span><span class="lineNoCov">          0 :   return Json::Object(</span></a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineNoCov">          0 :       {{&quot;regex&quot;, UpbStringToStdString(envoy_type_matcher_v3_RegexMatcher_regex(</span></a>
+<a name="53"><span class="lineNum">      53 </span><span class="lineNoCov">          0 :                      regex_matcher))}});</span></a>
+<a name="54"><span class="lineNum">      54 </span>            : }</a>
+<a name="55"><span class="lineNum">      55 </span>            : </a>
+<a name="56"><span class="lineNum">      56 </span><span class="lineNoCov">          0 : Json ParseInt64RangeToJson(const envoy_type_v3_Int64Range* range) {</span></a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineNoCov">          0 :   return Json::Object{{&quot;start&quot;, envoy_type_v3_Int64Range_start(range)},</span></a>
+<a name="58"><span class="lineNum">      58 </span><span class="lineNoCov">          0 :                       {&quot;end&quot;, envoy_type_v3_Int64Range_end(range)}};</span></a>
+<a name="59"><span class="lineNum">      59 </span>            : }</a>
+<a name="60"><span class="lineNum">      60 </span>            : </a>
+<a name="61"><span class="lineNum">      61 </span><span class="lineCov">        194 : absl::StatusOr&lt;Json&gt; ParseHeaderMatcherToJson(</span></a>
+<a name="62"><span class="lineNum">      62 </span>            :     const envoy_config_route_v3_HeaderMatcher* header) {</a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">        194 :   Json::Object header_json;</span></a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineCov">        194 :   std::vector&lt;absl::Status&gt; error_list;</span></a>
+<a name="65"><span class="lineNum">      65 </span>            :   std::string name =</a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">        194 :       UpbStringToStdString(envoy_config_route_v3_HeaderMatcher_name(header));</span></a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineCov">        194 :   if (name == &quot;:scheme&quot;) {</span></a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">         25 :     error_list.push_back(</span></a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineCov">         50 :         absl::InvalidArgumentError(&quot;':scheme' not allowed in header&quot;));</span></a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineCov">        169 :   } else if (absl::StartsWith(name, &quot;grpc-&quot;)) {</span></a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">         25 :     error_list.push_back(</span></a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">         50 :         absl::InvalidArgumentError(&quot;'grpc-' prefixes not allowed in header&quot;));</span></a>
+<a name="73"><span class="lineNum">      73 </span>            :   }</a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">        194 :   header_json.emplace(&quot;name&quot;, std::move(name));</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">        194 :   if (envoy_config_route_v3_HeaderMatcher_has_exact_match(header)) {</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">        194 :     header_json.emplace(</span></a>
+<a name="77"><span class="lineNum">      77 </span>            :         &quot;exactMatch&quot;,</a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">        388 :         UpbStringToStdString(</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">        388 :             envoy_config_route_v3_HeaderMatcher_exact_match(header)));</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineNoCov">          0 :   } else if (envoy_config_route_v3_HeaderMatcher_has_safe_regex_match(header)) {</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineNoCov">          0 :     header_json.emplace(</span></a>
+<a name="82"><span class="lineNum">      82 </span>            :         &quot;safeRegexMatch&quot;,</a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineNoCov">          0 :         ParseRegexMatcherToJson(</span></a>
+<a name="84"><span class="lineNum">      84 </span>            :             envoy_config_route_v3_HeaderMatcher_safe_regex_match(header)));</a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineNoCov">          0 :   } else if (envoy_config_route_v3_HeaderMatcher_has_range_match(header)) {</span></a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineNoCov">          0 :     header_json.emplace(</span></a>
+<a name="87"><span class="lineNum">      87 </span>            :         &quot;rangeMatch&quot;,</a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineNoCov">          0 :         ParseInt64RangeToJson(</span></a>
+<a name="89"><span class="lineNum">      89 </span>            :             envoy_config_route_v3_HeaderMatcher_range_match(header)));</a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineNoCov">          0 :   } else if (envoy_config_route_v3_HeaderMatcher_has_present_match(header)) {</span></a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineNoCov">          0 :     header_json.emplace(</span></a>
+<a name="92"><span class="lineNum">      92 </span>            :         &quot;presentMatch&quot;,</a>
+<a name="93"><span class="lineNum">      93 </span><span class="lineNoCov">          0 :         envoy_config_route_v3_HeaderMatcher_present_match(header));</span></a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineNoCov">          0 :   } else if (envoy_config_route_v3_HeaderMatcher_has_prefix_match(header)) {</span></a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineNoCov">          0 :     header_json.emplace(</span></a>
+<a name="96"><span class="lineNum">      96 </span>            :         &quot;prefixMatch&quot;,</a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineNoCov">          0 :         UpbStringToStdString(</span></a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineNoCov">          0 :             envoy_config_route_v3_HeaderMatcher_prefix_match(header)));</span></a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineNoCov">          0 :   } else if (envoy_config_route_v3_HeaderMatcher_has_suffix_match(header)) {</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineNoCov">          0 :     header_json.emplace(</span></a>
+<a name="101"><span class="lineNum">     101 </span>            :         &quot;suffixMatch&quot;,</a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineNoCov">          0 :         UpbStringToStdString(</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineNoCov">          0 :             envoy_config_route_v3_HeaderMatcher_suffix_match(header)));</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineNoCov">          0 :   } else if (envoy_config_route_v3_HeaderMatcher_has_contains_match(header)) {</span></a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineNoCov">          0 :     header_json.emplace(</span></a>
+<a name="106"><span class="lineNum">     106 </span>            :         &quot;containsMatch&quot;,</a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineNoCov">          0 :         UpbStringToStdString(</span></a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineNoCov">          0 :             envoy_config_route_v3_HeaderMatcher_contains_match(header)));</span></a>
+<a name="109"><span class="lineNum">     109 </span>            :   } else {</a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineNoCov">          0 :     error_list.push_back(</span></a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineNoCov">          0 :         absl::InvalidArgumentError(&quot;Invalid route header matcher specified.&quot;));</span></a>
+<a name="112"><span class="lineNum">     112 </span>            :   }</a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineCov">        194 :   if (!error_list.empty()) {</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">        200 :     return StatusCreate(absl::StatusCode::kInvalidArgument,</span></a>
+<a name="115"><span class="lineNum">     115 </span><span class="lineCov">        100 :                         &quot;Error parsing HeaderMatcher&quot;, DEBUG_LOCATION,</span></a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">        100 :                         std::move(error_list));</span></a>
+<a name="117"><span class="lineNum">     117 </span>            :   }</a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">        144 :   header_json.emplace(&quot;invertMatch&quot;,</span></a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineCov">        144 :                       envoy_config_route_v3_HeaderMatcher_invert_match(header));</span></a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineCov">        144 :   return header_json;</span></a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineCov">        194 : }</span></a>
+<a name="122"><span class="lineNum">     122 </span>            : </a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineCov">        264 : absl::StatusOr&lt;Json&gt; ParseStringMatcherToJson(</span></a>
+<a name="124"><span class="lineNum">     124 </span>            :     const envoy_type_matcher_v3_StringMatcher* matcher) {</a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineCov">        264 :   Json::Object json;</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">        264 :   if (envoy_type_matcher_v3_StringMatcher_has_exact(matcher)) {</span></a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineCov">        264 :     json.emplace(&quot;exact&quot;,</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">        528 :                  UpbStringToStdString(</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineCov">        528 :                      envoy_type_matcher_v3_StringMatcher_exact(matcher)));</span></a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineNoCov">          0 :   } else if (envoy_type_matcher_v3_StringMatcher_has_prefix(matcher)) {</span></a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineNoCov">          0 :     json.emplace(&quot;prefix&quot;,</span></a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineNoCov">          0 :                  UpbStringToStdString(</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineNoCov">          0 :                      envoy_type_matcher_v3_StringMatcher_prefix(matcher)));</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineNoCov">          0 :   } else if (envoy_type_matcher_v3_StringMatcher_has_suffix(matcher)) {</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineNoCov">          0 :     json.emplace(&quot;suffix&quot;,</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineNoCov">          0 :                  UpbStringToStdString(</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineNoCov">          0 :                      envoy_type_matcher_v3_StringMatcher_suffix(matcher)));</span></a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineNoCov">          0 :   } else if (envoy_type_matcher_v3_StringMatcher_has_safe_regex(matcher)) {</span></a>
+<a name="139"><span class="lineNum">     139 </span><span class="lineNoCov">          0 :     json.emplace(&quot;safeRegex&quot;,</span></a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineNoCov">          0 :                  ParseRegexMatcherToJson(</span></a>
+<a name="141"><span class="lineNum">     141 </span>            :                      envoy_type_matcher_v3_StringMatcher_safe_regex(matcher)));</a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineNoCov">          0 :   } else if (envoy_type_matcher_v3_StringMatcher_has_contains(matcher)) {</span></a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineNoCov">          0 :     json.emplace(&quot;contains&quot;,</span></a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineNoCov">          0 :                  UpbStringToStdString(</span></a>
+<a name="145"><span class="lineNum">     145 </span><span class="lineNoCov">          0 :                      envoy_type_matcher_v3_StringMatcher_contains(matcher)));</span></a>
+<a name="146"><span class="lineNum">     146 </span>            :   } else {</a>
+<a name="147"><span class="lineNum">     147 </span><span class="lineNoCov">          0 :     return absl::InvalidArgumentError(&quot;StringMatcher: Invalid match pattern&quot;);</span></a>
+<a name="148"><span class="lineNum">     148 </span>            :   }</a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineCov">        264 :   json.emplace(&quot;ignoreCase&quot;,</span></a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineCov">        264 :                envoy_type_matcher_v3_StringMatcher_ignore_case(matcher));</span></a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineCov">        264 :   return json;</span></a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">        264 : }</span></a>
+<a name="153"><span class="lineNum">     153 </span>            : </a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineCov">        168 : absl::StatusOr&lt;Json&gt; ParsePathMatcherToJson(</span></a>
+<a name="155"><span class="lineNum">     155 </span>            :     const envoy_type_matcher_v3_PathMatcher* matcher) {</a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineCov">        168 :   const auto* path = envoy_type_matcher_v3_PathMatcher_path(matcher);</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">        168 :   if (path == nullptr) {</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineNoCov">          0 :     return absl::InvalidArgumentError(&quot;PathMatcher has empty path&quot;);</span></a>
+<a name="159"><span class="lineNum">     159 </span>            :   }</a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineCov">        168 :   Json::Object json;</span></a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">        168 :   auto path_json = ParseStringMatcherToJson(path);</span></a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineCov">        168 :   if (!path_json.ok()) {</span></a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineNoCov">          0 :     return path_json;</span></a>
+<a name="164"><span class="lineNum">     164 </span>            :   }</a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineCov">        168 :   json.emplace(&quot;path&quot;, std::move(*path_json));</span></a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineCov">        168 :   return json;</span></a>
+<a name="167"><span class="lineNum">     167 </span><span class="lineCov">        168 : }</span></a>
+<a name="168"><span class="lineNum">     168 </span>            : </a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">        144 : Json ParseUInt32ValueToJson(const google_protobuf_UInt32Value* value) {</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">        288 :   return Json::Object{{&quot;value&quot;, google_protobuf_UInt32Value_value(value)}};</span></a>
+<a name="171"><span class="lineNum">     171 </span>            : }</a>
+<a name="172"><span class="lineNum">     172 </span>            : </a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">        144 : Json ParseCidrRangeToJson(const envoy_config_core_v3_CidrRange* range) {</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">        144 :   Json::Object json;</span></a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">        144 :   json.emplace(&quot;addressPrefix&quot;,</span></a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineCov">        288 :                UpbStringToStdString(</span></a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineCov">        144 :                    envoy_config_core_v3_CidrRange_address_prefix(range)));</span></a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineCov">        144 :   const auto* prefix_len = envoy_config_core_v3_CidrRange_prefix_len(range);</span></a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">        144 :   if (prefix_len != nullptr) {</span></a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineCov">        144 :     json.emplace(&quot;prefixLen&quot;, ParseUInt32ValueToJson(prefix_len));</span></a>
+<a name="181"><span class="lineNum">     181 </span>            :   }</a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineCov">        288 :   return json;</span></a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineCov">        144 : }</span></a>
+<a name="184"><span class="lineNum">     184 </span>            : </a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineCov">         96 : Json ParseMetadataMatcherToJson(</span></a>
+<a name="186"><span class="lineNum">     186 </span>            :     const envoy_type_matcher_v3_MetadataMatcher* metadata_matcher) {</a>
+<a name="187"><span class="lineNum">     187 </span><span class="lineCov">         96 :   Json::Object json;</span></a>
+<a name="188"><span class="lineNum">     188 </span>            :   // The fields &quot;filter&quot;, &quot;path&quot; and &quot;value&quot; are irrelevant to gRPC as per</a>
+<a name="189"><span class="lineNum">     189 </span>            :   // https://github.com/grpc/proposal/blob/master/A41-xds-rbac.md and are not</a>
+<a name="190"><span class="lineNum">     190 </span>            :   // being parsed.</a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">         96 :   json.emplace(&quot;invert&quot;,</span></a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">         96 :                envoy_type_matcher_v3_MetadataMatcher_invert(metadata_matcher));</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">        192 :   return json;</span></a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">         96 : }</span></a>
+<a name="195"><span class="lineNum">     195 </span>            : </a>
+<a name="196"><span class="lineNum">     196 </span><span class="lineCov">       1286 : absl::StatusOr&lt;Json&gt; ParsePermissionToJson(</span></a>
+<a name="197"><span class="lineNum">     197 </span>            :     const envoy_config_rbac_v3_Permission* permission) {</a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineCov">       1286 :   Json::Object permission_json;</span></a>
+<a name="199"><span class="lineNum">     199 </span>            :   // Helper function to parse Permission::Set to JSON. Used by `and_rules` and</a>
+<a name="200"><span class="lineNum">     200 </span>            :   // `or_rules`.</a>
+<a name="201"><span class="lineNum">     201 </span>            :   auto parse_permission_set_to_json =</a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineCov">         96 :       [](const envoy_config_rbac_v3_Permission_Set* set)</span></a>
+<a name="203"><span class="lineNum">     203 </span>            :       -&gt; absl::StatusOr&lt;Json&gt; {</a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineCov">         96 :     std::vector&lt;absl::Status&gt; error_list;</span></a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineCov">         96 :     Json::Array rules_json;</span></a>
+<a name="206"><span class="lineNum">     206 </span>            :     size_t size;</a>
+<a name="207"><span class="lineNum">     207 </span>            :     const envoy_config_rbac_v3_Permission* const* rules =</a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineCov">         96 :         envoy_config_rbac_v3_Permission_Set_rules(set, &amp;size);</span></a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineCov">        288 :     for (size_t i = 0; i &lt; size; ++i) {</span></a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineCov">        192 :       auto permission_json = ParsePermissionToJson(rules[i]);</span></a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineCov">        192 :       if (!permission_json.ok()) {</span></a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineNoCov">          0 :         error_list.push_back(permission_json.status());</span></a>
+<a name="213"><span class="lineNum">     213 </span>            :       } else {</a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineCov">        192 :         rules_json.emplace_back(std::move(*permission_json));</span></a>
+<a name="215"><span class="lineNum">     215 </span>            :       }</a>
+<a name="216"><span class="lineNum">     216 </span><span class="lineCov">        192 :     }</span></a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineCov">         96 :     if (!error_list.empty()) {</span></a>
+<a name="218"><span class="lineNum">     218 </span><span class="lineNoCov">          0 :       return StatusCreate(absl::StatusCode::kInvalidArgument,</span></a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineNoCov">          0 :                           &quot;Error parsing Set&quot;, DEBUG_LOCATION,</span></a>
+<a name="220"><span class="lineNum">     220 </span><span class="lineNoCov">          0 :                           std::move(error_list));</span></a>
+<a name="221"><span class="lineNum">     221 </span>            :     }</a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineCov">        288 :     return Json::Object({{&quot;rules&quot;, std::move(rules_json)}});</span></a>
+<a name="223"><span class="lineNum">     223 </span><span class="lineCov">         96 :   };</span></a>
+<a name="224"><span class="lineNum">     224 </span><span class="lineCov">       1286 :   if (envoy_config_rbac_v3_Permission_has_and_rules(permission)) {</span></a>
+<a name="225"><span class="lineNum">     225 </span>            :     const auto* and_rules =</a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineCov">         48 :         envoy_config_rbac_v3_Permission_and_rules(permission);</span></a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">         48 :     auto permission_set_json = parse_permission_set_to_json(and_rules);</span></a>
+<a name="228"><span class="lineNum">     228 </span><span class="lineCov">         48 :     if (!permission_set_json.ok()) {</span></a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineNoCov">          0 :       return permission_set_json;</span></a>
+<a name="230"><span class="lineNum">     230 </span>            :     }</a>
+<a name="231"><span class="lineNum">     231 </span><span class="lineCov">         48 :     permission_json.emplace(&quot;andRules&quot;, std::move(*permission_set_json));</span></a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineCov">       1286 :   } else if (envoy_config_rbac_v3_Permission_has_or_rules(permission)) {</span></a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineCov">         48 :     const auto* or_rules = envoy_config_rbac_v3_Permission_or_rules(permission);</span></a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineCov">         48 :     auto permission_set_json = parse_permission_set_to_json(or_rules);</span></a>
+<a name="235"><span class="lineNum">     235 </span><span class="lineCov">         48 :     if (!permission_set_json.ok()) {</span></a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineNoCov">          0 :       return permission_set_json;</span></a>
+<a name="237"><span class="lineNum">     237 </span>            :     }</a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineCov">         48 :     permission_json.emplace(&quot;orRules&quot;, std::move(*permission_set_json));</span></a>
+<a name="239"><span class="lineNum">     239 </span><span class="lineCov">       1238 :   } else if (envoy_config_rbac_v3_Permission_has_any(permission)) {</span></a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineCov">        662 :     permission_json.emplace(&quot;any&quot;,</span></a>
+<a name="241"><span class="lineNum">     241 </span><span class="lineCov">        662 :                             envoy_config_rbac_v3_Permission_any(permission));</span></a>
+<a name="242"><span class="lineNum">     242 </span><span class="lineCov">        528 :   } else if (envoy_config_rbac_v3_Permission_has_header(permission)) {</span></a>
+<a name="243"><span class="lineNum">     243 </span>            :     auto header_json = ParseHeaderMatcherToJson(</a>
+<a name="244"><span class="lineNum">     244 </span><span class="lineCov">         96 :         envoy_config_rbac_v3_Permission_header(permission));</span></a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineCov">         96 :     if (!header_json.ok()) {</span></a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineCov">         24 :       return header_json;</span></a>
+<a name="247"><span class="lineNum">     247 </span>            :     }</a>
+<a name="248"><span class="lineNum">     248 </span><span class="lineCov">         72 :     permission_json.emplace(&quot;header&quot;, std::move(*header_json));</span></a>
+<a name="249"><span class="lineNum">     249 </span><span class="lineCov">        528 :   } else if (envoy_config_rbac_v3_Permission_has_url_path(permission)) {</span></a>
+<a name="250"><span class="lineNum">     250 </span>            :     auto url_path_json = ParsePathMatcherToJson(</a>
+<a name="251"><span class="lineNum">     251 </span><span class="lineCov">         24 :         envoy_config_rbac_v3_Permission_url_path(permission));</span></a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineCov">         24 :     if (!url_path_json.ok()) {</span></a>
+<a name="253"><span class="lineNum">     253 </span><span class="lineNoCov">          0 :       return url_path_json;</span></a>
+<a name="254"><span class="lineNum">     254 </span>            :     }</a>
+<a name="255"><span class="lineNum">     255 </span><span class="lineCov">         24 :     permission_json.emplace(&quot;urlPath&quot;, std::move(*url_path_json));</span></a>
+<a name="256"><span class="lineNum">     256 </span><span class="lineCov">        432 :   } else if (envoy_config_rbac_v3_Permission_has_destination_ip(permission)) {</span></a>
+<a name="257"><span class="lineNum">     257 </span><span class="lineCov">         48 :     permission_json.emplace(</span></a>
+<a name="258"><span class="lineNum">     258 </span>            :         &quot;destinationIp&quot;,</a>
+<a name="259"><span class="lineNum">     259 </span><span class="lineCov">         96 :         ParseCidrRangeToJson(</span></a>
+<a name="260"><span class="lineNum">     260 </span>            :             envoy_config_rbac_v3_Permission_destination_ip(permission)));</a>
+<a name="261"><span class="lineNum">     261 </span><span class="lineCov">        360 :   } else if (envoy_config_rbac_v3_Permission_has_destination_port(permission)) {</span></a>
+<a name="262"><span class="lineNum">     262 </span><span class="lineCov">        144 :     permission_json.emplace(</span></a>
+<a name="263"><span class="lineNum">     263 </span>            :         &quot;destinationPort&quot;,</a>
+<a name="264"><span class="lineNum">     264 </span><span class="lineCov">        144 :         envoy_config_rbac_v3_Permission_destination_port(permission));</span></a>
+<a name="265"><span class="lineNum">     265 </span><span class="lineCov">        216 :   } else if (envoy_config_rbac_v3_Permission_has_metadata(permission)) {</span></a>
+<a name="266"><span class="lineNum">     266 </span><span class="lineCov">         48 :     permission_json.emplace(</span></a>
+<a name="267"><span class="lineNum">     267 </span><span class="lineCov">         96 :         &quot;metadata&quot;, ParseMetadataMatcherToJson(</span></a>
+<a name="268"><span class="lineNum">     268 </span>            :                         envoy_config_rbac_v3_Permission_metadata(permission)));</a>
+<a name="269"><span class="lineNum">     269 </span><span class="lineCov">        168 :   } else if (envoy_config_rbac_v3_Permission_has_not_rule(permission)) {</span></a>
+<a name="270"><span class="lineNum">     270 </span>            :     auto not_rule_json = ParsePermissionToJson(</a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineCov">         96 :         envoy_config_rbac_v3_Permission_not_rule(permission));</span></a>
+<a name="272"><span class="lineNum">     272 </span><span class="lineCov">         96 :     if (!not_rule_json.ok()) {</span></a>
+<a name="273"><span class="lineNum">     273 </span><span class="lineNoCov">          0 :       return not_rule_json;</span></a>
+<a name="274"><span class="lineNum">     274 </span>            :     }</a>
+<a name="275"><span class="lineNum">     275 </span><span class="lineCov">         96 :     permission_json.emplace(&quot;notRule&quot;, std::move(*not_rule_json));</span></a>
+<a name="276"><span class="lineNum">     276 </span><span class="lineCov">        168 :   } else if (envoy_config_rbac_v3_Permission_has_requested_server_name(</span></a>
+<a name="277"><span class="lineNum">     277 </span>            :                  permission)) {</a>
+<a name="278"><span class="lineNum">     278 </span>            :     auto requested_server_name_json = ParseStringMatcherToJson(</a>
+<a name="279"><span class="lineNum">     279 </span><span class="lineCov">         72 :         envoy_config_rbac_v3_Permission_requested_server_name(permission));</span></a>
+<a name="280"><span class="lineNum">     280 </span><span class="lineCov">         72 :     if (!requested_server_name_json.ok()) {</span></a>
+<a name="281"><span class="lineNum">     281 </span><span class="lineNoCov">          0 :       return requested_server_name_json;</span></a>
+<a name="282"><span class="lineNum">     282 </span>            :     }</a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineCov">         72 :     permission_json.emplace(&quot;requestedServerName&quot;,</span></a>
+<a name="284"><span class="lineNum">     284 </span><span class="lineCov">         72 :                             std::move(*requested_server_name_json));</span></a>
+<a name="285"><span class="lineNum">     285 </span><span class="lineCov">         72 :   } else {</span></a>
+<a name="286"><span class="lineNum">     286 </span><span class="lineNoCov">          0 :     return absl::InvalidArgumentError(&quot;Permission: Invalid rule&quot;);</span></a>
+<a name="287"><span class="lineNum">     287 </span>            :   }</a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineCov">       1262 :   return permission_json;</span></a>
+<a name="289"><span class="lineNum">     289 </span><span class="lineCov">       1286 : }</span></a>
+<a name="290"><span class="lineNum">     290 </span>            : </a>
+<a name="291"><span class="lineNum">     291 </span><span class="lineCov">       1286 : absl::StatusOr&lt;Json&gt; ParsePrincipalToJson(</span></a>
+<a name="292"><span class="lineNum">     292 </span>            :     const envoy_config_rbac_v3_Principal* principal) {</a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineCov">       1286 :   Json::Object principal_json;</span></a>
+<a name="294"><span class="lineNum">     294 </span>            :   // Helper function to parse Principal::Set to JSON. Used by `and_ids` and</a>
+<a name="295"><span class="lineNum">     295 </span>            :   // `or_ids`.</a>
+<a name="296"><span class="lineNum">     296 </span>            :   auto parse_principal_set_to_json =</a>
+<a name="297"><span class="lineNum">     297 </span><span class="lineCov">         96 :       [](const envoy_config_rbac_v3_Principal_Set* set)</span></a>
+<a name="298"><span class="lineNum">     298 </span>            :       -&gt; absl::StatusOr&lt;Json&gt; {</a>
+<a name="299"><span class="lineNum">     299 </span><span class="lineCov">         96 :     Json::Object json;</span></a>
+<a name="300"><span class="lineNum">     300 </span><span class="lineCov">         96 :     std::vector&lt;absl::Status&gt; error_list;</span></a>
+<a name="301"><span class="lineNum">     301 </span><span class="lineCov">         96 :     Json::Array ids_json;</span></a>
+<a name="302"><span class="lineNum">     302 </span>            :     size_t size;</a>
+<a name="303"><span class="lineNum">     303 </span>            :     const envoy_config_rbac_v3_Principal* const* ids =</a>
+<a name="304"><span class="lineNum">     304 </span><span class="lineCov">         96 :         envoy_config_rbac_v3_Principal_Set_ids(set, &amp;size);</span></a>
+<a name="305"><span class="lineNum">     305 </span><span class="lineCov">        288 :     for (size_t i = 0; i &lt; size; ++i) {</span></a>
+<a name="306"><span class="lineNum">     306 </span><span class="lineCov">        192 :       auto principal_json = ParsePrincipalToJson(ids[i]);</span></a>
+<a name="307"><span class="lineNum">     307 </span><span class="lineCov">        192 :       if (!principal_json.ok()) {</span></a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineNoCov">          0 :         error_list.push_back(principal_json.status());</span></a>
+<a name="309"><span class="lineNum">     309 </span>            :       } else {</a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineCov">        192 :         ids_json.emplace_back(std::move(*principal_json));</span></a>
+<a name="311"><span class="lineNum">     311 </span>            :       }</a>
+<a name="312"><span class="lineNum">     312 </span><span class="lineCov">        192 :     }</span></a>
+<a name="313"><span class="lineNum">     313 </span><span class="lineCov">         96 :     if (!error_list.empty()) {</span></a>
+<a name="314"><span class="lineNum">     314 </span><span class="lineNoCov">          0 :       return StatusCreate(absl::StatusCode::kInvalidArgument,</span></a>
+<a name="315"><span class="lineNum">     315 </span><span class="lineNoCov">          0 :                           &quot;Error parsing Set&quot;, DEBUG_LOCATION,</span></a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineNoCov">          0 :                           std::move(error_list));</span></a>
+<a name="317"><span class="lineNum">     317 </span>            :     }</a>
+<a name="318"><span class="lineNum">     318 </span><span class="lineCov">        288 :     return Json::Object({{&quot;ids&quot;, std::move(ids_json)}});</span></a>
+<a name="319"><span class="lineNum">     319 </span><span class="lineCov">         96 :   };</span></a>
+<a name="320"><span class="lineNum">     320 </span><span class="lineCov">       1286 :   if (envoy_config_rbac_v3_Principal_has_and_ids(principal)) {</span></a>
+<a name="321"><span class="lineNum">     321 </span><span class="lineCov">         48 :     const auto* and_rules = envoy_config_rbac_v3_Principal_and_ids(principal);</span></a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineCov">         48 :     auto principal_set_json = parse_principal_set_to_json(and_rules);</span></a>
+<a name="323"><span class="lineNum">     323 </span><span class="lineCov">         48 :     if (!principal_set_json.ok()) {</span></a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineNoCov">          0 :       return principal_set_json;</span></a>
+<a name="325"><span class="lineNum">     325 </span>            :     }</a>
+<a name="326"><span class="lineNum">     326 </span><span class="lineCov">         48 :     principal_json.emplace(&quot;andIds&quot;, std::move(*principal_set_json));</span></a>
+<a name="327"><span class="lineNum">     327 </span><span class="lineCov">       1286 :   } else if (envoy_config_rbac_v3_Principal_has_or_ids(principal)) {</span></a>
+<a name="328"><span class="lineNum">     328 </span><span class="lineCov">         48 :     const auto* or_rules = envoy_config_rbac_v3_Principal_or_ids(principal);</span></a>
+<a name="329"><span class="lineNum">     329 </span><span class="lineCov">         48 :     auto principal_set_json = parse_principal_set_to_json(or_rules);</span></a>
+<a name="330"><span class="lineNum">     330 </span><span class="lineCov">         48 :     if (!principal_set_json.ok()) {</span></a>
+<a name="331"><span class="lineNum">     331 </span><span class="lineNoCov">          0 :       return principal_set_json;</span></a>
+<a name="332"><span class="lineNum">     332 </span>            :     }</a>
+<a name="333"><span class="lineNum">     333 </span><span class="lineCov">         48 :     principal_json.emplace(&quot;orIds&quot;, std::move(*principal_set_json));</span></a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineCov">       1238 :   } else if (envoy_config_rbac_v3_Principal_has_any(principal)) {</span></a>
+<a name="335"><span class="lineNum">     335 </span><span class="lineCov">        684 :     principal_json.emplace(&quot;any&quot;,</span></a>
+<a name="336"><span class="lineNum">     336 </span><span class="lineCov">        684 :                            envoy_config_rbac_v3_Principal_any(principal));</span></a>
+<a name="337"><span class="lineNum">     337 </span><span class="lineCov">        506 :   } else if (envoy_config_rbac_v3_Principal_has_authenticated(principal)) {</span></a>
+<a name="338"><span class="lineNum">     338 </span>            :     auto* authenticated_json =</a>
+<a name="339"><span class="lineNum">     339 </span><span class="lineCov">         48 :         principal_json.emplace(&quot;authenticated&quot;, Json::Object())</span></a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineCov">         24 :             .first-&gt;second.mutable_object();</span></a>
+<a name="341"><span class="lineNum">     341 </span>            :     const auto* principal_name =</a>
+<a name="342"><span class="lineNum">     342 </span><span class="lineCov">         24 :         envoy_config_rbac_v3_Principal_Authenticated_principal_name(</span></a>
+<a name="343"><span class="lineNum">     343 </span>            :             envoy_config_rbac_v3_Principal_authenticated(principal));</a>
+<a name="344"><span class="lineNum">     344 </span><span class="lineCov">         24 :     if (principal_name != nullptr) {</span></a>
+<a name="345"><span class="lineNum">     345 </span><span class="lineCov">         24 :       auto principal_name_json = ParseStringMatcherToJson(principal_name);</span></a>
+<a name="346"><span class="lineNum">     346 </span><span class="lineCov">         24 :       if (!principal_name_json.ok()) {</span></a>
+<a name="347"><span class="lineNum">     347 </span><span class="lineNoCov">          0 :         return principal_name_json;</span></a>
+<a name="348"><span class="lineNum">     348 </span>            :       }</a>
+<a name="349"><span class="lineNum">     349 </span><span class="lineCov">         24 :       authenticated_json-&gt;emplace(&quot;principalName&quot;,</span></a>
+<a name="350"><span class="lineNum">     350 </span><span class="lineCov">         24 :                                   std::move(*principal_name_json));</span></a>
+<a name="351"><span class="lineNum">     351 </span><span class="lineCov">         24 :     }</span></a>
+<a name="352"><span class="lineNum">     352 </span><span class="lineCov">        482 :   } else if (envoy_config_rbac_v3_Principal_has_source_ip(principal)) {</span></a>
+<a name="353"><span class="lineNum">     353 </span><span class="lineNoCov">          0 :     principal_json.emplace(</span></a>
+<a name="354"><span class="lineNum">     354 </span><span class="lineNoCov">          0 :         &quot;sourceIp&quot;, ParseCidrRangeToJson(</span></a>
+<a name="355"><span class="lineNum">     355 </span>            :                         envoy_config_rbac_v3_Principal_source_ip(principal)));</a>
+<a name="356"><span class="lineNum">     356 </span><span class="lineCov">        482 :   } else if (envoy_config_rbac_v3_Principal_has_direct_remote_ip(principal)) {</span></a>
+<a name="357"><span class="lineNum">     357 </span><span class="lineCov">         48 :     principal_json.emplace(</span></a>
+<a name="358"><span class="lineNum">     358 </span>            :         &quot;directRemoteIp&quot;,</a>
+<a name="359"><span class="lineNum">     359 </span><span class="lineCov">         96 :         ParseCidrRangeToJson(</span></a>
+<a name="360"><span class="lineNum">     360 </span>            :             envoy_config_rbac_v3_Principal_direct_remote_ip(principal)));</a>
+<a name="361"><span class="lineNum">     361 </span><span class="lineCov">        434 :   } else if (envoy_config_rbac_v3_Principal_has_remote_ip(principal)) {</span></a>
+<a name="362"><span class="lineNum">     362 </span><span class="lineCov">         48 :     principal_json.emplace(</span></a>
+<a name="363"><span class="lineNum">     363 </span><span class="lineCov">         96 :         &quot;remoteIp&quot;, ParseCidrRangeToJson(</span></a>
+<a name="364"><span class="lineNum">     364 </span>            :                         envoy_config_rbac_v3_Principal_remote_ip(principal)));</a>
+<a name="365"><span class="lineNum">     365 </span><span class="lineCov">        386 :   } else if (envoy_config_rbac_v3_Principal_has_header(principal)) {</span></a>
+<a name="366"><span class="lineNum">     366 </span>            :     auto header_json = ParseHeaderMatcherToJson(</a>
+<a name="367"><span class="lineNum">     367 </span><span class="lineCov">         98 :         envoy_config_rbac_v3_Principal_header(principal));</span></a>
+<a name="368"><span class="lineNum">     368 </span><span class="lineCov">         98 :     if (!header_json.ok()) {</span></a>
+<a name="369"><span class="lineNum">     369 </span><span class="lineCov">         26 :       return header_json;</span></a>
+<a name="370"><span class="lineNum">     370 </span>            :     }</a>
+<a name="371"><span class="lineNum">     371 </span><span class="lineCov">         72 :     principal_json.emplace(&quot;header&quot;, std::move(*header_json));</span></a>
+<a name="372"><span class="lineNum">     372 </span><span class="lineCov">        386 :   } else if (envoy_config_rbac_v3_Principal_has_url_path(principal)) {</span></a>
+<a name="373"><span class="lineNum">     373 </span>            :     auto url_path_json = ParsePathMatcherToJson(</a>
+<a name="374"><span class="lineNum">     374 </span><span class="lineCov">        144 :         envoy_config_rbac_v3_Principal_url_path(principal));</span></a>
+<a name="375"><span class="lineNum">     375 </span><span class="lineCov">        144 :     if (!url_path_json.ok()) {</span></a>
+<a name="376"><span class="lineNum">     376 </span><span class="lineNoCov">          0 :       return url_path_json;</span></a>
+<a name="377"><span class="lineNum">     377 </span>            :     }</a>
+<a name="378"><span class="lineNum">     378 </span><span class="lineCov">        144 :     principal_json.emplace(&quot;urlPath&quot;, std::move(*url_path_json));</span></a>
+<a name="379"><span class="lineNum">     379 </span><span class="lineCov">        288 :   } else if (envoy_config_rbac_v3_Principal_has_metadata(principal)) {</span></a>
+<a name="380"><span class="lineNum">     380 </span><span class="lineCov">         48 :     principal_json.emplace(</span></a>
+<a name="381"><span class="lineNum">     381 </span><span class="lineCov">         96 :         &quot;metadata&quot;, ParseMetadataMatcherToJson(</span></a>
+<a name="382"><span class="lineNum">     382 </span>            :                         envoy_config_rbac_v3_Principal_metadata(principal)));</a>
+<a name="383"><span class="lineNum">     383 </span><span class="lineCov">         96 :   } else if (envoy_config_rbac_v3_Principal_has_not_id(principal)) {</span></a>
+<a name="384"><span class="lineNum">     384 </span>            :     auto not_id_json =</a>
+<a name="385"><span class="lineNum">     385 </span><span class="lineCov">         96 :         ParsePrincipalToJson(envoy_config_rbac_v3_Principal_not_id(principal));</span></a>
+<a name="386"><span class="lineNum">     386 </span><span class="lineCov">         96 :     if (!not_id_json.ok()) {</span></a>
+<a name="387"><span class="lineNum">     387 </span><span class="lineNoCov">          0 :       return not_id_json;</span></a>
+<a name="388"><span class="lineNum">     388 </span>            :     }</a>
+<a name="389"><span class="lineNum">     389 </span><span class="lineCov">         96 :     principal_json.emplace(&quot;notId&quot;, std::move(*not_id_json));</span></a>
+<a name="390"><span class="lineNum">     390 </span><span class="lineCov">         96 :   } else {</span></a>
+<a name="391"><span class="lineNum">     391 </span><span class="lineNoCov">          0 :     return absl::InvalidArgumentError(&quot;Principal: Invalid rule&quot;);</span></a>
+<a name="392"><span class="lineNum">     392 </span>            :   }</a>
+<a name="393"><span class="lineNum">     393 </span><span class="lineCov">       1260 :   return principal_json;</span></a>
+<a name="394"><span class="lineNum">     394 </span><span class="lineCov">       1286 : }</span></a>
+<a name="395"><span class="lineNum">     395 </span>            : </a>
+<a name="396"><span class="lineNum">     396 </span><span class="lineCov">        998 : absl::StatusOr&lt;Json&gt; ParsePolicyToJson(</span></a>
+<a name="397"><span class="lineNum">     397 </span>            :     const envoy_config_rbac_v3_Policy* policy) {</a>
+<a name="398"><span class="lineNum">     398 </span><span class="lineCov">        998 :   Json::Object policy_json;</span></a>
+<a name="399"><span class="lineNum">     399 </span><span class="lineCov">        998 :   std::vector&lt;absl::Status&gt; error_list;</span></a>
+<a name="400"><span class="lineNum">     400 </span>            :   size_t size;</a>
+<a name="401"><span class="lineNum">     401 </span><span class="lineCov">        998 :   Json::Array permissions_json;</span></a>
+<a name="402"><span class="lineNum">     402 </span>            :   const envoy_config_rbac_v3_Permission* const* permissions =</a>
+<a name="403"><span class="lineNum">     403 </span><span class="lineCov">        998 :       envoy_config_rbac_v3_Policy_permissions(policy, &amp;size);</span></a>
+<a name="404"><span class="lineNum">     404 </span><span class="lineCov">       1996 :   for (size_t i = 0; i &lt; size; ++i) {</span></a>
+<a name="405"><span class="lineNum">     405 </span><span class="lineCov">        998 :     auto permission_json = ParsePermissionToJson(permissions[i]);</span></a>
+<a name="406"><span class="lineNum">     406 </span><span class="lineCov">        998 :     if (!permission_json.ok()) {</span></a>
+<a name="407"><span class="lineNum">     407 </span><span class="lineCov">         24 :       error_list.push_back(permission_json.status());</span></a>
+<a name="408"><span class="lineNum">     408 </span>            :     } else {</a>
+<a name="409"><span class="lineNum">     409 </span><span class="lineCov">        974 :       permissions_json.emplace_back(std::move(*permission_json));</span></a>
+<a name="410"><span class="lineNum">     410 </span>            :     }</a>
+<a name="411"><span class="lineNum">     411 </span><span class="lineCov">        998 :   }</span></a>
+<a name="412"><span class="lineNum">     412 </span><span class="lineCov">        998 :   policy_json.emplace(&quot;permissions&quot;, std::move(permissions_json));</span></a>
+<a name="413"><span class="lineNum">     413 </span><span class="lineCov">        998 :   Json::Array principals_json;</span></a>
+<a name="414"><span class="lineNum">     414 </span>            :   const envoy_config_rbac_v3_Principal* const* principals =</a>
+<a name="415"><span class="lineNum">     415 </span><span class="lineCov">        998 :       envoy_config_rbac_v3_Policy_principals(policy, &amp;size);</span></a>
+<a name="416"><span class="lineNum">     416 </span><span class="lineCov">       1996 :   for (size_t i = 0; i &lt; size; ++i) {</span></a>
+<a name="417"><span class="lineNum">     417 </span><span class="lineCov">        998 :     auto principal_json = ParsePrincipalToJson(principals[i]);</span></a>
+<a name="418"><span class="lineNum">     418 </span><span class="lineCov">        998 :     if (!principal_json.ok()) {</span></a>
+<a name="419"><span class="lineNum">     419 </span><span class="lineCov">         26 :       error_list.push_back(principal_json.status());</span></a>
+<a name="420"><span class="lineNum">     420 </span>            :     } else {</a>
+<a name="421"><span class="lineNum">     421 </span><span class="lineCov">        972 :       principals_json.emplace_back(std::move(*principal_json));</span></a>
+<a name="422"><span class="lineNum">     422 </span>            :     }</a>
+<a name="423"><span class="lineNum">     423 </span><span class="lineCov">        998 :   }</span></a>
+<a name="424"><span class="lineNum">     424 </span><span class="lineCov">        998 :   policy_json.emplace(&quot;principals&quot;, std::move(principals_json));</span></a>
+<a name="425"><span class="lineNum">     425 </span><span class="lineCov">        998 :   if (envoy_config_rbac_v3_Policy_has_condition(policy)) {</span></a>
+<a name="426"><span class="lineNum">     426 </span><span class="lineNoCov">          0 :     error_list.push_back(</span></a>
+<a name="427"><span class="lineNum">     427 </span><span class="lineNoCov">          0 :         absl::InvalidArgumentError(&quot;Policy: condition not supported&quot;));</span></a>
+<a name="428"><span class="lineNum">     428 </span>            :   }</a>
+<a name="429"><span class="lineNum">     429 </span><span class="lineCov">        998 :   if (envoy_config_rbac_v3_Policy_has_checked_condition(policy)) {</span></a>
+<a name="430"><span class="lineNum">     430 </span><span class="lineNoCov">          0 :     error_list.push_back(</span></a>
+<a name="431"><span class="lineNum">     431 </span><span class="lineNoCov">          0 :         absl::InvalidArgumentError(&quot;Policy: checked condition not supported&quot;));</span></a>
+<a name="432"><span class="lineNum">     432 </span>            :   }</a>
+<a name="433"><span class="lineNum">     433 </span><span class="lineCov">        998 :   if (!error_list.empty()) {</span></a>
+<a name="434"><span class="lineNum">     434 </span><span class="lineCov">        200 :     return StatusCreate(absl::StatusCode::kInvalidArgument,</span></a>
+<a name="435"><span class="lineNum">     435 </span><span class="lineCov">        100 :                         &quot;Error parsing Policy&quot;, DEBUG_LOCATION,</span></a>
+<a name="436"><span class="lineNum">     436 </span><span class="lineCov">        100 :                         std::move(error_list));</span></a>
+<a name="437"><span class="lineNum">     437 </span>            :   }</a>
+<a name="438"><span class="lineNum">     438 </span><span class="lineCov">        948 :   return policy_json;</span></a>
+<a name="439"><span class="lineNum">     439 </span><span class="lineCov">        998 : }</span></a>
+<a name="440"><span class="lineNum">     440 </span>            : </a>
+<a name="441"><span class="lineNum">     441 </span><span class="lineCov">       1565 : absl::StatusOr&lt;Json&gt; ParseHttpRbacToJson(</span></a>
+<a name="442"><span class="lineNum">     442 </span>            :     const envoy_extensions_filters_http_rbac_v3_RBAC* rbac) {</a>
+<a name="443"><span class="lineNum">     443 </span><span class="lineCov">       1565 :   Json::Object rbac_json;</span></a>
+<a name="444"><span class="lineNum">     444 </span><span class="lineCov">       1565 :   std::vector&lt;absl::Status&gt; error_list;</span></a>
+<a name="445"><span class="lineNum">     445 </span><span class="lineCov">       1565 :   const auto* rules = envoy_extensions_filters_http_rbac_v3_RBAC_rules(rbac);</span></a>
+<a name="446"><span class="lineNum">     446 </span><span class="lineCov">       1565 :   if (rules != nullptr) {</span></a>
+<a name="447"><span class="lineNum">     447 </span><span class="lineCov">       1034 :     int action = envoy_config_rbac_v3_RBAC_action(rules);</span></a>
+<a name="448"><span class="lineNum">     448 </span>            :     // Treat Log action as RBAC being absent</a>
+<a name="449"><span class="lineNum">     449 </span><span class="lineCov">       1034 :     if (action == envoy_config_rbac_v3_RBAC_LOG) {</span></a>
+<a name="450"><span class="lineNum">     450 </span><span class="lineCov">         12 :       return rbac_json;</span></a>
+<a name="451"><span class="lineNum">     451 </span>            :     }</a>
+<a name="452"><span class="lineNum">     452 </span><span class="lineCov">       1022 :     Json::Object inner_rbac_json;</span></a>
+<a name="453"><span class="lineNum">     453 </span><span class="lineCov">       1022 :     inner_rbac_json.emplace(&quot;action&quot;, envoy_config_rbac_v3_RBAC_action(rules));</span></a>
+<a name="454"><span class="lineNum">     454 </span><span class="lineCov">       1022 :     if (envoy_config_rbac_v3_RBAC_has_policies(rules)) {</span></a>
+<a name="455"><span class="lineNum">     455 </span><span class="lineCov">        998 :       Json::Object policies_object;</span></a>
+<a name="456"><span class="lineNum">     456 </span><span class="lineCov">        998 :       size_t iter = kUpb_Map_Begin;</span></a>
+<a name="457"><span class="lineNum">     457 </span>            :       while (true) {</a>
+<a name="458"><span class="lineNum">     458 </span><span class="lineCov">       1996 :         auto* entry = envoy_config_rbac_v3_RBAC_policies_next(rules, &amp;iter);</span></a>
+<a name="459"><span class="lineNum">     459 </span><span class="lineCov">       1996 :         if (entry == nullptr) {</span></a>
+<a name="460"><span class="lineNum">     460 </span><span class="lineCov">        998 :           break;</span></a>
+<a name="461"><span class="lineNum">     461 </span>            :         }</a>
+<a name="462"><span class="lineNum">     462 </span>            :         auto policy = ParsePolicyToJson(</a>
+<a name="463"><span class="lineNum">     463 </span><span class="lineCov">        998 :             envoy_config_rbac_v3_RBAC_PoliciesEntry_value(entry));</span></a>
+<a name="464"><span class="lineNum">     464 </span><span class="lineCov">        998 :         if (!policy.ok()) {</span></a>
+<a name="465"><span class="lineNum">     465 </span><span class="lineCov">        200 :           error_list.push_back(StatusCreate(</span></a>
+<a name="466"><span class="lineNum">     466 </span>            :               absl::StatusCode::kInvalidArgument,</a>
+<a name="467"><span class="lineNum">     467 </span><span class="lineCov">        100 :               absl::StrFormat(</span></a>
+<a name="468"><span class="lineNum">     468 </span>            :                   &quot;RBAC PoliciesEntry key:%s&quot;,</a>
+<a name="469"><span class="lineNum">     469 </span><span class="lineCov">        100 :                   UpbStringToStdString(</span></a>
+<a name="470"><span class="lineNum">     470 </span><span class="lineCov">         50 :                       envoy_config_rbac_v3_RBAC_PoliciesEntry_key(entry))),</span></a>
+<a name="471"><span class="lineNum">     471 </span><span class="lineCov">        100 :               DEBUG_LOCATION, {policy.status()}));</span></a>
+<a name="472"><span class="lineNum">     472 </span>            :         } else {</a>
+<a name="473"><span class="lineNum">     473 </span><span class="lineCov">        948 :           policies_object.emplace(</span></a>
+<a name="474"><span class="lineNum">     474 </span><span class="lineCov">       1896 :               UpbStringToStdString(</span></a>
+<a name="475"><span class="lineNum">     475 </span><span class="lineCov">       1896 :                   envoy_config_rbac_v3_RBAC_PoliciesEntry_key(entry)),</span></a>
+<a name="476"><span class="lineNum">     476 </span><span class="lineCov">        948 :               std::move(*policy));</span></a>
+<a name="477"><span class="lineNum">     477 </span>            :         }</a>
+<a name="478"><span class="lineNum">     478 </span><span class="lineCov">        998 :       }</span></a>
+<a name="479"><span class="lineNum">     479 </span><span class="lineCov">        998 :       inner_rbac_json.emplace(&quot;policies&quot;, std::move(policies_object));</span></a>
+<a name="480"><span class="lineNum">     480 </span><span class="lineCov">        998 :     }</span></a>
+<a name="481"><span class="lineNum">     481 </span><span class="lineCov">       1022 :     rbac_json.emplace(&quot;rules&quot;, std::move(inner_rbac_json));</span></a>
+<a name="482"><span class="lineNum">     482 </span><span class="lineCov">       1022 :   }</span></a>
+<a name="483"><span class="lineNum">     483 </span><span class="lineCov">       1553 :   if (!error_list.empty()) {</span></a>
+<a name="484"><span class="lineNum">     484 </span><span class="lineCov">        200 :     return StatusCreate(absl::StatusCode::kInvalidArgument,</span></a>
+<a name="485"><span class="lineNum">     485 </span><span class="lineCov">        100 :                         &quot;Error parsing RBAC&quot;, DEBUG_LOCATION,</span></a>
+<a name="486"><span class="lineNum">     486 </span><span class="lineCov">        100 :                         std::move(error_list));</span></a>
+<a name="487"><span class="lineNum">     487 </span>            :   }</a>
+<a name="488"><span class="lineNum">     488 </span><span class="lineCov">       1503 :   return rbac_json;</span></a>
+<a name="489"><span class="lineNum">     489 </span><span class="lineCov">       1565 : }</span></a>
+<a name="490"><span class="lineNum">     490 </span>            : </a>
+<a name="491"><span class="lineNum">     491 </span>            : }  // namespace</a>
+<a name="492"><span class="lineNum">     492 </span>            : </a>
+<a name="493"><span class="lineNum">     493 </span><span class="lineCov">       5412 : void XdsHttpRbacFilter::PopulateSymtab(upb_DefPool* symtab) const {</span></a>
+<a name="494"><span class="lineNum">     494 </span><span class="lineCov">       5412 :   envoy_extensions_filters_http_rbac_v3_RBAC_getmsgdef(symtab);</span></a>
+<a name="495"><span class="lineNum">     495 </span><span class="lineCov">       5412 : }</span></a>
+<a name="496"><span class="lineNum">     496 </span>            : </a>
+<a name="497"><span class="lineNum">     497 </span>            : absl::StatusOr&lt;XdsHttpFilterImpl::FilterConfig&gt;</a>
+<a name="498"><span class="lineNum">     498 </span><span class="lineCov">       1049 : XdsHttpRbacFilter::GenerateFilterConfig(upb_StringView serialized_filter_config,</span></a>
+<a name="499"><span class="lineNum">     499 </span>            :                                         upb_Arena* arena) const {</a>
+<a name="500"><span class="lineNum">     500 </span><span class="lineCov">       1049 :   absl::StatusOr&lt;Json&gt; rbac_json;</span></a>
+<a name="501"><span class="lineNum">     501 </span><span class="lineCov">       1049 :   auto* rbac = envoy_extensions_filters_http_rbac_v3_RBAC_parse(</span></a>
+<a name="502"><span class="lineNum">     502 </span>            :       serialized_filter_config.data, serialized_filter_config.size, arena);</a>
+<a name="503"><span class="lineNum">     503 </span><span class="lineCov">       1049 :   if (rbac == nullptr) {</span></a>
+<a name="504"><span class="lineNum">     504 </span><span class="lineNoCov">          0 :     return absl::InvalidArgumentError(</span></a>
+<a name="505"><span class="lineNum">     505 </span><span class="lineNoCov">          0 :         &quot;could not parse HTTP RBAC filter config&quot;);</span></a>
+<a name="506"><span class="lineNum">     506 </span>            :   }</a>
+<a name="507"><span class="lineNum">     507 </span><span class="lineCov">       1049 :   rbac_json = ParseHttpRbacToJson(rbac);</span></a>
+<a name="508"><span class="lineNum">     508 </span><span class="lineCov">       1049 :   if (!rbac_json.ok()) {</span></a>
+<a name="509"><span class="lineNum">     509 </span><span class="lineCov">         26 :     return rbac_json.status();</span></a>
+<a name="510"><span class="lineNum">     510 </span>            :   }</a>
+<a name="511"><span class="lineNum">     511 </span><span class="lineCov">       2046 :   return FilterConfig{kXdsHttpRbacFilterConfigName, std::move(*rbac_json)};</span></a>
+<a name="512"><span class="lineNum">     512 </span><span class="lineCov">       1049 : }</span></a>
+<a name="513"><span class="lineNum">     513 </span>            : </a>
+<a name="514"><span class="lineNum">     514 </span>            : absl::StatusOr&lt;XdsHttpFilterImpl::FilterConfig&gt;</a>
+<a name="515"><span class="lineNum">     515 </span><span class="lineCov">        528 : XdsHttpRbacFilter::GenerateFilterConfigOverride(</span></a>
+<a name="516"><span class="lineNum">     516 </span>            :     upb_StringView serialized_filter_config, upb_Arena* arena) const {</a>
+<a name="517"><span class="lineNum">     517 </span>            :   auto* rbac_per_route =</a>
+<a name="518"><span class="lineNum">     518 </span><span class="lineCov">        528 :       envoy_extensions_filters_http_rbac_v3_RBACPerRoute_parse(</span></a>
+<a name="519"><span class="lineNum">     519 </span>            :           serialized_filter_config.data, serialized_filter_config.size, arena);</a>
+<a name="520"><span class="lineNum">     520 </span><span class="lineCov">        528 :   if (rbac_per_route == nullptr) {</span></a>
+<a name="521"><span class="lineNum">     521 </span><span class="lineNoCov">          0 :     return absl::InvalidArgumentError(&quot;could not parse RBACPerRoute&quot;);</span></a>
+<a name="522"><span class="lineNum">     522 </span>            :   }</a>
+<a name="523"><span class="lineNum">     523 </span><span class="lineCov">        528 :   absl::StatusOr&lt;Json&gt; rbac_json;</span></a>
+<a name="524"><span class="lineNum">     524 </span>            :   const auto* rbac =</a>
+<a name="525"><span class="lineNum">     525 </span><span class="lineCov">        528 :       envoy_extensions_filters_http_rbac_v3_RBACPerRoute_rbac(rbac_per_route);</span></a>
+<a name="526"><span class="lineNum">     526 </span><span class="lineCov">        528 :   if (rbac == nullptr) {</span></a>
+<a name="527"><span class="lineNum">     527 </span><span class="lineCov">         12 :     rbac_json = Json::Object();</span></a>
+<a name="528"><span class="lineNum">     528 </span>            :   } else {</a>
+<a name="529"><span class="lineNum">     529 </span><span class="lineCov">        516 :     rbac_json = ParseHttpRbacToJson(rbac);</span></a>
+<a name="530"><span class="lineNum">     530 </span><span class="lineCov">        516 :     if (!rbac_json.ok()) {</span></a>
+<a name="531"><span class="lineNum">     531 </span><span class="lineCov">         24 :       return rbac_json.status();</span></a>
+<a name="532"><span class="lineNum">     532 </span>            :     }</a>
+<a name="533"><span class="lineNum">     533 </span>            :   }</a>
+<a name="534"><span class="lineNum">     534 </span><span class="lineCov">       1512 :   return FilterConfig{kXdsHttpRbacFilterConfigOverrideName,</span></a>
+<a name="535"><span class="lineNum">     535 </span><span class="lineCov">       1008 :                       std::move(*rbac_json)};</span></a>
+<a name="536"><span class="lineNum">     536 </span><span class="lineCov">        528 : }</span></a>
+<a name="537"><span class="lineNum">     537 </span>            : </a>
+<a name="538"><span class="lineNum">     538 </span><span class="lineCov">       5198 : const grpc_channel_filter* XdsHttpRbacFilter::channel_filter() const {</span></a>
+<a name="539"><span class="lineNum">     539 </span><span class="lineCov">       5198 :   return &amp;RbacFilter::kFilterVtable;</span></a>
+<a name="540"><span class="lineNum">     540 </span>            : }</a>
+<a name="541"><span class="lineNum">     541 </span>            : </a>
+<a name="542"><span class="lineNum">     542 </span><span class="lineCov">       1760 : grpc_channel_args* XdsHttpRbacFilter::ModifyChannelArgs(</span></a>
+<a name="543"><span class="lineNum">     543 </span>            :     grpc_channel_args* args) const {</a>
+<a name="544"><span class="lineNum">     544 </span><span class="lineCov">       1760 :   grpc_arg arg_to_add = grpc_channel_arg_integer_create(</span></a>
+<a name="545"><span class="lineNum">     545 </span>            :       const_cast&lt;char*&gt;(GRPC_ARG_PARSE_RBAC_METHOD_CONFIG), 1);</a>
+<a name="546"><span class="lineNum">     546 </span>            :   grpc_channel_args* new_args =</a>
+<a name="547"><span class="lineNum">     547 </span><span class="lineCov">       1760 :       grpc_channel_args_copy_and_add(args, &amp;arg_to_add, 1);</span></a>
+<a name="548"><span class="lineNum">     548 </span><span class="lineCov">       1760 :   grpc_channel_args_destroy(args);</span></a>
+<a name="549"><span class="lineNum">     549 </span><span class="lineCov">       1760 :   return new_args;</span></a>
+<a name="550"><span class="lineNum">     550 </span>            : }</a>
+<a name="551"><span class="lineNum">     551 </span>            : </a>
+<a name="552"><span class="lineNum">     552 </span>            : absl::StatusOr&lt;XdsHttpFilterImpl::ServiceConfigJsonEntry&gt;</a>
+<a name="553"><span class="lineNum">     553 </span><span class="lineCov">       1760 : XdsHttpRbacFilter::GenerateServiceConfig(</span></a>
+<a name="554"><span class="lineNum">     554 </span>            :     const FilterConfig&amp; hcm_filter_config,</a>
+<a name="555"><span class="lineNum">     555 </span>            :     const FilterConfig* filter_config_override) const {</a>
+<a name="556"><span class="lineNum">     556 </span>            :   Json policy_json = filter_config_override != nullptr</a>
+<a name="557"><span class="lineNum">     557 </span>            :                          ? filter_config_override-&gt;config</a>
+<a name="558"><span class="lineNum">     558 </span><span class="lineCov">       1760 :                          : hcm_filter_config.config;</span></a>
+<a name="559"><span class="lineNum">     559 </span>            :   // The policy JSON may be empty, that's allowed.</a>
+<a name="560"><span class="lineNum">     560 </span><span class="lineCov">       5280 :   return ServiceConfigJsonEntry{&quot;rbacPolicy&quot;, policy_json.Dump()};</span></a>
+<a name="561"><span class="lineNum">     561 </span><span class="lineCov">       1760 : }</span></a>
+<a name="562"><span class="lineNum">     562 </span>            : </a>
+<a name="563"><span class="lineNum">     563 </span>            : }  // namespace grpc_core</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

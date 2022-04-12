@@ -1,0 +1,441 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/core/lib/uri/uri_parser.cc</title>
+  <link rel="stylesheet" type="text/css" href="../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../index.html">top level</a> - <a href="index.html">src/core/lib/uri</a> - uri_parser.cc<span style="font-size: 80%;"> (source / <a href="uri_parser.cc.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">183</td>
+            <td class="headerCovTableEntry">188</td>
+            <td class="headerCovTableEntryHi">97.3 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-11 16:17:17</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">20</td>
+            <td class="headerCovTableEntry">21</td>
+            <td class="headerCovTableEntryHi">95.2 %</td>
+          </tr>
+          <tr><td><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<a name="2"><span class="lineNum">       2 </span>            : // Copyright 2015 gRPC authors.</a>
+<a name="3"><span class="lineNum">       3 </span>            : //</a>
+<a name="4"><span class="lineNum">       4 </span>            : // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="5"><span class="lineNum">       5 </span>            : // you may not use this file except in compliance with the License.</a>
+<a name="6"><span class="lineNum">       6 </span>            : // You may obtain a copy of the License at</a>
+<a name="7"><span class="lineNum">       7 </span>            : //</a>
+<a name="8"><span class="lineNum">       8 </span>            : //     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="9"><span class="lineNum">       9 </span>            : //</a>
+<a name="10"><span class="lineNum">      10 </span>            : // Unless required by applicable law or agreed to in writing, software</a>
+<a name="11"><span class="lineNum">      11 </span>            : // distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="12"><span class="lineNum">      12 </span>            : // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="13"><span class="lineNum">      13 </span>            : // See the License for the specific language governing permissions and</a>
+<a name="14"><span class="lineNum">      14 </span>            : // limitations under the License.</a>
+<a name="15"><span class="lineNum">      15 </span>            : //</a>
+<a name="16"><span class="lineNum">      16 </span>            : </a>
+<a name="17"><span class="lineNum">      17 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #include &quot;src/core/lib/uri/uri_parser.h&quot;</a>
+<a name="20"><span class="lineNum">      20 </span>            : </a>
+<a name="21"><span class="lineNum">      21 </span>            : #include &lt;string.h&gt;</a>
+<a name="22"><span class="lineNum">      22 </span>            : </a>
+<a name="23"><span class="lineNum">      23 </span>            : #include &lt;map&gt;</a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &lt;string&gt;</a>
+<a name="25"><span class="lineNum">      25 </span>            : </a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &quot;absl/strings/escaping.h&quot;</a>
+<a name="27"><span class="lineNum">      27 </span>            : #include &quot;absl/strings/str_format.h&quot;</a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &quot;absl/strings/str_split.h&quot;</a>
+<a name="29"><span class="lineNum">      29 </span>            : </a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &lt;grpc/support/log.h&gt;</a>
+<a name="31"><span class="lineNum">      31 </span>            : </a>
+<a name="32"><span class="lineNum">      32 </span>            : #include &quot;src/core/lib/gpr/string.h&quot;</a>
+<a name="33"><span class="lineNum">      33 </span>            : </a>
+<a name="34"><span class="lineNum">      34 </span>            : namespace grpc_core {</a>
+<a name="35"><span class="lineNum">      35 </span>            : </a>
+<a name="36"><span class="lineNum">      36 </span>            : namespace {</a>
+<a name="37"><span class="lineNum">      37 </span>            : </a>
+<a name="38"><span class="lineNum">      38 </span>            : // Returns true for any sub-delim character, as defined in:</a>
+<a name="39"><span class="lineNum">      39 </span>            : // https://datatracker.ietf.org/doc/html/rfc3986#section-2.2</a>
+<a name="40"><span class="lineNum">      40 </span><span class="lineCov">       5193 : bool IsSubDelimChar(char c) {</span></a>
+<a name="41"><span class="lineNum">      41 </span><span class="lineCov">       5193 :   switch (c) {</span></a>
+<a name="42"><span class="lineNum">      42 </span><span class="lineCov">       1296 :     case '!':</span></a>
+<a name="43"><span class="lineNum">      43 </span>            :     case '$':</a>
+<a name="44"><span class="lineNum">      44 </span>            :     case '&amp;':</a>
+<a name="45"><span class="lineNum">      45 </span>            :     case '\'':</a>
+<a name="46"><span class="lineNum">      46 </span>            :     case '(':</a>
+<a name="47"><span class="lineNum">      47 </span>            :     case ')':</a>
+<a name="48"><span class="lineNum">      48 </span>            :     case '*':</a>
+<a name="49"><span class="lineNum">      49 </span>            :     case '+':</a>
+<a name="50"><span class="lineNum">      50 </span>            :     case ',':</a>
+<a name="51"><span class="lineNum">      51 </span>            :     case ';':</a>
+<a name="52"><span class="lineNum">      52 </span>            :     case '=':</a>
+<a name="53"><span class="lineNum">      53 </span><span class="lineCov">       1296 :       return true;</span></a>
+<a name="54"><span class="lineNum">      54 </span>            :   }</a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineCov">       3897 :   return false;</span></a>
+<a name="56"><span class="lineNum">      56 </span>            : }</a>
+<a name="57"><span class="lineNum">      57 </span>            : </a>
+<a name="58"><span class="lineNum">      58 </span>            : // Returns true for any unreserved character, as defined in:</a>
+<a name="59"><span class="lineNum">      59 </span>            : // https://datatracker.ietf.org/doc/html/rfc3986#section-2.3</a>
+<a name="60"><span class="lineNum">      60 </span><span class="lineCov">      45561 : bool IsUnreservedChar(char c) {</span></a>
+<a name="61"><span class="lineNum">      61 </span><span class="lineCov">      45561 :   if (absl::ascii_isalnum(c)) return true;</span></a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">       7044 :   switch (c) {</span></a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">       1851 :     case '-':</span></a>
+<a name="64"><span class="lineNum">      64 </span>            :     case '.':</a>
+<a name="65"><span class="lineNum">      65 </span>            :     case '_':</a>
+<a name="66"><span class="lineNum">      66 </span>            :     case '~':</a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineCov">       1851 :       return true;</span></a>
+<a name="68"><span class="lineNum">      68 </span>            :   }</a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineCov">       5193 :   return false;</span></a>
+<a name="70"><span class="lineNum">      70 </span>            : }</a>
+<a name="71"><span class="lineNum">      71 </span>            : </a>
+<a name="72"><span class="lineNum">      72 </span>            : // Returns true for any character in scheme, as defined in:</a>
+<a name="73"><span class="lineNum">      73 </span>            : // https://datatracker.ietf.org/doc/html/rfc3986#section-3.1</a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">        333 : bool IsSchemeChar(char c) {</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">        333 :   if (absl::ascii_isalnum(c)) return true;</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">         63 :   switch (c) {</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">          9 :     case '+':</span></a>
+<a name="78"><span class="lineNum">      78 </span>            :     case '-':</a>
+<a name="79"><span class="lineNum">      79 </span>            :     case '.':</a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">          9 :       return true;</span></a>
+<a name="81"><span class="lineNum">      81 </span>            :   }</a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">         54 :   return false;</span></a>
+<a name="83"><span class="lineNum">      83 </span>            : }</a>
+<a name="84"><span class="lineNum">      84 </span>            : </a>
+<a name="85"><span class="lineNum">      85 </span>            : // Returns true for any character in authority, as defined in:</a>
+<a name="86"><span class="lineNum">      86 </span>            : // https://datatracker.ietf.org/doc/html/rfc3986#section-3.2</a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineCov">        525 : bool IsAuthorityChar(char c) {</span></a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineCov">        525 :   if (IsUnreservedChar(c)) return true;</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">         60 :   if (IsSubDelimChar(c)) return true;</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">         24 :   switch (c) {</span></a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineCov">         12 :     case ':':</span></a>
+<a name="92"><span class="lineNum">      92 </span>            :     case '[':</a>
+<a name="93"><span class="lineNum">      93 </span>            :     case ']':</a>
+<a name="94"><span class="lineNum">      94 </span>            :     case '@':</a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineCov">         12 :       return true;</span></a>
+<a name="96"><span class="lineNum">      96 </span>            :   }</a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineCov">         12 :   return false;</span></a>
+<a name="98"><span class="lineNum">      98 </span>            : }</a>
+<a name="99"><span class="lineNum">      99 </span>            : </a>
+<a name="100"><span class="lineNum">     100 </span>            : // Returns true for any character in pchar, as defined in:</a>
+<a name="101"><span class="lineNum">     101 </span>            : // https://datatracker.ietf.org/doc/html/rfc3986#section-3.3</a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineCov">      45036 : bool IsPChar(char c) {</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">      45036 :   if (IsUnreservedChar(c)) return true;</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineCov">       5133 :   if (IsSubDelimChar(c)) return true;</span></a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">       3873 :   switch (c) {</span></a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineCov">        144 :     case ':':</span></a>
+<a name="107"><span class="lineNum">     107 </span>            :     case '@':</a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineCov">        144 :       return true;</span></a>
+<a name="109"><span class="lineNum">     109 </span>            :   }</a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">       3729 :   return false;</span></a>
+<a name="111"><span class="lineNum">     111 </span>            : }</a>
+<a name="112"><span class="lineNum">     112 </span>            : </a>
+<a name="113"><span class="lineNum">     113 </span>            : // Returns true for any character allowed in a URI path, as defined in:</a>
+<a name="114"><span class="lineNum">     114 </span>            : // https://datatracker.ietf.org/doc/html/rfc3986#section-3.3</a>
+<a name="115"><span class="lineNum">     115 </span><span class="lineCov">        891 : bool IsPathChar(char c) { return IsPChar(c) || c == '/'; }</span></a>
+<a name="116"><span class="lineNum">     116 </span>            : </a>
+<a name="117"><span class="lineNum">     117 </span>            : // Returns true for any character allowed in a URI query or fragment,</a>
+<a name="118"><span class="lineNum">     118 </span>            : // as defined in:</a>
+<a name="119"><span class="lineNum">     119 </span>            : // See https://tools.ietf.org/html/rfc3986#section-3.4</a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineCov">      44145 : bool IsQueryOrFragmentChar(char c) {</span></a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineCov">      44145 :   return IsPChar(c) || c == '/' || c == '?';</span></a>
+<a name="122"><span class="lineNum">     122 </span>            : }</a>
+<a name="123"><span class="lineNum">     123 </span>            : </a>
+<a name="124"><span class="lineNum">     124 </span>            : // Same as IsQueryOrFragmentChar(), but excludes '&amp;' and '='.</a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineCov">        714 : bool IsQueryKeyOrValueChar(char c) {</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">        714 :   return c != '&amp;' &amp;&amp; c != '=' &amp;&amp; IsQueryOrFragmentChar(c);</span></a>
+<a name="127"><span class="lineNum">     127 </span>            : }</a>
+<a name="128"><span class="lineNum">     128 </span>            : </a>
+<a name="129"><span class="lineNum">     129 </span>            : // Returns a copy of str, percent-encoding any character for which</a>
+<a name="130"><span class="lineNum">     130 </span>            : // is_allowed_char() returns false.</a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineCov">        126 : std::string PercentEncode(absl::string_view str,</span></a>
+<a name="132"><span class="lineNum">     132 </span>            :                           std::function&lt;bool(char)&gt; is_allowed_char) {</a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">        126 :   std::string out;</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineCov">       2892 :   for (char c : str) {</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">       2766 :     if (!is_allowed_char(c)) {</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">        150 :       std::string hex = absl::BytesToHexString(absl::string_view(&amp;c, 1));</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">        150 :       GPR_ASSERT(hex.size() == 2);</span></a>
+<a name="138"><span class="lineNum">     138 </span>            :       // BytesToHexString() returns lower case, but</a>
+<a name="139"><span class="lineNum">     139 </span>            :       // https://datatracker.ietf.org/doc/html/rfc3986#section-6.2.2.1 says</a>
+<a name="140"><span class="lineNum">     140 </span>            :       // to prefer upper-case.</a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineCov">        150 :       absl::AsciiStrToUpper(&amp;hex);</span></a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineCov">        150 :       out.push_back('%');</span></a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineCov">        150 :       out.append(hex);</span></a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineCov">        150 :     } else {</span></a>
+<a name="145"><span class="lineNum">     145 </span><span class="lineCov">       2616 :       out.push_back(c);</span></a>
+<a name="146"><span class="lineNum">     146 </span>            :     }</a>
+<a name="147"><span class="lineNum">     147 </span>            :   }</a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineCov">        126 :   return out;</span></a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="150"><span class="lineNum">     150 </span>            : </a>
+<a name="151"><span class="lineNum">     151 </span>            : // Checks if this string is made up of query/fragment chars and '%' exclusively.</a>
+<a name="152"><span class="lineNum">     152 </span>            : // See https://tools.ietf.org/html/rfc3986#section-3.4</a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineCov">        234 : bool IsQueryOrFragmentString(absl::string_view str) {</span></a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineCov">      43356 :   for (char c : str) {</span></a>
+<a name="155"><span class="lineNum">     155 </span><span class="lineCov">      43140 :     if (!IsQueryOrFragmentChar(c) &amp;&amp; c != '%') return false;</span></a>
+<a name="156"><span class="lineNum">     156 </span>            :   }</a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">        216 :   return true;</span></a>
+<a name="158"><span class="lineNum">     158 </span>            : }</a>
+<a name="159"><span class="lineNum">     159 </span>            : </a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineCov">       4986 : absl::Status MakeInvalidURIStatus(absl::string_view part_name,</span></a>
+<a name="161"><span class="lineNum">     161 </span>            :                                   absl::string_view uri,</a>
+<a name="162"><span class="lineNum">     162 </span>            :                                   absl::string_view extra) {</a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">       9969 :   return absl::InvalidArgumentError(absl::StrFormat(</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">       9968 :       &quot;Could not parse '%s' from uri '%s'. %s&quot;, part_name, uri, extra));</span></a>
+<a name="165"><span class="lineNum">     165 </span>            : }</a>
+<a name="166"><span class="lineNum">     166 </span>            : </a>
+<a name="167"><span class="lineNum">     167 </span>            : }  // namespace</a>
+<a name="168"><span class="lineNum">     168 </span>            : </a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineNoCov">          0 : std::string URI::PercentEncodeAuthority(absl::string_view str) {</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineNoCov">          0 :   return PercentEncode(str, IsAuthorityChar);</span></a>
+<a name="171"><span class="lineNum">     171 </span>            : }</a>
+<a name="172"><span class="lineNum">     172 </span>            : </a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">          3 : std::string URI::PercentEncodePath(absl::string_view str) {</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">          3 :   return PercentEncode(str, IsPathChar);</span></a>
+<a name="175"><span class="lineNum">     175 </span>            : }</a>
+<a name="176"><span class="lineNum">     176 </span>            : </a>
+<a name="177"><span class="lineNum">     177 </span>            : // Similar to `grpc_permissive_percent_decode_slice`, this %-decodes all valid</a>
+<a name="178"><span class="lineNum">     178 </span>            : // triplets, and passes through the rest verbatim.</a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">     184839 : std::string URI::PercentDecode(absl::string_view str) {</span></a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineCov">     184839 :   if (str.empty() || !absl::StrContains(str, &quot;%&quot;)) {</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">     184593 :     return std::string(str);</span></a>
+<a name="182"><span class="lineNum">     182 </span>            :   }</a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineCov">        263 :   std::string out;</span></a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineCov">        263 :   std::string unescaped;</span></a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineCov">        263 :   out.reserve(str.size());</span></a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">      25988 :   for (size_t i = 0; i &lt; str.length(); i++) {</span></a>
+<a name="187"><span class="lineNum">     187 </span><span class="lineCov">      25725 :     unescaped = &quot;&quot;;</span></a>
+<a name="188"><span class="lineNum">     188 </span><span class="lineCov">       3467 :     if (str[i] == '%' &amp;&amp; i + 3 &lt;= str.length() &amp;&amp;</span></a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineCov">      29189 :         absl::CUnescape(absl::StrCat(&quot;\\x&quot;, str.substr(i + 1, 2)),</span></a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineCov">      29192 :                         &amp;unescaped) &amp;&amp;</span></a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">       3444 :         unescaped.length() == 1) {</span></a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">       3441 :       out += unescaped[0];</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">       3441 :       i += 2;</span></a>
+<a name="194"><span class="lineNum">     194 </span>            :     } else {</a>
+<a name="195"><span class="lineNum">     195 </span><span class="lineCov">      22284 :       out += str[i];</span></a>
+<a name="196"><span class="lineNum">     196 </span>            :     }</a>
+<a name="197"><span class="lineNum">     197 </span>            :   }</a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineCov">        263 :   return out;</span></a>
+<a name="199"><span class="lineNum">     199 </span><span class="lineCov">        263 : }</span></a>
+<a name="200"><span class="lineNum">     200 </span>            : </a>
+<a name="201"><span class="lineNum">     201 </span><span class="lineCov">     105996 : absl::StatusOr&lt;URI&gt; URI::Parse(absl::string_view uri_text) {</span></a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineCov">     105996 :   absl::StatusOr&lt;std::string&gt; decoded;</span></a>
+<a name="203"><span class="lineNum">     203 </span><span class="lineCov">     105851 :   absl::string_view remaining = uri_text;</span></a>
+<a name="204"><span class="lineNum">     204 </span>            :   // parse scheme</a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineCov">     105851 :   size_t offset = remaining.find(':');</span></a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineCov">     105849 :   if (offset == remaining.npos || offset == 0) {</span></a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineCov">       3640 :     return MakeInvalidURIStatus(&quot;scheme&quot;, uri_text, &quot;Scheme not found.&quot;);</span></a>
+<a name="208"><span class="lineNum">     208 </span>            :   }</a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineCov">     104037 :   std::string scheme(remaining.substr(0, offset));</span></a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineCov">     103987 :   if (scheme.find_first_not_of(&quot;ABCDEFGHIJKLMNOPQRSTUVWXYZ&quot;</span></a>
+<a name="211"><span class="lineNum">     211 </span>            :                                &quot;abcdefghijklmnopqrstuvwxyz&quot;</a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineCov">     104071 :                                &quot;0123456789+-.&quot;) != std::string::npos) {</span></a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineCov">       6204 :     return MakeInvalidURIStatus(&quot;scheme&quot;, uri_text,</span></a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineCov">       3100 :                                 &quot;Scheme contains invalid characters.&quot;);</span></a>
+<a name="215"><span class="lineNum">     215 </span>            :   }</a>
+<a name="216"><span class="lineNum">     216 </span><span class="lineCov">     100970 :   if (!isalpha(scheme[0])) {</span></a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineCov">         74 :     return MakeInvalidURIStatus(</span></a>
+<a name="218"><span class="lineNum">     218 </span>            :         &quot;scheme&quot;, uri_text,</a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineCov">         37 :         &quot;Scheme must begin with an alpha character [A-Za-z].&quot;);</span></a>
+<a name="220"><span class="lineNum">     220 </span>            :   }</a>
+<a name="221"><span class="lineNum">     221 </span><span class="lineCov">     100965 :   remaining.remove_prefix(offset + 1);</span></a>
+<a name="222"><span class="lineNum">     222 </span>            :   // parse authority</a>
+<a name="223"><span class="lineNum">     223 </span><span class="lineCov">     100981 :   std::string authority;</span></a>
+<a name="224"><span class="lineNum">     224 </span><span class="lineCov">     100987 :   if (absl::ConsumePrefix(&amp;remaining, &quot;//&quot;)) {</span></a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineCov">      82358 :     offset = remaining.find_first_of(&quot;/?#&quot;);</span></a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineCov">      82494 :     authority = PercentDecode(remaining.substr(0, offset));</span></a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">      82345 :     if (offset == remaining.npos) {</span></a>
+<a name="228"><span class="lineNum">     228 </span><span class="lineCov">         27 :       remaining = &quot;&quot;;</span></a>
+<a name="229"><span class="lineNum">     229 </span>            :     } else {</a>
+<a name="230"><span class="lineNum">     230 </span><span class="lineCov">      82318 :       remaining.remove_prefix(offset);</span></a>
+<a name="231"><span class="lineNum">     231 </span>            :     }</a>
+<a name="232"><span class="lineNum">     232 </span>            :   }</a>
+<a name="233"><span class="lineNum">     233 </span>            :   // parse path</a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineCov">     100849 :   std::string path;</span></a>
+<a name="235"><span class="lineNum">     235 </span><span class="lineCov">     100921 :   if (!remaining.empty()) {</span></a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineCov">     100871 :     offset = remaining.find_first_of(&quot;?#&quot;);</span></a>
+<a name="237"><span class="lineNum">     237 </span><span class="lineCov">     100899 :     path = PercentDecode(remaining.substr(0, offset));</span></a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineCov">     101102 :     if (offset == remaining.npos) {</span></a>
+<a name="239"><span class="lineNum">     239 </span><span class="lineCov">     100898 :       remaining = &quot;&quot;;</span></a>
+<a name="240"><span class="lineNum">     240 </span>            :     } else {</a>
+<a name="241"><span class="lineNum">     241 </span><span class="lineCov">        204 :       remaining.remove_prefix(offset);</span></a>
+<a name="242"><span class="lineNum">     242 </span>            :     }</a>
+<a name="243"><span class="lineNum">     243 </span>            :   }</a>
+<a name="244"><span class="lineNum">     244 </span>            :   // parse query</a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineCov">     101105 :   std::vector&lt;QueryParam&gt; query_param_pairs;</span></a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineCov">     101091 :   if (absl::ConsumePrefix(&amp;remaining, &quot;?&quot;)) {</span></a>
+<a name="247"><span class="lineNum">     247 </span><span class="lineCov">        195 :     offset = remaining.find('#');</span></a>
+<a name="248"><span class="lineNum">     248 </span><span class="lineCov">        195 :     absl::string_view tmp_query = remaining.substr(0, offset);</span></a>
+<a name="249"><span class="lineNum">     249 </span><span class="lineCov">        195 :     if (tmp_query.empty()) {</span></a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineNoCov">          0 :       return MakeInvalidURIStatus(&quot;query&quot;, uri_text, &quot;Invalid query string.&quot;);</span></a>
+<a name="251"><span class="lineNum">     251 </span>            :     }</a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineCov">        195 :     if (!IsQueryOrFragmentString(tmp_query)) {</span></a>
+<a name="253"><span class="lineNum">     253 </span><span class="lineCov">         30 :       return MakeInvalidURIStatus(&quot;query string&quot;, uri_text,</span></a>
+<a name="254"><span class="lineNum">     254 </span><span class="lineCov">         15 :                                   &quot;Query string contains invalid characters.&quot;);</span></a>
+<a name="255"><span class="lineNum">     255 </span>            :     }</a>
+<a name="256"><span class="lineNum">     256 </span><span class="lineCov">        759 :     for (absl::string_view query_param : absl::StrSplit(tmp_query, '&amp;')) {</span></a>
+<a name="257"><span class="lineNum">     257 </span>            :       const std::pair&lt;absl::string_view, absl::string_view&gt; possible_kv =</a>
+<a name="258"><span class="lineNum">     258 </span><span class="lineCov">        579 :           absl::StrSplit(query_param, absl::MaxSplits('=', 1));</span></a>
+<a name="259"><span class="lineNum">     259 </span><span class="lineCov">        579 :       if (possible_kv.first.empty()) continue;</span></a>
+<a name="260"><span class="lineNum">     260 </span><span class="lineCov">        567 :       query_param_pairs.push_back({PercentDecode(possible_kv.first),</span></a>
+<a name="261"><span class="lineNum">     261 </span>            :                                    PercentDecode(possible_kv.second)});</a>
+<a name="262"><span class="lineNum">     262 </span>            :     }</a>
+<a name="263"><span class="lineNum">     263 </span><span class="lineCov">        180 :     if (offset == remaining.npos) {</span></a>
+<a name="264"><span class="lineNum">     264 </span><span class="lineCov">        150 :       remaining = &quot;&quot;;</span></a>
+<a name="265"><span class="lineNum">     265 </span>            :     } else {</a>
+<a name="266"><span class="lineNum">     266 </span><span class="lineCov">         30 :       remaining.remove_prefix(offset);</span></a>
+<a name="267"><span class="lineNum">     267 </span>            :     }</a>
+<a name="268"><span class="lineNum">     268 </span>            :   }</a>
+<a name="269"><span class="lineNum">     269 </span><span class="lineCov">     101014 :   std::string fragment;</span></a>
+<a name="270"><span class="lineNum">     270 </span><span class="lineCov">     101015 :   if (absl::ConsumePrefix(&amp;remaining, &quot;#&quot;)) {</span></a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineCov">         39 :     if (!IsQueryOrFragmentString(remaining)) {</span></a>
+<a name="272"><span class="lineNum">     272 </span><span class="lineCov">          6 :       return MakeInvalidURIStatus(&quot;fragment&quot;, uri_text,</span></a>
+<a name="273"><span class="lineNum">     273 </span><span class="lineCov">          3 :                                   &quot;Fragment contains invalid characters.&quot;);</span></a>
+<a name="274"><span class="lineNum">     274 </span>            :     }</a>
+<a name="275"><span class="lineNum">     275 </span><span class="lineCov">         36 :     fragment = PercentDecode(remaining);</span></a>
+<a name="276"><span class="lineNum">     276 </span>            :   }</a>
+<a name="277"><span class="lineNum">     277 </span><span class="lineCov">     302943 :   return URI(std::move(scheme), std::move(authority), std::move(path),</span></a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineCov">     302819 :              std::move(query_param_pairs), std::move(fragment));</span></a>
+<a name="279"><span class="lineNum">     279 </span><span class="lineCov">     105847 : }</span></a>
+<a name="280"><span class="lineNum">     280 </span>            : </a>
+<a name="281"><span class="lineNum">     281 </span><span class="lineCov">       3788 : absl::StatusOr&lt;URI&gt; URI::Create(std::string scheme, std::string authority,</span></a>
+<a name="282"><span class="lineNum">     282 </span>            :                                 std::string path,</a>
+<a name="283"><span class="lineNum">     283 </span>            :                                 std::vector&lt;QueryParam&gt; query_parameter_pairs,</a>
+<a name="284"><span class="lineNum">     284 </span>            :                                 std::string fragment) {</a>
+<a name="285"><span class="lineNum">     285 </span><span class="lineCov">       3788 :   if (!authority.empty() &amp;&amp; !path.empty() &amp;&amp; path[0] != '/') {</span></a>
+<a name="286"><span class="lineNum">     286 </span><span class="lineCov">          6 :     return absl::InvalidArgumentError(</span></a>
+<a name="287"><span class="lineNum">     287 </span><span class="lineCov">          3 :         &quot;if authority is present, path must start with a '/'&quot;);</span></a>
+<a name="288"><span class="lineNum">     288 </span>            :   }</a>
+<a name="289"><span class="lineNum">     289 </span><span class="lineCov">      11355 :   return URI(std::move(scheme), std::move(authority), std::move(path),</span></a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineCov">      11354 :              std::move(query_parameter_pairs), std::move(fragment));</span></a>
+<a name="291"><span class="lineNum">     291 </span>            : }</a>
+<a name="292"><span class="lineNum">     292 </span>            : </a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineCov">     104727 : URI::URI(std::string scheme, std::string authority, std::string path,</span></a>
+<a name="294"><span class="lineNum">     294 </span><span class="lineCov">     104727 :          std::vector&lt;QueryParam&gt; query_parameter_pairs, std::string fragment)</span></a>
+<a name="295"><span class="lineNum">     295 </span><span class="lineCov">     104727 :     : scheme_(std::move(scheme)),</span></a>
+<a name="296"><span class="lineNum">     296 </span><span class="lineCov">     104672 :       authority_(std::move(authority)),</span></a>
+<a name="297"><span class="lineNum">     297 </span><span class="lineCov">     104637 :       path_(std::move(path)),</span></a>
+<a name="298"><span class="lineNum">     298 </span><span class="lineCov">     104632 :       query_parameter_pairs_(std::move(query_parameter_pairs)),</span></a>
+<a name="299"><span class="lineNum">     299 </span><span class="lineCov">     209299 :       fragment_(std::move(fragment)) {</span></a>
+<a name="300"><span class="lineNum">     300 </span><span class="lineCov">     105274 :   for (const auto&amp; kv : query_parameter_pairs_) {</span></a>
+<a name="301"><span class="lineNum">     301 </span><span class="lineCov">        588 :     query_parameter_map_[kv.key] = kv.value;</span></a>
+<a name="302"><span class="lineNum">     302 </span>            :   }</a>
+<a name="303"><span class="lineNum">     303 </span><span class="lineCov">     104634 : }</span></a>
+<a name="304"><span class="lineNum">     304 </span>            : </a>
+<a name="305"><span class="lineNum">     305 </span><span class="lineCov">        185 : URI::URI(const URI&amp; other)</span></a>
+<a name="306"><span class="lineNum">     306 </span><span class="lineCov">        185 :     : scheme_(other.scheme_),</span></a>
+<a name="307"><span class="lineNum">     307 </span><span class="lineCov">        185 :       authority_(other.authority_),</span></a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineCov">        185 :       path_(other.path_),</span></a>
+<a name="309"><span class="lineNum">     309 </span><span class="lineCov">        185 :       query_parameter_pairs_(other.query_parameter_pairs_),</span></a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineCov">        370 :       fragment_(other.fragment_) {</span></a>
+<a name="311"><span class="lineNum">     311 </span><span class="lineCov">        203 :   for (const auto&amp; kv : query_parameter_pairs_) {</span></a>
+<a name="312"><span class="lineNum">     312 </span><span class="lineCov">         18 :     query_parameter_map_[kv.key] = kv.value;</span></a>
+<a name="313"><span class="lineNum">     313 </span>            :   }</a>
+<a name="314"><span class="lineNum">     314 </span><span class="lineCov">        185 : }</span></a>
+<a name="315"><span class="lineNum">     315 </span>            : </a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineCov">         75 : URI&amp; URI::operator=(const URI&amp; other) {</span></a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineCov">         75 :   if (this == &amp;other) {</span></a>
+<a name="318"><span class="lineNum">     318 </span><span class="lineNoCov">          0 :     return *this;</span></a>
+<a name="319"><span class="lineNum">     319 </span>            :   }</a>
+<a name="320"><span class="lineNum">     320 </span><span class="lineCov">         75 :   scheme_ = other.scheme_;</span></a>
+<a name="321"><span class="lineNum">     321 </span><span class="lineCov">         75 :   authority_ = other.authority_;</span></a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineCov">         75 :   path_ = other.path_;</span></a>
+<a name="323"><span class="lineNum">     323 </span><span class="lineCov">         75 :   query_parameter_pairs_ = other.query_parameter_pairs_;</span></a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineCov">         75 :   fragment_ = other.fragment_;</span></a>
+<a name="325"><span class="lineNum">     325 </span><span class="lineCov">        123 :   for (const auto&amp; kv : query_parameter_pairs_) {</span></a>
+<a name="326"><span class="lineNum">     326 </span><span class="lineCov">         48 :     query_parameter_map_[kv.key] = kv.value;</span></a>
+<a name="327"><span class="lineNum">     327 </span>            :   }</a>
+<a name="328"><span class="lineNum">     328 </span><span class="lineCov">         75 :   return *this;</span></a>
+<a name="329"><span class="lineNum">     329 </span>            : }</a>
+<a name="330"><span class="lineNum">     330 </span>            : </a>
+<a name="331"><span class="lineNum">     331 </span>            : namespace {</a>
+<a name="332"><span class="lineNum">     332 </span>            : </a>
+<a name="333"><span class="lineNum">     333 </span>            : // A pair formatter for use with absl::StrJoin() for formatting query params.</a>
+<a name="334"><span class="lineNum">     334 </span>            : struct QueryParameterFormatter {</a>
+<a name="335"><span class="lineNum">     335 </span><span class="lineCov">         24 :   void operator()(std::string* out, const URI::QueryParam&amp; query_param) const {</span></a>
+<a name="336"><span class="lineNum">     336 </span><span class="lineCov">         24 :     out-&gt;append(</span></a>
+<a name="337"><span class="lineNum">     337 </span><span class="lineCov">         48 :         absl::StrCat(PercentEncode(query_param.key, IsQueryKeyOrValueChar), &quot;=&quot;,</span></a>
+<a name="338"><span class="lineNum">     338 </span><span class="lineCov">         48 :                      PercentEncode(query_param.value, IsQueryKeyOrValueChar)));</span></a>
+<a name="339"><span class="lineNum">     339 </span><span class="lineCov">         24 :   }</span></a>
+<a name="340"><span class="lineNum">     340 </span>            : };</a>
+<a name="341"><span class="lineNum">     341 </span>            : </a>
+<a name="342"><span class="lineNum">     342 </span>            : }  // namespace</a>
+<a name="343"><span class="lineNum">     343 </span>            : </a>
+<a name="344"><span class="lineNum">     344 </span><span class="lineCov">         24 : std::string URI::ToString() const {</span></a>
+<a name="345"><span class="lineNum">     345 </span><span class="lineCov">        120 :   std::vector&lt;std::string&gt; parts = {PercentEncode(scheme_, IsSchemeChar), &quot;:&quot;};</span></a>
+<a name="346"><span class="lineNum">     346 </span><span class="lineCov">         24 :   if (!authority_.empty()) {</span></a>
+<a name="347"><span class="lineNum">     347 </span><span class="lineCov">         18 :     parts.emplace_back(&quot;//&quot;);</span></a>
+<a name="348"><span class="lineNum">     348 </span><span class="lineCov">         18 :     parts.emplace_back(PercentEncode(authority_, IsAuthorityChar));</span></a>
+<a name="349"><span class="lineNum">     349 </span>            :   }</a>
+<a name="350"><span class="lineNum">     350 </span><span class="lineCov">         24 :   if (!path_.empty()) {</span></a>
+<a name="351"><span class="lineNum">     351 </span><span class="lineCov">         24 :     parts.emplace_back(PercentEncode(path_, IsPathChar));</span></a>
+<a name="352"><span class="lineNum">     352 </span>            :   }</a>
+<a name="353"><span class="lineNum">     353 </span><span class="lineCov">         24 :   if (!query_parameter_pairs_.empty()) {</span></a>
+<a name="354"><span class="lineNum">     354 </span><span class="lineCov">         12 :     parts.push_back(&quot;?&quot;);</span></a>
+<a name="355"><span class="lineNum">     355 </span><span class="lineCov">         12 :     parts.push_back(</span></a>
+<a name="356"><span class="lineNum">     356 </span><span class="lineCov">         24 :         absl::StrJoin(query_parameter_pairs_, &quot;&amp;&quot;, QueryParameterFormatter()));</span></a>
+<a name="357"><span class="lineNum">     357 </span>            :   }</a>
+<a name="358"><span class="lineNum">     358 </span><span class="lineCov">         24 :   if (!fragment_.empty()) {</span></a>
+<a name="359"><span class="lineNum">     359 </span><span class="lineCov">          9 :     parts.push_back(&quot;#&quot;);</span></a>
+<a name="360"><span class="lineNum">     360 </span><span class="lineCov">          9 :     parts.push_back(PercentEncode(fragment_, IsQueryOrFragmentChar));</span></a>
+<a name="361"><span class="lineNum">     361 </span>            :   }</a>
+<a name="362"><span class="lineNum">     362 </span><span class="lineCov">         48 :   return absl::StrJoin(parts, &quot;&quot;);</span></a>
+<a name="363"><span class="lineNum">     363 </span><span class="lineCov">         24 : }</span></a>
+<a name="364"><span class="lineNum">     364 </span>            : </a>
+<a name="365"><span class="lineNum">     365 </span>            : }  // namespace grpc_core</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

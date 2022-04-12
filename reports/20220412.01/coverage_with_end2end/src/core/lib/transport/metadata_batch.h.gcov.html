@@ -1,0 +1,1470 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/core/lib/transport/metadata_batch.h</title>
+  <link rel="stylesheet" type="text/css" href="../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../index.html">top level</a> - <a href="index.html">src/core/lib/transport</a> - metadata_batch.h<span style="font-size: 80%;"> (source / <a href="metadata_batch.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">394</td>
+            <td class="headerCovTableEntry">475</td>
+            <td class="headerCovTableEntryMed">82.9 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-12 14:35:39</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">728</td>
+            <td class="headerCovTableEntry">1372</td>
+            <td class="headerCovTableEntryLo">53.1 %</td>
+          </tr>
+          <tr><td><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<a name="2"><span class="lineNum">       2 </span>            :  *</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * Copyright 2015 gRPC authors.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * you may not use this file except in compliance with the License.</a>
+<a name="7"><span class="lineNum">       7 </span>            :  * You may obtain a copy of the License at</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *</a>
+<a name="9"><span class="lineNum">       9 </span>            :  *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="10"><span class="lineNum">      10 </span>            :  *</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * Unless required by applicable law or agreed to in writing, software</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * See the License for the specific language governing permissions and</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * limitations under the License.</a>
+<a name="16"><span class="lineNum">      16 </span>            :  *</a>
+<a name="17"><span class="lineNum">      17 </span>            :  */</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #ifndef GRPC_CORE_LIB_TRANSPORT_METADATA_BATCH_H</a>
+<a name="20"><span class="lineNum">      20 </span>            : #define GRPC_CORE_LIB_TRANSPORT_METADATA_BATCH_H</a>
+<a name="21"><span class="lineNum">      21 </span>            : </a>
+<a name="22"><span class="lineNum">      22 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="23"><span class="lineNum">      23 </span>            : </a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &lt;stdbool.h&gt;</a>
+<a name="25"><span class="lineNum">      25 </span>            : </a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &lt;cstdint&gt;</a>
+<a name="27"><span class="lineNum">      27 </span>            : #include &lt;limits&gt;</a>
+<a name="28"><span class="lineNum">      28 </span>            : </a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &quot;absl/strings/escaping.h&quot;</a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &quot;absl/strings/match.h&quot;</a>
+<a name="31"><span class="lineNum">      31 </span>            : #include &quot;absl/strings/str_join.h&quot;</a>
+<a name="32"><span class="lineNum">      32 </span>            : #include &quot;absl/types/optional.h&quot;</a>
+<a name="33"><span class="lineNum">      33 </span>            : </a>
+<a name="34"><span class="lineNum">      34 </span>            : #include &lt;grpc/grpc.h&gt;</a>
+<a name="35"><span class="lineNum">      35 </span>            : #include &lt;grpc/slice.h&gt;</a>
+<a name="36"><span class="lineNum">      36 </span>            : #include &lt;grpc/status.h&gt;</a>
+<a name="37"><span class="lineNum">      37 </span>            : #include &lt;grpc/support/time.h&gt;</a>
+<a name="38"><span class="lineNum">      38 </span>            : </a>
+<a name="39"><span class="lineNum">      39 </span>            : #include &quot;src/core/lib/compression/compression_internal.h&quot;</a>
+<a name="40"><span class="lineNum">      40 </span>            : #include &quot;src/core/lib/gprpp/chunked_vector.h&quot;</a>
+<a name="41"><span class="lineNum">      41 </span>            : #include &quot;src/core/lib/gprpp/table.h&quot;</a>
+<a name="42"><span class="lineNum">      42 </span>            : #include &quot;src/core/lib/iomgr/exec_ctx.h&quot;</a>
+<a name="43"><span class="lineNum">      43 </span>            : #include &quot;src/core/lib/slice/slice.h&quot;</a>
+<a name="44"><span class="lineNum">      44 </span>            : #include &quot;src/core/lib/surface/validate_metadata.h&quot;</a>
+<a name="45"><span class="lineNum">      45 </span>            : #include &quot;src/core/lib/transport/parsed_metadata.h&quot;</a>
+<a name="46"><span class="lineNum">      46 </span>            : #include &quot;src/core/lib/transport/timeout_encoding.h&quot;</a>
+<a name="47"><span class="lineNum">      47 </span>            : </a>
+<a name="48"><span class="lineNum">      48 </span>            : struct grpc_call_final_info;</a>
+<a name="49"><span class="lineNum">      49 </span>            : </a>
+<a name="50"><span class="lineNum">      50 </span>            : namespace grpc_core {</a>
+<a name="51"><span class="lineNum">      51 </span>            : </a>
+<a name="52"><span class="lineNum">      52 </span>            : // grpc-timeout metadata trait.</a>
+<a name="53"><span class="lineNum">      53 </span>            : // ValueType is defined as Timestamp - an absolute timestamp (i.e. a</a>
+<a name="54"><span class="lineNum">      54 </span>            : // deadline!), that is converted to a duration by transports before being</a>
+<a name="55"><span class="lineNum">      55 </span>            : // sent.</a>
+<a name="56"><span class="lineNum">      56 </span>            : // TODO(ctiller): Move this elsewhere. During the transition we need to be able</a>
+<a name="57"><span class="lineNum">      57 </span>            : // to name this in MetadataMap, but ultimately once the transition is done we</a>
+<a name="58"><span class="lineNum">      58 </span>            : // should not need to.</a>
+<a name="59"><span class="lineNum">      59 </span>            : struct GrpcTimeoutMetadata {</a>
+<a name="60"><span class="lineNum">      60 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="61"><span class="lineNum">      61 </span>            :   using ValueType = Timestamp;</a>
+<a name="62"><span class="lineNum">      62 </span>            :   using MementoType = Duration;</a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">   14897574 :   static absl::string_view key() { return &quot;grpc-timeout&quot;; }</span></a>
+<a name="64"><span class="lineNum">      64 </span><span class="lineCov">     657447 :   static MementoType ParseMemento(Slice value, MetadataParseErrorFn on_error) {</span></a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">     657447 :     auto timeout = ParseTimeout(value);</span></a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">     657447 :     if (!timeout.has_value()) {</span></a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineCov">         42 :       on_error(&quot;invalid value&quot;, value);</span></a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">         42 :       return Duration::Infinity();</span></a>
+<a name="69"><span class="lineNum">      69 </span>            :     }</a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineCov">     657405 :     return *timeout;</span></a>
+<a name="71"><span class="lineNum">      71 </span>            :   }</a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">    2225189 :   static ValueType MementoToValue(MementoType timeout) {</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">    2225189 :     if (timeout == Duration::Infinity()) {</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">         43 :       return Timestamp::InfFuture();</span></a>
+<a name="75"><span class="lineNum">      75 </span>            :     }</a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">    2225146 :     return ExecCtx::Get()-&gt;Now() + timeout;</span></a>
+<a name="77"><span class="lineNum">      77 </span>            :   }</a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">    2429021 :   static Slice Encode(ValueType x) {</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">    4858042 :     return Timeout::FromDuration(x - ExecCtx::Get()-&gt;Now()).Encode();</span></a>
+<a name="80"><span class="lineNum">      80 </span>            :   }</a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">          2 :   static std::string DisplayValue(MementoType x) { return x.ToString(); }</span></a>
+<a name="82"><span class="lineNum">      82 </span>            : };</a>
+<a name="83"><span class="lineNum">      83 </span>            : </a>
+<a name="84"><span class="lineNum">      84 </span>            : // TE metadata trait.</a>
+<a name="85"><span class="lineNum">      85 </span>            : struct TeMetadata {</a>
+<a name="86"><span class="lineNum">      86 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="87"><span class="lineNum">      87 </span>            :   // HTTP2 says that TE can either be empty or &quot;trailers&quot;.</a>
+<a name="88"><span class="lineNum">      88 </span>            :   // Empty means this trait is not included, &quot;trailers&quot; means kTrailers, and</a>
+<a name="89"><span class="lineNum">      89 </span>            :   // kInvalid is used to remember an invalid value.</a>
+<a name="90"><span class="lineNum">      90 </span>            :   enum ValueType : uint8_t {</a>
+<a name="91"><span class="lineNum">      91 </span>            :     kTrailers,</a>
+<a name="92"><span class="lineNum">      92 </span>            :     kInvalid,</a>
+<a name="93"><span class="lineNum">      93 </span>            :   };</a>
+<a name="94"><span class="lineNum">      94 </span>            :   using MementoType = ValueType;</a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineCov">   12890173 :   static absl::string_view key() { return &quot;te&quot;; }</span></a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineCov">     664944 :   static MementoType ParseMemento(Slice value, MetadataParseErrorFn on_error) {</span></a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineCov">     664944 :     auto out = kInvalid;</span></a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">     664944 :     if (value == &quot;trailers&quot;) {</span></a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineCov">     664937 :       out = kTrailers;</span></a>
+<a name="100"><span class="lineNum">     100 </span>            :     } else {</a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineCov">          7 :       on_error(&quot;invalid value&quot;, value);</span></a>
+<a name="102"><span class="lineNum">     102 </span>            :     }</a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">     664944 :     return out;</span></a>
+<a name="104"><span class="lineNum">     104 </span>            :   }</a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">    4503387 :   static ValueType MementoToValue(MementoType te) { return te; }</span></a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineCov">         14 :   static StaticSlice Encode(ValueType x) {</span></a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineCov">         14 :     GPR_ASSERT(x == kTrailers);</span></a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineCov">         14 :     return StaticSlice::FromStaticString(&quot;trailers&quot;);</span></a>
+<a name="109"><span class="lineNum">     109 </span>            :   }</a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">          2 :   static const char* DisplayValue(MementoType te) {</span></a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineCov">          2 :     switch (te) {</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineCov">          2 :       case ValueType::kTrailers:</span></a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineCov">          2 :         return &quot;trailers&quot;;</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineNoCov">          0 :       default:</span></a>
+<a name="115"><span class="lineNum">     115 </span><span class="lineNoCov">          0 :         return &quot;&lt;discarded-invalid-value&gt;&quot;;</span></a>
+<a name="116"><span class="lineNum">     116 </span>            :     }</a>
+<a name="117"><span class="lineNum">     117 </span>            :   }</a>
+<a name="118"><span class="lineNum">     118 </span>            : };</a>
+<a name="119"><span class="lineNum">     119 </span>            : </a>
+<a name="120"><span class="lineNum">     120 </span>            : // content-type metadata trait.</a>
+<a name="121"><span class="lineNum">     121 </span>            : struct ContentTypeMetadata {</a>
+<a name="122"><span class="lineNum">     122 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="123"><span class="lineNum">     123 </span>            :   // gRPC says that content-type can be application/grpc[;something]</a>
+<a name="124"><span class="lineNum">     124 </span>            :   // Core has only ever verified the prefix.</a>
+<a name="125"><span class="lineNum">     125 </span>            :   // IF we want to start verifying more, we can expand this type.</a>
+<a name="126"><span class="lineNum">     126 </span>            :   enum ValueType {</a>
+<a name="127"><span class="lineNum">     127 </span>            :     kApplicationGrpc,</a>
+<a name="128"><span class="lineNum">     128 </span>            :     kEmpty,</a>
+<a name="129"><span class="lineNum">     129 </span>            :     kInvalid,</a>
+<a name="130"><span class="lineNum">     130 </span>            :   };</a>
+<a name="131"><span class="lineNum">     131 </span>            :   using MementoType = ValueType;</a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineCov">   13900618 :   static absl::string_view key() { return &quot;content-type&quot;; }</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">    1009487 :   static MementoType ParseMemento(Slice value, MetadataParseErrorFn on_error) {</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineCov">    1009487 :     auto out = kInvalid;</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">    1009487 :     auto value_string = value.as_string_view();</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">    1009487 :     if (value_string == &quot;application/grpc&quot;) {</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">    1003619 :       out = kApplicationGrpc;</span></a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineCov">       5868 :     } else if (absl::StartsWith(value_string, &quot;application/grpc;&quot;)) {</span></a>
+<a name="139"><span class="lineNum">     139 </span><span class="lineCov">          4 :       out = kApplicationGrpc;</span></a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineCov">       5864 :     } else if (absl::StartsWith(value_string, &quot;application/grpc+&quot;)) {</span></a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineCov">         17 :       out = kApplicationGrpc;</span></a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineCov">       5847 :     } else if (value_string.empty()) {</span></a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineCov">       5833 :       out = kEmpty;</span></a>
+<a name="144"><span class="lineNum">     144 </span>            :     } else {</a>
+<a name="145"><span class="lineNum">     145 </span><span class="lineCov">         14 :       on_error(&quot;invalid value&quot;, value);</span></a>
+<a name="146"><span class="lineNum">     146 </span>            :     }</a>
+<a name="147"><span class="lineNum">     147 </span><span class="lineCov">    1009487 :     return out;</span></a>
+<a name="148"><span class="lineNum">     148 </span>            :   }</a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineCov">    8994770 :   static ValueType MementoToValue(MementoType content_type) {</span></a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineCov">    8994770 :     return content_type;</span></a>
+<a name="151"><span class="lineNum">     151 </span>            :   }</a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">         26 :   static StaticSlice Encode(ValueType x) {</span></a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineCov">         26 :     switch (x) {</span></a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineNoCov">          0 :       case kEmpty:</span></a>
+<a name="155"><span class="lineNum">     155 </span><span class="lineNoCov">          0 :         return StaticSlice::FromStaticString(&quot;&quot;);</span></a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineCov">         20 :       case kApplicationGrpc:</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">         20 :         return StaticSlice::FromStaticString(&quot;application/grpc&quot;);</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineCov">          6 :       case kInvalid:</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">          6 :         return StaticSlice::FromStaticString(&quot;application/grpc+unknown&quot;);</span></a>
+<a name="160"><span class="lineNum">     160 </span>            :     }</a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineNoCov">          0 :     GPR_UNREACHABLE_CODE(</span></a>
+<a name="162"><span class="lineNum">     162 </span>            :         return StaticSlice::FromStaticString(&quot;unrepresentable value&quot;));</a>
+<a name="163"><span class="lineNum">     163 </span>            :   }</a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">          6 :   static const char* DisplayValue(MementoType content_type) {</span></a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineCov">          6 :     switch (content_type) {</span></a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineCov">          5 :       case ValueType::kApplicationGrpc:</span></a>
+<a name="167"><span class="lineNum">     167 </span><span class="lineCov">          5 :         return &quot;application/grpc&quot;;</span></a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">          1 :       case ValueType::kEmpty:</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">          1 :         return &quot;&quot;;</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineNoCov">          0 :       default:</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineNoCov">          0 :         return &quot;&lt;discarded-invalid-value&gt;&quot;;</span></a>
+<a name="172"><span class="lineNum">     172 </span>            :     }</a>
+<a name="173"><span class="lineNum">     173 </span>            :   }</a>
+<a name="174"><span class="lineNum">     174 </span>            : };</a>
+<a name="175"><span class="lineNum">     175 </span>            : </a>
+<a name="176"><span class="lineNum">     176 </span>            : // scheme metadata trait.</a>
+<a name="177"><span class="lineNum">     177 </span>            : struct HttpSchemeMetadata {</a>
+<a name="178"><span class="lineNum">     178 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="179"><span class="lineNum">     179 </span>            :   enum ValueType {</a>
+<a name="180"><span class="lineNum">     180 </span>            :     kHttp,</a>
+<a name="181"><span class="lineNum">     181 </span>            :     kHttps,</a>
+<a name="182"><span class="lineNum">     182 </span>            :     kInvalid,</a>
+<a name="183"><span class="lineNum">     183 </span>            :   };</a>
+<a name="184"><span class="lineNum">     184 </span>            :   using MementoType = ValueType;</a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineCov">   13912548 :   static absl::string_view key() { return &quot;:scheme&quot;; }</span></a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">      12173 :   static MementoType ParseMemento(Slice value, MetadataParseErrorFn on_error) {</span></a>
+<a name="187"><span class="lineNum">     187 </span><span class="lineCov">      12173 :     return Parse(value.as_string_view(), on_error);</span></a>
+<a name="188"><span class="lineNum">     188 </span>            :   }</a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineCov">      53417 :   static ValueType Parse(absl::string_view value,</span></a>
+<a name="190"><span class="lineNum">     190 </span>            :                          MetadataParseErrorFn on_error) {</a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">      53417 :     if (value == &quot;http&quot;) {</span></a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">       6105 :       return kHttp;</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">      47313 :     } else if (value == &quot;https&quot;) {</span></a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">      18052 :       return kHttps;</span></a>
+<a name="195"><span class="lineNum">     195 </span>            :     }</a>
+<a name="196"><span class="lineNum">     196 </span><span class="lineCov">      29259 :     on_error(&quot;invalid value&quot;, Slice::FromCopiedBuffer(value));</span></a>
+<a name="197"><span class="lineNum">     197 </span><span class="lineCov">      29259 :     return kInvalid;</span></a>
+<a name="198"><span class="lineNum">     198 </span>            :   }</a>
+<a name="199"><span class="lineNum">     199 </span><span class="lineCov">    4503677 :   static ValueType MementoToValue(MementoType content_type) {</span></a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineCov">    4503677 :     return content_type;</span></a>
+<a name="201"><span class="lineNum">     201 </span>            :   }</a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineCov">         26 :   static StaticSlice Encode(ValueType x) {</span></a>
+<a name="203"><span class="lineNum">     203 </span><span class="lineCov">         26 :     switch (x) {</span></a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineCov">         22 :       case kHttp:</span></a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineCov">         22 :         return StaticSlice::FromStaticString(&quot;http&quot;);</span></a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineCov">          4 :       case kHttps:</span></a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineCov">          4 :         return StaticSlice::FromStaticString(&quot;https&quot;);</span></a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineNoCov">          0 :       default:</span></a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineNoCov">          0 :         abort();</span></a>
+<a name="210"><span class="lineNum">     210 </span>            :     }</a>
+<a name="211"><span class="lineNum">     211 </span>            :   }</a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineCov">          4 :   static const char* DisplayValue(MementoType content_type) {</span></a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineCov">          4 :     switch (content_type) {</span></a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineCov">          3 :       case kHttp:</span></a>
+<a name="215"><span class="lineNum">     215 </span><span class="lineCov">          3 :         return &quot;http&quot;;</span></a>
+<a name="216"><span class="lineNum">     216 </span><span class="lineCov">          1 :       case kHttps:</span></a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineCov">          1 :         return &quot;https&quot;;</span></a>
+<a name="218"><span class="lineNum">     218 </span><span class="lineNoCov">          0 :       default:</span></a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineNoCov">          0 :         return &quot;&lt;discarded-invalid-value&gt;&quot;;</span></a>
+<a name="220"><span class="lineNum">     220 </span>            :     }</a>
+<a name="221"><span class="lineNum">     221 </span>            :   }</a>
+<a name="222"><span class="lineNum">     222 </span>            : };</a>
+<a name="223"><span class="lineNum">     223 </span>            : </a>
+<a name="224"><span class="lineNum">     224 </span>            : // method metadata trait.</a>
+<a name="225"><span class="lineNum">     225 </span>            : struct HttpMethodMetadata {</a>
+<a name="226"><span class="lineNum">     226 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="227"><span class="lineNum">     227 </span>            :   enum ValueType {</a>
+<a name="228"><span class="lineNum">     228 </span>            :     kPost,</a>
+<a name="229"><span class="lineNum">     229 </span>            :     kGet,</a>
+<a name="230"><span class="lineNum">     230 </span>            :     kInvalid,</a>
+<a name="231"><span class="lineNum">     231 </span>            :   };</a>
+<a name="232"><span class="lineNum">     232 </span>            :   using MementoType = ValueType;</a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineCov">   14270603 :   static absl::string_view key() { return &quot;:method&quot;; }</span></a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineCov">      12025 :   static MementoType ParseMemento(Slice value, MetadataParseErrorFn on_error) {</span></a>
+<a name="235"><span class="lineNum">     235 </span><span class="lineCov">      12025 :     auto out = kInvalid;</span></a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineCov">      12025 :     auto value_string = value.as_string_view();</span></a>
+<a name="237"><span class="lineNum">     237 </span><span class="lineCov">      12025 :     if (value_string == &quot;POST&quot;) {</span></a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineCov">       6093 :       out = kPost;</span></a>
+<a name="239"><span class="lineNum">     239 </span><span class="lineCov">       5932 :     } else if (value_string == &quot;GET&quot;) {</span></a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineCov">       5840 :       out = kGet;</span></a>
+<a name="241"><span class="lineNum">     241 </span>            :     } else {</a>
+<a name="242"><span class="lineNum">     242 </span><span class="lineCov">         92 :       on_error(&quot;invalid value&quot;, value);</span></a>
+<a name="243"><span class="lineNum">     243 </span>            :     }</a>
+<a name="244"><span class="lineNum">     244 </span><span class="lineCov">      12025 :     return out;</span></a>
+<a name="245"><span class="lineNum">     245 </span>            :   }</a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineCov">    4503490 :   static ValueType MementoToValue(MementoType content_type) {</span></a>
+<a name="247"><span class="lineNum">     247 </span><span class="lineCov">    4503490 :     return content_type;</span></a>
+<a name="248"><span class="lineNum">     248 </span>            :   }</a>
+<a name="249"><span class="lineNum">     249 </span><span class="lineCov">        181 :   static StaticSlice Encode(ValueType x) {</span></a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineCov">        181 :     switch (x) {</span></a>
+<a name="251"><span class="lineNum">     251 </span><span class="lineCov">        158 :       case kPost:</span></a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineCov">        158 :         return StaticSlice::FromStaticString(&quot;POST&quot;);</span></a>
+<a name="253"><span class="lineNum">     253 </span><span class="lineCov">         23 :       case kGet:</span></a>
+<a name="254"><span class="lineNum">     254 </span><span class="lineCov">         23 :         return StaticSlice::FromStaticString(&quot;GET&quot;);</span></a>
+<a name="255"><span class="lineNum">     255 </span><span class="lineNoCov">          0 :       default:</span></a>
+<a name="256"><span class="lineNum">     256 </span><span class="lineNoCov">          0 :         abort();</span></a>
+<a name="257"><span class="lineNum">     257 </span>            :     }</a>
+<a name="258"><span class="lineNum">     258 </span>            :   }</a>
+<a name="259"><span class="lineNum">     259 </span><span class="lineCov">          4 :   static const char* DisplayValue(MementoType content_type) {</span></a>
+<a name="260"><span class="lineNum">     260 </span><span class="lineCov">          4 :     switch (content_type) {</span></a>
+<a name="261"><span class="lineNum">     261 </span><span class="lineCov">          3 :       case kPost:</span></a>
+<a name="262"><span class="lineNum">     262 </span><span class="lineCov">          3 :         return &quot;POST&quot;;</span></a>
+<a name="263"><span class="lineNum">     263 </span><span class="lineCov">          1 :       case kGet:</span></a>
+<a name="264"><span class="lineNum">     264 </span><span class="lineCov">          1 :         return &quot;GET&quot;;</span></a>
+<a name="265"><span class="lineNum">     265 </span><span class="lineNoCov">          0 :       default:</span></a>
+<a name="266"><span class="lineNum">     266 </span><span class="lineNoCov">          0 :         return &quot;&lt;discarded-invalid-value&gt;&quot;;</span></a>
+<a name="267"><span class="lineNum">     267 </span>            :     }</a>
+<a name="268"><span class="lineNum">     268 </span>            :   }</a>
+<a name="269"><span class="lineNum">     269 </span>            : };</a>
+<a name="270"><span class="lineNum">     270 </span>            : </a>
+<a name="271"><span class="lineNum">     271 </span>            : // Base type for metadata pertaining to a single compression algorithm</a>
+<a name="272"><span class="lineNum">     272 </span>            : // (e.g., &quot;grpc-encoding&quot;).</a>
+<a name="273"><span class="lineNum">     273 </span>            : struct CompressionAlgorithmBasedMetadata {</a>
+<a name="274"><span class="lineNum">     274 </span>            :   using ValueType = grpc_compression_algorithm;</a>
+<a name="275"><span class="lineNum">     275 </span>            :   using MementoType = ValueType;</a>
+<a name="276"><span class="lineNum">     276 </span><span class="lineCov">      47966 :   static MementoType ParseMemento(Slice value, MetadataParseErrorFn on_error) {</span></a>
+<a name="277"><span class="lineNum">     277 </span><span class="lineCov">      47966 :     auto algorithm = ParseCompressionAlgorithm(value.as_string_view());</span></a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineCov">      47971 :     if (!algorithm.has_value()) {</span></a>
+<a name="279"><span class="lineNum">     279 </span><span class="lineCov">          6 :       on_error(&quot;invalid value&quot;, value);</span></a>
+<a name="280"><span class="lineNum">     280 </span><span class="lineCov">          6 :       return GRPC_COMPRESS_NONE;</span></a>
+<a name="281"><span class="lineNum">     281 </span>            :     }</a>
+<a name="282"><span class="lineNum">     282 </span><span class="lineCov">      47962 :     return *algorithm;</span></a>
+<a name="283"><span class="lineNum">     283 </span>            :   }</a>
+<a name="284"><span class="lineNum">     284 </span><span class="lineCov">      81014 :   static ValueType MementoToValue(MementoType x) { return x; }</span></a>
+<a name="285"><span class="lineNum">     285 </span><span class="lineCov">      44959 :   static Slice Encode(ValueType x) {</span></a>
+<a name="286"><span class="lineNum">     286 </span><span class="lineCov">      44959 :     GPR_ASSERT(x != GRPC_COMPRESS_ALGORITHMS_COUNT);</span></a>
+<a name="287"><span class="lineNum">     287 </span><span class="lineCov">      44959 :     return Slice::FromStaticString(CompressionAlgorithmAsString(x));</span></a>
+<a name="288"><span class="lineNum">     288 </span>            :   }</a>
+<a name="289"><span class="lineNum">     289 </span><span class="lineNoCov">          0 :   static const char* DisplayValue(MementoType x) {</span></a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineNoCov">          0 :     if (const char* p = CompressionAlgorithmAsString(x)) {</span></a>
+<a name="291"><span class="lineNum">     291 </span><span class="lineNoCov">          0 :       return p;</span></a>
+<a name="292"><span class="lineNum">     292 </span>            :     } else {</a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineNoCov">          0 :       return &quot;&lt;discarded-invalid-value&gt;&quot;;</span></a>
+<a name="294"><span class="lineNum">     294 </span>            :     }</a>
+<a name="295"><span class="lineNum">     295 </span>            :   }</a>
+<a name="296"><span class="lineNum">     296 </span>            : };</a>
+<a name="297"><span class="lineNum">     297 </span>            : </a>
+<a name="298"><span class="lineNum">     298 </span>            : // grpc-encoding metadata trait.</a>
+<a name="299"><span class="lineNum">     299 </span>            : struct GrpcEncodingMetadata : public CompressionAlgorithmBasedMetadata {</a>
+<a name="300"><span class="lineNum">     300 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="301"><span class="lineNum">     301 </span><span class="lineCov">   12245366 :   static absl::string_view key() { return &quot;grpc-encoding&quot;; }</span></a>
+<a name="302"><span class="lineNum">     302 </span>            : };</a>
+<a name="303"><span class="lineNum">     303 </span>            : </a>
+<a name="304"><span class="lineNum">     304 </span>            : // grpc-internal-encoding-request metadata trait.</a>
+<a name="305"><span class="lineNum">     305 </span>            : struct GrpcInternalEncodingRequest : public CompressionAlgorithmBasedMetadata {</a>
+<a name="306"><span class="lineNum">     306 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="307"><span class="lineNum">     307 </span><span class="lineCov">   12202838 :   static absl::string_view key() { return &quot;grpc-internal-encoding-request&quot;; }</span></a>
+<a name="308"><span class="lineNum">     308 </span>            : };</a>
+<a name="309"><span class="lineNum">     309 </span>            : </a>
+<a name="310"><span class="lineNum">     310 </span>            : // grpc-accept-encoding metadata trait.</a>
+<a name="311"><span class="lineNum">     311 </span>            : struct GrpcAcceptEncodingMetadata {</a>
+<a name="312"><span class="lineNum">     312 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="313"><span class="lineNum">     313 </span><span class="lineCov">   12953890 :   static absl::string_view key() { return &quot;grpc-accept-encoding&quot;; }</span></a>
+<a name="314"><span class="lineNum">     314 </span>            :   using ValueType = CompressionAlgorithmSet;</a>
+<a name="315"><span class="lineNum">     315 </span>            :   using MementoType = ValueType;</a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineCov">     685074 :   static MementoType ParseMemento(Slice value, MetadataParseErrorFn) {</span></a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineCov">     685074 :     return CompressionAlgorithmSet::FromString(value.as_string_view());</span></a>
+<a name="318"><span class="lineNum">     318 </span>            :   }</a>
+<a name="319"><span class="lineNum">     319 </span><span class="lineCov">    7331031 :   static ValueType MementoToValue(MementoType x) { return x; }</span></a>
+<a name="320"><span class="lineNum">     320 </span><span class="lineCov">     776273 :   static Slice Encode(ValueType x) { return x.ToSlice(); }</span></a>
+<a name="321"><span class="lineNum">     321 </span><span class="lineCov">          3 :   static std::string DisplayValue(MementoType x) { return x.ToString(); }</span></a>
+<a name="322"><span class="lineNum">     322 </span>            : };</a>
+<a name="323"><span class="lineNum">     323 </span>            : </a>
+<a name="324"><span class="lineNum">     324 </span>            : struct SimpleSliceBasedMetadata {</a>
+<a name="325"><span class="lineNum">     325 </span>            :   using ValueType = Slice;</a>
+<a name="326"><span class="lineNum">     326 </span>            :   using MementoType = Slice;</a>
+<a name="327"><span class="lineNum">     327 </span><span class="lineCov">    3719006 :   static MementoType ParseMemento(Slice value, MetadataParseErrorFn) {</span></a>
+<a name="328"><span class="lineNum">     328 </span><span class="lineCov">    3719006 :     return value.TakeOwned();</span></a>
+<a name="329"><span class="lineNum">     329 </span>            :   }</a>
+<a name="330"><span class="lineNum">     330 </span><span class="lineCov">   15201386 :   static ValueType MementoToValue(MementoType value) { return value; }</span></a>
+<a name="331"><span class="lineNum">     331 </span><span class="lineCov">    5172261 :   static Slice Encode(const ValueType&amp; x) { return x.Ref(); }</span></a>
+<a name="332"><span class="lineNum">     332 </span><span class="lineCov">         13 :   static absl::string_view DisplayValue(const MementoType&amp; value) {</span></a>
+<a name="333"><span class="lineNum">     333 </span><span class="lineCov">         13 :     return value.as_string_view();</span></a>
+<a name="334"><span class="lineNum">     334 </span>            :   }</a>
+<a name="335"><span class="lineNum">     335 </span>            : };</a>
+<a name="336"><span class="lineNum">     336 </span>            : </a>
+<a name="337"><span class="lineNum">     337 </span>            : // user-agent metadata trait.</a>
+<a name="338"><span class="lineNum">     338 </span>            : struct UserAgentMetadata : public SimpleSliceBasedMetadata {</a>
+<a name="339"><span class="lineNum">     339 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineCov">   15094933 :   static absl::string_view key() { return &quot;user-agent&quot;; }</span></a>
+<a name="341"><span class="lineNum">     341 </span>            : };</a>
+<a name="342"><span class="lineNum">     342 </span>            : </a>
+<a name="343"><span class="lineNum">     343 </span>            : // grpc-message metadata trait.</a>
+<a name="344"><span class="lineNum">     344 </span>            : struct GrpcMessageMetadata : public SimpleSliceBasedMetadata {</a>
+<a name="345"><span class="lineNum">     345 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="346"><span class="lineNum">     346 </span><span class="lineCov">    9814326 :   static absl::string_view key() { return &quot;grpc-message&quot;; }</span></a>
+<a name="347"><span class="lineNum">     347 </span>            : };</a>
+<a name="348"><span class="lineNum">     348 </span>            : </a>
+<a name="349"><span class="lineNum">     349 </span>            : // host metadata trait.</a>
+<a name="350"><span class="lineNum">     350 </span>            : struct HostMetadata : public SimpleSliceBasedMetadata {</a>
+<a name="351"><span class="lineNum">     351 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="352"><span class="lineNum">     352 </span><span class="lineCov">    8354910 :   static absl::string_view key() { return &quot;host&quot;; }</span></a>
+<a name="353"><span class="lineNum">     353 </span>            : };</a>
+<a name="354"><span class="lineNum">     354 </span>            : </a>
+<a name="355"><span class="lineNum">     355 </span>            : // x-endpoint-load-metrics-bin metadata trait.</a>
+<a name="356"><span class="lineNum">     356 </span>            : struct XEndpointLoadMetricsBinMetadata : public SimpleSliceBasedMetadata {</a>
+<a name="357"><span class="lineNum">     357 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="358"><span class="lineNum">     358 </span><span class="lineCov">    8337477 :   static absl::string_view key() { return &quot;x-endpoint-load-metrics-bin&quot;; }</span></a>
+<a name="359"><span class="lineNum">     359 </span>            : };</a>
+<a name="360"><span class="lineNum">     360 </span>            : </a>
+<a name="361"><span class="lineNum">     361 </span>            : // grpc-server-stats-bin metadata trait.</a>
+<a name="362"><span class="lineNum">     362 </span>            : struct GrpcServerStatsBinMetadata : public SimpleSliceBasedMetadata {</a>
+<a name="363"><span class="lineNum">     363 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="364"><span class="lineNum">     364 </span><span class="lineCov">    8337363 :   static absl::string_view key() { return &quot;grpc-server-stats-bin&quot;; }</span></a>
+<a name="365"><span class="lineNum">     365 </span>            : };</a>
+<a name="366"><span class="lineNum">     366 </span>            : </a>
+<a name="367"><span class="lineNum">     367 </span>            : // grpc-trace-bin metadata trait.</a>
+<a name="368"><span class="lineNum">     368 </span>            : struct GrpcTraceBinMetadata : public SimpleSliceBasedMetadata {</a>
+<a name="369"><span class="lineNum">     369 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="370"><span class="lineNum">     370 </span><span class="lineCov">    8337348 :   static absl::string_view key() { return &quot;grpc-trace-bin&quot;; }</span></a>
+<a name="371"><span class="lineNum">     371 </span>            : };</a>
+<a name="372"><span class="lineNum">     372 </span>            : </a>
+<a name="373"><span class="lineNum">     373 </span>            : // grpc-tags-bin metadata trait.</a>
+<a name="374"><span class="lineNum">     374 </span>            : struct GrpcTagsBinMetadata : public SimpleSliceBasedMetadata {</a>
+<a name="375"><span class="lineNum">     375 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="376"><span class="lineNum">     376 </span><span class="lineCov">    8337335 :   static absl::string_view key() { return &quot;grpc-tags-bin&quot;; }</span></a>
+<a name="377"><span class="lineNum">     377 </span>            : };</a>
+<a name="378"><span class="lineNum">     378 </span>            : </a>
+<a name="379"><span class="lineNum">     379 </span>            : // :authority metadata trait.</a>
+<a name="380"><span class="lineNum">     380 </span>            : struct HttpAuthorityMetadata : public SimpleSliceBasedMetadata {</a>
+<a name="381"><span class="lineNum">     381 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="382"><span class="lineNum">     382 </span><span class="lineCov">   19829430 :   static absl::string_view key() { return &quot;:authority&quot;; }</span></a>
+<a name="383"><span class="lineNum">     383 </span>            : };</a>
+<a name="384"><span class="lineNum">     384 </span>            : </a>
+<a name="385"><span class="lineNum">     385 </span>            : // :path metadata trait.</a>
+<a name="386"><span class="lineNum">     386 </span>            : struct HttpPathMetadata : public SimpleSliceBasedMetadata {</a>
+<a name="387"><span class="lineNum">     387 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="388"><span class="lineNum">     388 </span><span class="lineCov">   24826740 :   static absl::string_view key() { return &quot;:path&quot;; }</span></a>
+<a name="389"><span class="lineNum">     389 </span>            : };</a>
+<a name="390"><span class="lineNum">     390 </span>            : </a>
+<a name="391"><span class="lineNum">     391 </span>            : // We separate SimpleIntBasedMetadata into two pieces: one that does not depend</a>
+<a name="392"><span class="lineNum">     392 </span>            : // on the invalid value, and one that does. This allows the compiler to easily</a>
+<a name="393"><span class="lineNum">     393 </span>            : // see the functions that are shared, and helps reduce code bloat here.</a>
+<a name="394"><span class="lineNum">     394 </span>            : template &lt;typename Int&gt;</a>
+<a name="395"><span class="lineNum">     395 </span>            : struct SimpleIntBasedMetadataBase {</a>
+<a name="396"><span class="lineNum">     396 </span>            :   using ValueType = Int;</a>
+<a name="397"><span class="lineNum">     397 </span>            :   using MementoType = Int;</a>
+<a name="398"><span class="lineNum">     398 </span><span class="lineCov">    8931001 :   static ValueType MementoToValue(MementoType value) { return value; }</span></a>
+<a name="399"><span class="lineNum">     399 </span><span class="lineCov">       1696 :   static Slice Encode(ValueType x) { return Slice::FromInt64(x); }</span></a>
+<a name="400"><span class="lineNum">     400 </span><span class="lineCov">         13 :   static Int DisplayValue(MementoType x) { return x; }</span></a>
+<a name="401"><span class="lineNum">     401 </span>            : };</a>
+<a name="402"><span class="lineNum">     402 </span>            : </a>
+<a name="403"><span class="lineNum">     403 </span>            : template &lt;typename Int, Int kInvalidValue&gt;</a>
+<a name="404"><span class="lineNum">     404 </span>            : struct SimpleIntBasedMetadata : public SimpleIntBasedMetadataBase&lt;Int&gt; {</a>
+<a name="405"><span class="lineNum">     405 </span>            :   static constexpr Int invalid_value() { return kInvalidValue; }</a>
+<a name="406"><span class="lineNum">     406 </span><span class="lineCov">     684583 :   static Int ParseMemento(Slice value, MetadataParseErrorFn on_error) {</span></a>
+<a name="407"><span class="lineNum">     407 </span>            :     Int out;</a>
+<a name="408"><span class="lineNum">     408 </span><span class="lineCov">     684583 :     if (!absl::SimpleAtoi(value.as_string_view(), &amp;out)) {</span></a>
+<a name="409"><span class="lineNum">     409 </span><span class="lineCov">        381 :       on_error(&quot;not an integer&quot;, value);</span></a>
+<a name="410"><span class="lineNum">     410 </span><span class="lineCov">        381 :       out = kInvalidValue;</span></a>
+<a name="411"><span class="lineNum">     411 </span>            :     }</a>
+<a name="412"><span class="lineNum">     412 </span><span class="lineCov">     684583 :     return out;</span></a>
+<a name="413"><span class="lineNum">     413 </span>            :   }</a>
+<a name="414"><span class="lineNum">     414 </span>            : };</a>
+<a name="415"><span class="lineNum">     415 </span>            : </a>
+<a name="416"><span class="lineNum">     416 </span>            : // grpc-status metadata trait.</a>
+<a name="417"><span class="lineNum">     417 </span>            : struct GrpcStatusMetadata</a>
+<a name="418"><span class="lineNum">     418 </span>            :     : public SimpleIntBasedMetadata&lt;grpc_status_code, GRPC_STATUS_UNKNOWN&gt; {</a>
+<a name="419"><span class="lineNum">     419 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="420"><span class="lineNum">     420 </span><span class="lineCov">   11521383 :   static absl::string_view key() { return &quot;grpc-status&quot;; }</span></a>
+<a name="421"><span class="lineNum">     421 </span>            : };</a>
+<a name="422"><span class="lineNum">     422 </span>            : </a>
+<a name="423"><span class="lineNum">     423 </span>            : // grpc-previous-rpc-attempts metadata trait.</a>
+<a name="424"><span class="lineNum">     424 </span>            : struct GrpcPreviousRpcAttemptsMetadata</a>
+<a name="425"><span class="lineNum">     425 </span>            :     : public SimpleIntBasedMetadata&lt;uint32_t, 0&gt; {</a>
+<a name="426"><span class="lineNum">     426 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="427"><span class="lineNum">     427 </span><span class="lineCov">   10494943 :   static absl::string_view key() { return &quot;grpc-previous-rpc-attempts&quot;; }</span></a>
+<a name="428"><span class="lineNum">     428 </span>            : };</a>
+<a name="429"><span class="lineNum">     429 </span>            : </a>
+<a name="430"><span class="lineNum">     430 </span>            : // grpc-retry-pushback-ms metadata trait.</a>
+<a name="431"><span class="lineNum">     431 </span>            : struct GrpcRetryPushbackMsMetadata {</a>
+<a name="432"><span class="lineNum">     432 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="433"><span class="lineNum">     433 </span><span class="lineCov">   10488056 :   static absl::string_view key() { return &quot;grpc-retry-pushback-ms&quot;; }</span></a>
+<a name="434"><span class="lineNum">     434 </span>            :   using ValueType = Duration;</a>
+<a name="435"><span class="lineNum">     435 </span>            :   using MementoType = Duration;</a>
+<a name="436"><span class="lineNum">     436 </span><span class="lineCov">        336 :   static ValueType MementoToValue(MementoType x) { return x; }</span></a>
+<a name="437"><span class="lineNum">     437 </span><span class="lineCov">        168 :   static Slice Encode(Duration x) { return Slice::FromInt64(x.millis()); }</span></a>
+<a name="438"><span class="lineNum">     438 </span><span class="lineNoCov">          0 :   static int64_t DisplayValue(Duration x) { return x.millis(); }</span></a>
+<a name="439"><span class="lineNum">     439 </span><span class="lineCov">        336 :   static Duration ParseMemento(Slice value, MetadataParseErrorFn on_error) {</span></a>
+<a name="440"><span class="lineNum">     440 </span>            :     int64_t out;</a>
+<a name="441"><span class="lineNum">     441 </span><span class="lineCov">        336 :     if (!absl::SimpleAtoi(value.as_string_view(), &amp;out)) {</span></a>
+<a name="442"><span class="lineNum">     442 </span><span class="lineNoCov">          0 :       on_error(&quot;not an integer&quot;, value);</span></a>
+<a name="443"><span class="lineNum">     443 </span><span class="lineNoCov">          0 :       return Duration::NegativeInfinity();</span></a>
+<a name="444"><span class="lineNum">     444 </span>            :     }</a>
+<a name="445"><span class="lineNum">     445 </span><span class="lineCov">        336 :     return Duration::Milliseconds(out);</span></a>
+<a name="446"><span class="lineNum">     446 </span>            :   }</a>
+<a name="447"><span class="lineNum">     447 </span>            : };</a>
+<a name="448"><span class="lineNum">     448 </span>            : </a>
+<a name="449"><span class="lineNum">     449 </span>            : // :status metadata trait.</a>
+<a name="450"><span class="lineNum">     450 </span>            : // TODO(ctiller): consider moving to uint16_t</a>
+<a name="451"><span class="lineNum">     451 </span>            : struct HttpStatusMetadata : public SimpleIntBasedMetadata&lt;uint32_t, 0&gt; {</a>
+<a name="452"><span class="lineNum">     452 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="453"><span class="lineNum">     453 </span><span class="lineCov">   14258494 :   static absl::string_view key() { return &quot;:status&quot;; }</span></a>
+<a name="454"><span class="lineNum">     454 </span>            : };</a>
+<a name="455"><span class="lineNum">     455 </span>            : </a>
+<a name="456"><span class="lineNum">     456 </span>            : // &quot;secret&quot; metadata trait used to pass load balancing token between filters.</a>
+<a name="457"><span class="lineNum">     457 </span>            : // This should not be exposed outside of gRPC core.</a>
+<a name="458"><span class="lineNum">     458 </span>            : class GrpcLbClientStats;</a>
+<a name="459"><span class="lineNum">     459 </span>            : struct GrpcLbClientStatsMetadata {</a>
+<a name="460"><span class="lineNum">     460 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="461"><span class="lineNum">     461 </span><span class="lineCov">    8454293 :   static absl::string_view key() { return &quot;grpclb_client_stats&quot;; }</span></a>
+<a name="462"><span class="lineNum">     462 </span>            :   using ValueType = GrpcLbClientStats*;</a>
+<a name="463"><span class="lineNum">     463 </span>            :   using MementoType = ValueType;</a>
+<a name="464"><span class="lineNum">     464 </span><span class="lineNoCov">          0 :   static ValueType MementoToValue(MementoType value) { return value; }</span></a>
+<a name="465"><span class="lineNum">     465 </span><span class="lineNoCov">          0 :   static Slice Encode(ValueType) { abort(); }</span></a>
+<a name="466"><span class="lineNum">     466 </span><span class="lineNoCov">          0 :   static const char* DisplayValue(MementoType) { return &quot;&lt;internal-lb-stats&gt;&quot;; }</span></a>
+<a name="467"><span class="lineNum">     467 </span><span class="lineNoCov">          0 :   static MementoType ParseMemento(Slice, MetadataParseErrorFn) {</span></a>
+<a name="468"><span class="lineNum">     468 </span><span class="lineNoCov">          0 :     return nullptr;</span></a>
+<a name="469"><span class="lineNum">     469 </span>            :   }</a>
+<a name="470"><span class="lineNum">     470 </span>            : };</a>
+<a name="471"><span class="lineNum">     471 </span>            : </a>
+<a name="472"><span class="lineNum">     472 </span>            : // lb-token metadata</a>
+<a name="473"><span class="lineNum">     473 </span>            : struct LbTokenMetadata : public SimpleSliceBasedMetadata {</a>
+<a name="474"><span class="lineNum">     474 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="475"><span class="lineNum">     475 </span><span class="lineCov">    8772126 :   static absl::string_view key() { return &quot;lb-token&quot;; }</span></a>
+<a name="476"><span class="lineNum">     476 </span>            : };</a>
+<a name="477"><span class="lineNum">     477 </span>            : </a>
+<a name="478"><span class="lineNum">     478 </span>            : // lb-cost-bin metadata</a>
+<a name="479"><span class="lineNum">     479 </span>            : struct LbCostBinMetadata {</a>
+<a name="480"><span class="lineNum">     480 </span>            :   static constexpr bool kRepeatable = true;</a>
+<a name="481"><span class="lineNum">     481 </span><span class="lineCov">    8337315 :   static absl::string_view key() { return &quot;lb-cost-bin&quot;; }</span></a>
+<a name="482"><span class="lineNum">     482 </span>            :   struct ValueType {</a>
+<a name="483"><span class="lineNum">     483 </span>            :     double cost;</a>
+<a name="484"><span class="lineNum">     484 </span>            :     std::string name;</a>
+<a name="485"><span class="lineNum">     485 </span>            :   };</a>
+<a name="486"><span class="lineNum">     486 </span>            :   using MementoType = ValueType;</a>
+<a name="487"><span class="lineNum">     487 </span><span class="lineCov">          3 :   static ValueType MementoToValue(MementoType value) { return value; }</span></a>
+<a name="488"><span class="lineNum">     488 </span><span class="lineNoCov">          0 :   static Slice Encode(const ValueType&amp; x) {</span></a>
+<a name="489"><span class="lineNum">     489 </span>            :     auto slice =</a>
+<a name="490"><span class="lineNum">     490 </span><span class="lineNoCov">          0 :         MutableSlice::CreateUninitialized(sizeof(double) + x.name.length());</span></a>
+<a name="491"><span class="lineNum">     491 </span><span class="lineNoCov">          0 :     memcpy(slice.data(), &amp;x.cost, sizeof(double));</span></a>
+<a name="492"><span class="lineNum">     492 </span><span class="lineNoCov">          0 :     memcpy(slice.data() + sizeof(double), x.name.data(), x.name.length());</span></a>
+<a name="493"><span class="lineNum">     493 </span><span class="lineNoCov">          0 :     return Slice(std::move(slice));</span></a>
+<a name="494"><span class="lineNum">     494 </span><span class="lineNoCov">          0 :   }</span></a>
+<a name="495"><span class="lineNum">     495 </span><span class="lineNoCov">          0 :   static std::string DisplayValue(MementoType x) {</span></a>
+<a name="496"><span class="lineNum">     496 </span><span class="lineNoCov">          0 :     return absl::StrCat(x.name, &quot;:&quot;, x.cost);</span></a>
+<a name="497"><span class="lineNum">     497 </span>            :   }</a>
+<a name="498"><span class="lineNum">     498 </span><span class="lineCov">          3 :   static MementoType ParseMemento(Slice value, MetadataParseErrorFn on_error) {</span></a>
+<a name="499"><span class="lineNum">     499 </span><span class="lineCov">          3 :     if (value.length() &lt; sizeof(double)) {</span></a>
+<a name="500"><span class="lineNum">     500 </span><span class="lineNoCov">          0 :       on_error(&quot;too short&quot;, value);</span></a>
+<a name="501"><span class="lineNum">     501 </span><span class="lineNoCov">          0 :       return {0, &quot;&quot;};</span></a>
+<a name="502"><span class="lineNum">     502 </span>            :     }</a>
+<a name="503"><span class="lineNum">     503 </span><span class="lineCov">          3 :     MementoType out;</span></a>
+<a name="504"><span class="lineNum">     504 </span><span class="lineCov">          3 :     memcpy(&amp;out.cost, value.data(), sizeof(double));</span></a>
+<a name="505"><span class="lineNum">     505 </span><span class="lineCov">          9 :     out.name = std::string(</span></a>
+<a name="506"><span class="lineNum">     506 </span><span class="lineCov">          3 :         reinterpret_cast&lt;const char*&gt;(value.data()) + sizeof(double),</span></a>
+<a name="507"><span class="lineNum">     507 </span><span class="lineCov">          6 :         value.length() - sizeof(double));</span></a>
+<a name="508"><span class="lineNum">     508 </span><span class="lineCov">          3 :     return out;</span></a>
+<a name="509"><span class="lineNum">     509 </span><span class="lineCov">          3 :   }</span></a>
+<a name="510"><span class="lineNum">     510 </span>            : };</a>
+<a name="511"><span class="lineNum">     511 </span>            : </a>
+<a name="512"><span class="lineNum">     512 </span>            : // Annotation added by a transport to note whether a failed request was never</a>
+<a name="513"><span class="lineNum">     513 </span>            : // placed on the wire, or never seen by a server.</a>
+<a name="514"><span class="lineNum">     514 </span>            : struct GrpcStreamNetworkState {</a>
+<a name="515"><span class="lineNum">     515 </span><span class="lineCov">          3 :   static absl::string_view DebugKey() { return &quot;GrpcStreamNetworkState&quot;; }</span></a>
+<a name="516"><span class="lineNum">     516 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="517"><span class="lineNum">     517 </span>            :   enum ValueType : uint8_t {</a>
+<a name="518"><span class="lineNum">     518 </span>            :     kNotSentOnWire,</a>
+<a name="519"><span class="lineNum">     519 </span>            :     kNotSeenByServer,</a>
+<a name="520"><span class="lineNum">     520 </span>            :   };</a>
+<a name="521"><span class="lineNum">     521 </span><span class="lineCov">          3 :   static std::string DisplayValue(ValueType x) {</span></a>
+<a name="522"><span class="lineNum">     522 </span><span class="lineCov">          3 :     switch (x) {</span></a>
+<a name="523"><span class="lineNum">     523 </span><span class="lineCov">          3 :       case kNotSentOnWire:</span></a>
+<a name="524"><span class="lineNum">     524 </span><span class="lineCov">          3 :         return &quot;not sent on wire&quot;;</span></a>
+<a name="525"><span class="lineNum">     525 </span><span class="lineNoCov">          0 :       case kNotSeenByServer:</span></a>
+<a name="526"><span class="lineNum">     526 </span><span class="lineNoCov">          0 :         return &quot;not seen by server&quot;;</span></a>
+<a name="527"><span class="lineNum">     527 </span>            :     }</a>
+<a name="528"><span class="lineNum">     528 </span><span class="lineNoCov">          0 :   }</span></a>
+<a name="529"><span class="lineNum">     529 </span>            : };</a>
+<a name="530"><span class="lineNum">     530 </span>            : </a>
+<a name="531"><span class="lineNum">     531 </span>            : // Annotation added by a server transport to note the peer making a request.</a>
+<a name="532"><span class="lineNum">     532 </span>            : struct PeerString {</a>
+<a name="533"><span class="lineNum">     533 </span><span class="lineNoCov">          0 :   static absl::string_view DebugKey() { return &quot;PeerString&quot;; }</span></a>
+<a name="534"><span class="lineNum">     534 </span>            :   static constexpr bool kRepeatable = false;</a>
+<a name="535"><span class="lineNum">     535 </span>            :   using ValueType = absl::string_view;</a>
+<a name="536"><span class="lineNum">     536 </span><span class="lineNoCov">          0 :   static std::string DisplayValue(ValueType x) { return std::string(x); }</span></a>
+<a name="537"><span class="lineNum">     537 </span>            : };</a>
+<a name="538"><span class="lineNum">     538 </span>            : </a>
+<a name="539"><span class="lineNum">     539 </span>            : // Annotation added by various systems to describe the reason for a failure.</a>
+<a name="540"><span class="lineNum">     540 </span>            : struct GrpcStatusContext {</a>
+<a name="541"><span class="lineNum">     541 </span><span class="lineNoCov">          0 :   static absl::string_view DebugKey() { return &quot;GrpcStatusContext&quot;; }</span></a>
+<a name="542"><span class="lineNum">     542 </span>            :   static constexpr bool kRepeatable = true;</a>
+<a name="543"><span class="lineNum">     543 </span>            :   using ValueType = std::string;</a>
+<a name="544"><span class="lineNum">     544 </span><span class="lineNoCov">          0 :   static const std::string&amp; DisplayValue(const std::string&amp; x) { return x; }</span></a>
+<a name="545"><span class="lineNum">     545 </span>            : };</a>
+<a name="546"><span class="lineNum">     546 </span>            : </a>
+<a name="547"><span class="lineNum">     547 </span>            : namespace metadata_detail {</a>
+<a name="548"><span class="lineNum">     548 </span>            : </a>
+<a name="549"><span class="lineNum">     549 </span>            : // IsEncodable: Given a trait, determine if that trait is encodable, or is just</a>
+<a name="550"><span class="lineNum">     550 </span>            : // a value attached to a MetadataMap.</a>
+<a name="551"><span class="lineNum">     551 </span>            : // We use the presence of the key() static method to determine if a trait is</a>
+<a name="552"><span class="lineNum">     552 </span>            : // encodable or not - encodable traits have string names, and non-encodable</a>
+<a name="553"><span class="lineNum">     553 </span>            : // traits do not.</a>
+<a name="554"><span class="lineNum">     554 </span>            : template &lt;typename Trait, typename Ignored = void&gt;</a>
+<a name="555"><span class="lineNum">     555 </span>            : struct IsEncodableTrait {</a>
+<a name="556"><span class="lineNum">     556 </span>            :   static const bool value = false;</a>
+<a name="557"><span class="lineNum">     557 </span>            : };</a>
+<a name="558"><span class="lineNum">     558 </span>            : </a>
+<a name="559"><span class="lineNum">     559 </span>            : template &lt;typename Trait&gt;</a>
+<a name="560"><span class="lineNum">     560 </span>            : struct IsEncodableTrait&lt;Trait, absl::void_t&lt;decltype(Trait::key())&gt;&gt; {</a>
+<a name="561"><span class="lineNum">     561 </span>            :   static const bool value = true;</a>
+<a name="562"><span class="lineNum">     562 </span>            : };</a>
+<a name="563"><span class="lineNum">     563 </span>            : </a>
+<a name="564"><span class="lineNum">     564 </span>            : // Helper type - maps a string name to a trait.</a>
+<a name="565"><span class="lineNum">     565 </span>            : template &lt;typename MustBeVoid, typename... Traits&gt;</a>
+<a name="566"><span class="lineNum">     566 </span>            : struct NameLookup;</a>
+<a name="567"><span class="lineNum">     567 </span>            : </a>
+<a name="568"><span class="lineNum">     568 </span>            : template &lt;typename Trait, typename... Traits&gt;</a>
+<a name="569"><span class="lineNum">     569 </span>            : struct NameLookup&lt;absl::enable_if_t&lt;IsEncodableTrait&lt;Trait&gt;::value, void&gt;,</a>
+<a name="570"><span class="lineNum">     570 </span>            :                   Trait, Traits...&gt; {</a>
+<a name="571"><span class="lineNum">     571 </span>            :   // Call op-&gt;Found(Trait()) if op-&gt;name == Trait::key() for some Trait in</a>
+<a name="572"><span class="lineNum">     572 </span>            :   // Traits. If not found, call op-&gt;NotFound().</a>
+<a name="573"><span class="lineNum">     573 </span>            :   template &lt;typename Op&gt;</a>
+<a name="574"><span class="lineNum">     574 </span><span class="lineCov">  266897231 :   static auto Lookup(absl::string_view key, Op* op)</span></a>
+<a name="575"><span class="lineNum">     575 </span>            :       -&gt; decltype(op-&gt;Found(Trait())) {</a>
+<a name="576"><span class="lineNum">     576 </span><span class="lineCov">  266897231 :     if (key == Trait::key()) {</span></a>
+<a name="577"><span class="lineNum">     577 </span><span class="lineCov">    7490301 :       return op-&gt;Found(Trait());</span></a>
+<a name="578"><span class="lineNum">     578 </span>            :     }</a>
+<a name="579"><span class="lineNum">     579 </span><span class="lineCov">  259406732 :     return NameLookup&lt;void, Traits...&gt;::Lookup(key, op);</span></a>
+<a name="580"><span class="lineNum">     580 </span>            :   }</a>
+<a name="581"><span class="lineNum">     581 </span>            : };</a>
+<a name="582"><span class="lineNum">     582 </span>            : </a>
+<a name="583"><span class="lineNum">     583 </span>            : template &lt;typename Trait, typename... Traits&gt;</a>
+<a name="584"><span class="lineNum">     584 </span>            : struct NameLookup&lt;absl::enable_if_t&lt;!IsEncodableTrait&lt;Trait&gt;::value, void&gt;,</a>
+<a name="585"><span class="lineNum">     585 </span>            :                   Trait, Traits...&gt; {</a>
+<a name="586"><span class="lineNum">     586 </span>            :   template &lt;typename Op&gt;</a>
+<a name="587"><span class="lineNum">     587 </span><span class="lineCov">   24360546 :   static auto Lookup(absl::string_view key, Op* op)</span></a>
+<a name="588"><span class="lineNum">     588 </span>            :       -&gt; decltype(NameLookup&lt;void, Traits...&gt;::Lookup(key, op)) {</a>
+<a name="589"><span class="lineNum">     589 </span><span class="lineCov">   24360546 :     return NameLookup&lt;void, Traits...&gt;::Lookup(key, op);</span></a>
+<a name="590"><span class="lineNum">     590 </span>            :   }</a>
+<a name="591"><span class="lineNum">     591 </span>            : };</a>
+<a name="592"><span class="lineNum">     592 </span>            : </a>
+<a name="593"><span class="lineNum">     593 </span>            : template &lt;&gt;</a>
+<a name="594"><span class="lineNum">     594 </span>            : struct NameLookup&lt;void&gt; {</a>
+<a name="595"><span class="lineNum">     595 </span>            :   template &lt;typename Op&gt;</a>
+<a name="596"><span class="lineNum">     596 </span><span class="lineCov">    8120195 :   static auto Lookup(absl::string_view key, Op* op)</span></a>
+<a name="597"><span class="lineNum">     597 </span>            :       -&gt; decltype(op-&gt;NotFound(key)) {</a>
+<a name="598"><span class="lineNum">     598 </span><span class="lineCov">    8120195 :     return op-&gt;NotFound(key);</span></a>
+<a name="599"><span class="lineNum">     599 </span>            :   }</a>
+<a name="600"><span class="lineNum">     600 </span>            : };</a>
+<a name="601"><span class="lineNum">     601 </span>            : </a>
+<a name="602"><span class="lineNum">     602 </span>            : // Helper to take a slice to a memento to a value.</a>
+<a name="603"><span class="lineNum">     603 </span>            : // By splitting this part out we can scale code size as the number of (memento,</a>
+<a name="604"><span class="lineNum">     604 </span>            : // value) types, rather than as the number of traits.</a>
+<a name="605"><span class="lineNum">     605 </span>            : template &lt;typename ParseMementoFn, typename MementoToValueFn&gt;</a>
+<a name="606"><span class="lineNum">     606 </span>            : struct ParseValue {</a>
+<a name="607"><span class="lineNum">     607 </span>            :   template &lt;ParseMementoFn parse_memento, MementoToValueFn memento_to_value&gt;</a>
+<a name="608"><span class="lineNum">     608 </span><span class="lineCov">     138938 :   static GPR_ATTRIBUTE_NOINLINE auto Parse(Slice* value,</span></a>
+<a name="609"><span class="lineNum">     609 </span>            :                                            MetadataParseErrorFn on_error)</a>
+<a name="610"><span class="lineNum">     610 </span>            :       -&gt; decltype(memento_to_value(parse_memento(std::move(*value),</a>
+<a name="611"><span class="lineNum">     611 </span>            :                                                  on_error))) {</a>
+<a name="612"><span class="lineNum">     612 </span><span class="lineCov">     182535 :     return memento_to_value(parse_memento(std::move(*value), on_error));</span></a>
+<a name="613"><span class="lineNum">     613 </span>            :   }</a>
+<a name="614"><span class="lineNum">     614 </span>            : };</a>
+<a name="615"><span class="lineNum">     615 </span>            : </a>
+<a name="616"><span class="lineNum">     616 </span>            : // This is an &quot;Op&quot; type for NameLookup.</a>
+<a name="617"><span class="lineNum">     617 </span>            : // Used for MetadataMap::Parse, its Found/NotFound methods turn a slice into a</a>
+<a name="618"><span class="lineNum">     618 </span>            : // ParsedMetadata object.</a>
+<a name="619"><span class="lineNum">     619 </span>            : template &lt;typename Container&gt;</a>
+<a name="620"><span class="lineNum">     620 </span>            : class ParseHelper {</a>
+<a name="621"><span class="lineNum">     621 </span>            :  public:</a>
+<a name="622"><span class="lineNum">     622 </span><span class="lineCov">   11355152 :   ParseHelper(Slice value, MetadataParseErrorFn on_error, size_t transport_size)</span></a>
+<a name="623"><span class="lineNum">     623 </span><span class="lineCov">   11355152 :       : value_(std::move(value)),</span></a>
+<a name="624"><span class="lineNum">     624 </span><span class="lineCov">   11355152 :         on_error_(on_error),</span></a>
+<a name="625"><span class="lineNum">     625 </span><span class="lineCov">   11355152 :         transport_size_(transport_size) {}</span></a>
+<a name="626"><span class="lineNum">     626 </span>            : </a>
+<a name="627"><span class="lineNum">     627 </span>            :   template &lt;typename Trait&gt;</a>
+<a name="628"><span class="lineNum">     628 </span><span class="lineCov">    7351213 :   GPR_ATTRIBUTE_NOINLINE ParsedMetadata&lt;Container&gt; Found(Trait trait) {</span></a>
+<a name="629"><span class="lineNum">     629 </span>            :     return ParsedMetadata&lt;Container&gt;(</a>
+<a name="630"><span class="lineNum">     630 </span>            :         trait,</a>
+<a name="631"><span class="lineNum">     631 </span><span class="lineCov">    8830227 :         ParseValueToMemento&lt;typename Trait::MementoType, Trait::ParseMemento&gt;(),</span></a>
+<a name="632"><span class="lineNum">     632 </span><span class="lineCov">    7351213 :         transport_size_);</span></a>
+<a name="633"><span class="lineNum">     633 </span>            :   }</a>
+<a name="634"><span class="lineNum">     634 </span>            : </a>
+<a name="635"><span class="lineNum">     635 </span><span class="lineCov">    4003940 :   GPR_ATTRIBUTE_NOINLINE ParsedMetadata&lt;Container&gt; NotFound(</span></a>
+<a name="636"><span class="lineNum">     636 </span>            :       absl::string_view key) {</a>
+<a name="637"><span class="lineNum">     637 </span>            :     return ParsedMetadata&lt;Container&gt;(Slice::FromCopiedString(key),</a>
+<a name="638"><span class="lineNum">     638 </span><span class="lineCov">    4003940 :                                      std::move(value_));</span></a>
+<a name="639"><span class="lineNum">     639 </span>            :   }</a>
+<a name="640"><span class="lineNum">     640 </span>            : </a>
+<a name="641"><span class="lineNum">     641 </span>            :  private:</a>
+<a name="642"><span class="lineNum">     642 </span>            :   template &lt;typename T, T (*parse_memento)(Slice, MetadataParseErrorFn)&gt;</a>
+<a name="643"><span class="lineNum">     643 </span><span class="lineCov">    7351213 :   GPR_ATTRIBUTE_NOINLINE T ParseValueToMemento() {</span></a>
+<a name="644"><span class="lineNum">     644 </span><span class="lineCov">   14851505 :     return parse_memento(std::move(value_), on_error_);</span></a>
+<a name="645"><span class="lineNum">     645 </span>            :   }</a>
+<a name="646"><span class="lineNum">     646 </span>            : </a>
+<a name="647"><span class="lineNum">     647 </span>            :   Slice value_;</a>
+<a name="648"><span class="lineNum">     648 </span>            :   MetadataParseErrorFn on_error_;</a>
+<a name="649"><span class="lineNum">     649 </span>            :   const size_t transport_size_;</a>
+<a name="650"><span class="lineNum">     650 </span>            : };</a>
+<a name="651"><span class="lineNum">     651 </span>            : </a>
+<a name="652"><span class="lineNum">     652 </span>            : // This is an &quot;Op&quot; type for NameLookup.</a>
+<a name="653"><span class="lineNum">     653 </span>            : // Used for MetadataMap::Append, its Found/NotFound methods turn a slice into a</a>
+<a name="654"><span class="lineNum">     654 </span>            : // value and add it to a container.</a>
+<a name="655"><span class="lineNum">     655 </span>            : template &lt;typename Container&gt;</a>
+<a name="656"><span class="lineNum">     656 </span>            : class AppendHelper {</a>
+<a name="657"><span class="lineNum">     657 </span>            :  public:</a>
+<a name="658"><span class="lineNum">     658 </span><span class="lineCov">    4007356 :   AppendHelper(Container* container, Slice value, MetadataParseErrorFn on_error)</span></a>
+<a name="659"><span class="lineNum">     659 </span><span class="lineCov">    4007356 :       : container_(container), value_(std::move(value)), on_error_(on_error) {}</span></a>
+<a name="660"><span class="lineNum">     660 </span>            : </a>
+<a name="661"><span class="lineNum">     661 </span>            :   template &lt;typename Trait&gt;</a>
+<a name="662"><span class="lineNum">     662 </span><span class="lineCov">     138936 :   GPR_ATTRIBUTE_NOINLINE void Found(Trait trait) {</span></a>
+<a name="663"><span class="lineNum">     663 </span><span class="lineCov">     160547 :     container_-&gt;Set(</span></a>
+<a name="664"><span class="lineNum">     664 </span>            :         trait, ParseValue&lt;decltype(Trait::ParseMemento),</a>
+<a name="665"><span class="lineNum">     665 </span>            :                           decltype(Trait::MementoToValue)&gt;::</a>
+<a name="666"><span class="lineNum">     666 </span><span class="lineCov">      65402 :                    template Parse&lt;Trait::ParseMemento, Trait::MementoToValue&gt;(</span></a>
+<a name="667"><span class="lineNum">     667 </span>            :                        &amp;value_, on_error_));</a>
+<a name="668"><span class="lineNum">     668 </span><span class="lineCov">     138929 :   }</span></a>
+<a name="669"><span class="lineNum">     669 </span>            : </a>
+<a name="670"><span class="lineNum">     670 </span><span class="lineCov">    3868384 :   GPR_ATTRIBUTE_NOINLINE void NotFound(absl::string_view key) {</span></a>
+<a name="671"><span class="lineNum">     671 </span><span class="lineCov">    3868384 :     container_-&gt;AppendUnknown(key, std::move(value_));</span></a>
+<a name="672"><span class="lineNum">     672 </span><span class="lineCov">    3868366 :   }</span></a>
+<a name="673"><span class="lineNum">     673 </span>            : </a>
+<a name="674"><span class="lineNum">     674 </span>            :  private:</a>
+<a name="675"><span class="lineNum">     675 </span>            :   Container* const container_;</a>
+<a name="676"><span class="lineNum">     676 </span>            :   Slice value_;</a>
+<a name="677"><span class="lineNum">     677 </span>            :   MetadataParseErrorFn on_error_;</a>
+<a name="678"><span class="lineNum">     678 </span>            : };</a>
+<a name="679"><span class="lineNum">     679 </span>            : </a>
+<a name="680"><span class="lineNum">     680 </span>            : // This is an &quot;Op&quot; type for NameLookup.</a>
+<a name="681"><span class="lineNum">     681 </span>            : // Used for MetadataMap::Remove, its Found/NotFound methods remove a key from</a>
+<a name="682"><span class="lineNum">     682 </span>            : // the container.</a>
+<a name="683"><span class="lineNum">     683 </span>            : template &lt;typename Container&gt;</a>
+<a name="684"><span class="lineNum">     684 </span>            : class RemoveHelper {</a>
+<a name="685"><span class="lineNum">     685 </span>            :  public:</a>
+<a name="686"><span class="lineNum">     686 </span><span class="lineCov">      85988 :   explicit RemoveHelper(Container* container) : container_(container) {}</span></a>
+<a name="687"><span class="lineNum">     687 </span>            : </a>
+<a name="688"><span class="lineNum">     688 </span>            :   template &lt;typename Trait&gt;</a>
+<a name="689"><span class="lineNum">     689 </span><span class="lineNoCov">          0 :   GPR_ATTRIBUTE_NOINLINE void Found(Trait trait) {</span></a>
+<a name="690"><span class="lineNum">     690 </span><span class="lineNoCov">          0 :     container_-&gt;Remove(trait);</span></a>
+<a name="691"><span class="lineNum">     691 </span><span class="lineNoCov">          0 :   }</span></a>
+<a name="692"><span class="lineNum">     692 </span>            : </a>
+<a name="693"><span class="lineNum">     693 </span><span class="lineCov">      85988 :   GPR_ATTRIBUTE_NOINLINE void NotFound(absl::string_view key) {</span></a>
+<a name="694"><span class="lineNum">     694 </span><span class="lineCov">      85988 :     container_-&gt;RemoveUnknown(key);</span></a>
+<a name="695"><span class="lineNum">     695 </span><span class="lineCov">      85988 :   }</span></a>
+<a name="696"><span class="lineNum">     696 </span>            : </a>
+<a name="697"><span class="lineNum">     697 </span>            :  private:</a>
+<a name="698"><span class="lineNum">     698 </span>            :   Container* const container_;</a>
+<a name="699"><span class="lineNum">     699 </span>            : };</a>
+<a name="700"><span class="lineNum">     700 </span>            : </a>
+<a name="701"><span class="lineNum">     701 </span>            : // This is an &quot;Op&quot; type for NameLookup.</a>
+<a name="702"><span class="lineNum">     702 </span>            : // Used for MetadataMap::GetStringValue, its Found/NotFound methods generated a</a>
+<a name="703"><span class="lineNum">     703 </span>            : // string value from the container.</a>
+<a name="704"><span class="lineNum">     704 </span>            : template &lt;typename Container&gt;</a>
+<a name="705"><span class="lineNum">     705 </span>            : class GetStringValueHelper {</a>
+<a name="706"><span class="lineNum">     706 </span>            :  public:</a>
+<a name="707"><span class="lineNum">     707 </span><span class="lineCov">     162048 :   explicit GetStringValueHelper(const Container* container,</span></a>
+<a name="708"><span class="lineNum">     708 </span>            :                                 std::string* backing)</a>
+<a name="709"><span class="lineNum">     709 </span><span class="lineCov">     162048 :       : container_(container), backing_(backing) {}</span></a>
+<a name="710"><span class="lineNum">     710 </span>            : </a>
+<a name="711"><span class="lineNum">     711 </span>            :   template &lt;typename Trait&gt;</a>
+<a name="712"><span class="lineNum">     712 </span>            :   GPR_ATTRIBUTE_NOINLINE absl::enable_if_t&lt;</a>
+<a name="713"><span class="lineNum">     713 </span>            :       Trait::kRepeatable == false &amp;&amp;</a>
+<a name="714"><span class="lineNum">     714 </span>            :           std::is_same&lt;Slice, typename Trait::ValueType&gt;::value,</a>
+<a name="715"><span class="lineNum">     715 </span>            :       absl::optional&lt;absl::string_view&gt;&gt;</a>
+<a name="716"><span class="lineNum">     716 </span><span class="lineCov">         12 :   Found(Trait) {</span></a>
+<a name="717"><span class="lineNum">     717 </span><span class="lineCov">         12 :     const auto* value = container_-&gt;get_pointer(Trait());</span></a>
+<a name="718"><span class="lineNum">     718 </span><span class="lineCov">         12 :     if (value == nullptr) return absl::nullopt;</span></a>
+<a name="719"><span class="lineNum">     719 </span><span class="lineCov">         24 :     return value-&gt;as_string_view();</span></a>
+<a name="720"><span class="lineNum">     720 </span>            :   }</a>
+<a name="721"><span class="lineNum">     721 </span>            : </a>
+<a name="722"><span class="lineNum">     722 </span>            :   template &lt;typename Trait&gt;</a>
+<a name="723"><span class="lineNum">     723 </span>            :   GPR_ATTRIBUTE_NOINLINE absl::enable_if_t&lt;</a>
+<a name="724"><span class="lineNum">     724 </span>            :       Trait::kRepeatable == true &amp;&amp;</a>
+<a name="725"><span class="lineNum">     725 </span>            :           !std::is_same&lt;Slice, typename Trait::ValueType&gt;::value,</a>
+<a name="726"><span class="lineNum">     726 </span>            :       absl::optional&lt;absl::string_view&gt;&gt;</a>
+<a name="727"><span class="lineNum">     727 </span><span class="lineNoCov">          0 :   Found(Trait) {</span></a>
+<a name="728"><span class="lineNum">     728 </span><span class="lineNoCov">          0 :     const auto* value = container_-&gt;get_pointer(Trait());</span></a>
+<a name="729"><span class="lineNum">     729 </span><span class="lineNoCov">          0 :     if (value == nullptr) return absl::nullopt;</span></a>
+<a name="730"><span class="lineNum">     730 </span><span class="lineNoCov">          0 :     backing_-&gt;clear();</span></a>
+<a name="731"><span class="lineNum">     731 </span><span class="lineNoCov">          0 :     for (const auto&amp; v : *value) {</span></a>
+<a name="732"><span class="lineNum">     732 </span><span class="lineNoCov">          0 :       if (!backing_-&gt;empty()) backing_-&gt;push_back(',');</span></a>
+<a name="733"><span class="lineNum">     733 </span><span class="lineNoCov">          0 :       auto new_segment = Trait::Encode(v);</span></a>
+<a name="734"><span class="lineNum">     734 </span><span class="lineNoCov">          0 :       backing_-&gt;append(new_segment.begin(), new_segment.end());</span></a>
+<a name="735"><span class="lineNum">     735 </span>            :     }</a>
+<a name="736"><span class="lineNum">     736 </span><span class="lineNoCov">          0 :     return *backing_;</span></a>
+<a name="737"><span class="lineNum">     737 </span>            :   }</a>
+<a name="738"><span class="lineNum">     738 </span>            : </a>
+<a name="739"><span class="lineNum">     739 </span>            :   template &lt;typename Trait&gt;</a>
+<a name="740"><span class="lineNum">     740 </span>            :   GPR_ATTRIBUTE_NOINLINE absl::enable_if_t&lt;</a>
+<a name="741"><span class="lineNum">     741 </span>            :       Trait::kRepeatable == false &amp;&amp;</a>
+<a name="742"><span class="lineNum">     742 </span>            :           !std::is_same&lt;Slice, typename Trait::ValueType&gt;::value,</a>
+<a name="743"><span class="lineNum">     743 </span>            :       absl::optional&lt;absl::string_view&gt;&gt;</a>
+<a name="744"><span class="lineNum">     744 </span><span class="lineCov">        150 :   Found(Trait) {</span></a>
+<a name="745"><span class="lineNum">     745 </span><span class="lineCov">        150 :     const auto* value = container_-&gt;get_pointer(Trait());</span></a>
+<a name="746"><span class="lineNum">     746 </span><span class="lineCov">        150 :     if (value == nullptr) return absl::nullopt;</span></a>
+<a name="747"><span class="lineNum">     747 </span><span class="lineCov">        150 :     *backing_ = std::string(Trait::Encode(*value).as_string_view());</span></a>
+<a name="748"><span class="lineNum">     748 </span><span class="lineCov">        150 :     return *backing_;</span></a>
+<a name="749"><span class="lineNum">     749 </span>            :   }</a>
+<a name="750"><span class="lineNum">     750 </span>            : </a>
+<a name="751"><span class="lineNum">     751 </span><span class="lineCov">     161883 :   GPR_ATTRIBUTE_NOINLINE absl::optional&lt;absl::string_view&gt; NotFound(</span></a>
+<a name="752"><span class="lineNum">     752 </span>            :       absl::string_view key) {</a>
+<a name="753"><span class="lineNum">     753 </span><span class="lineCov">     161883 :     return container_-&gt;GetStringValueUnknown(key, backing_);</span></a>
+<a name="754"><span class="lineNum">     754 </span>            :   }</a>
+<a name="755"><span class="lineNum">     755 </span>            : </a>
+<a name="756"><span class="lineNum">     756 </span>            :  private:</a>
+<a name="757"><span class="lineNum">     757 </span>            :   const Container* const container_;</a>
+<a name="758"><span class="lineNum">     758 </span>            :   std::string* backing_;</a>
+<a name="759"><span class="lineNum">     759 </span>            : };</a>
+<a name="760"><span class="lineNum">     760 </span>            : </a>
+<a name="761"><span class="lineNum">     761 </span>            : // Sink for key value logs</a>
+<a name="762"><span class="lineNum">     762 </span>            : using LogFn = absl::FunctionRef&lt;void(absl::string_view, absl::string_view)&gt;;</a>
+<a name="763"><span class="lineNum">     763 </span>            : </a>
+<a name="764"><span class="lineNum">     764 </span>            : template &lt;typename T&gt;</a>
+<a name="765"><span class="lineNum">     765 </span>            : struct AdaptDisplayValueToLog {</a>
+<a name="766"><span class="lineNum">     766 </span><span class="lineCov">          3 :   static std::string ToString(const T&amp; value) { return absl::StrCat(value); }</span></a>
+<a name="767"><span class="lineNum">     767 </span>            : };</a>
+<a name="768"><span class="lineNum">     768 </span>            : </a>
+<a name="769"><span class="lineNum">     769 </span>            : template &lt;&gt;</a>
+<a name="770"><span class="lineNum">     770 </span>            : struct AdaptDisplayValueToLog&lt;Slice&gt; {</a>
+<a name="771"><span class="lineNum">     771 </span><span class="lineCov">        224 :   static std::string ToString(Slice value) {</span></a>
+<a name="772"><span class="lineNum">     772 </span><span class="lineCov">        448 :     return std::string(value.as_string_view());</span></a>
+<a name="773"><span class="lineNum">     773 </span>            :   }</a>
+<a name="774"><span class="lineNum">     774 </span>            : };</a>
+<a name="775"><span class="lineNum">     775 </span>            : </a>
+<a name="776"><span class="lineNum">     776 </span>            : template &lt;&gt;</a>
+<a name="777"><span class="lineNum">     777 </span>            : struct AdaptDisplayValueToLog&lt;StaticSlice&gt; {</a>
+<a name="778"><span class="lineNum">     778 </span><span class="lineCov">         68 :   static absl::string_view ToString(StaticSlice value) {</span></a>
+<a name="779"><span class="lineNum">     779 </span><span class="lineCov">         68 :     return value.as_string_view();</span></a>
+<a name="780"><span class="lineNum">     780 </span>            :   }</a>
+<a name="781"><span class="lineNum">     781 </span>            : };</a>
+<a name="782"><span class="lineNum">     782 </span>            : </a>
+<a name="783"><span class="lineNum">     783 </span>            : template &lt;typename T, typename U, typename V&gt;</a>
+<a name="784"><span class="lineNum">     784 </span><span class="lineCov">        295 : GPR_ATTRIBUTE_NOINLINE void LogKeyValueTo(absl::string_view key, const T&amp; value,</span></a>
+<a name="785"><span class="lineNum">     785 </span>            :                                           V (*display_value)(U), LogFn log_fn) {</a>
+<a name="786"><span class="lineNum">     786 </span><span class="lineCov">        295 :   log_fn(key, AdaptDisplayValueToLog&lt;V&gt;::ToString(display_value(value)));</span></a>
+<a name="787"><span class="lineNum">     787 </span><span class="lineCov">        295 : }</span></a>
+<a name="788"><span class="lineNum">     788 </span>            : </a>
+<a name="789"><span class="lineNum">     789 </span>            : // Generate a strong type for metadata values per trait.</a>
+<a name="790"><span class="lineNum">     790 </span>            : template &lt;typename Which, typename Ignored = void&gt;</a>
+<a name="791"><span class="lineNum">     791 </span>            : struct Value;</a>
+<a name="792"><span class="lineNum">     792 </span>            : </a>
+<a name="793"><span class="lineNum">     793 </span>            : template &lt;typename Which&gt;</a>
+<a name="794"><span class="lineNum">     794 </span>            : struct Value&lt;Which, absl::enable_if_t&lt;Which::kRepeatable == false &amp;&amp;</a>
+<a name="795"><span class="lineNum">     795 </span>            :                                           IsEncodableTrait&lt;Which&gt;::value,</a>
+<a name="796"><span class="lineNum">     796 </span>            :                                       void&gt;&gt; {</a>
+<a name="797"><span class="lineNum">     797 </span><span class="lineCov">   15085040 :   Value() = default;</span></a>
+<a name="798"><span class="lineNum">     798 </span><span class="lineCov">   24827096 :   explicit Value(const typename Which::ValueType&amp; value) : value(value) {}</span></a>
+<a name="799"><span class="lineNum">     799 </span><span class="lineCov">  119722905 :   explicit Value(typename Which::ValueType&amp;&amp; value)</span></a>
+<a name="800"><span class="lineNum">     800 </span><span class="lineCov">  119722905 :       : value(std::forward&lt;typename Which::ValueType&gt;(value)) {}</span></a>
+<a name="801"><span class="lineNum">     801 </span>            :   Value(const Value&amp;) = delete;</a>
+<a name="802"><span class="lineNum">     802 </span>            :   Value&amp; operator=(const Value&amp;) = delete;</a>
+<a name="803"><span class="lineNum">     803 </span><span class="lineCov">   26271636 :   Value(Value&amp;&amp;) noexcept = default;</span></a>
+<a name="804"><span class="lineNum">     804 </span><span class="lineCov">       5473 :   Value&amp; operator=(Value&amp;&amp; other) noexcept {</span></a>
+<a name="805"><span class="lineNum">     805 </span><span class="lineCov">       5473 :     value = std::move(other.value);</span></a>
+<a name="806"><span class="lineNum">     806 </span><span class="lineCov">       5473 :     return *this;</span></a>
+<a name="807"><span class="lineNum">     807 </span>            :   }</a>
+<a name="808"><span class="lineNum">     808 </span>            :   template &lt;typename Encoder&gt;</a>
+<a name="809"><span class="lineNum">     809 </span><span class="lineCov">  111011024 :   void EncodeTo(Encoder* encoder) const {</span></a>
+<a name="810"><span class="lineNum">     810 </span><span class="lineCov">  111011024 :     encoder-&gt;Encode(Which(), value);</span></a>
+<a name="811"><span class="lineNum">     811 </span><span class="lineCov">  111011764 :   }</span></a>
+<a name="812"><span class="lineNum">     812 </span><span class="lineCov">        292 :   void LogTo(LogFn log_fn) const {</span></a>
+<a name="813"><span class="lineNum">     813 </span><span class="lineCov">        292 :     LogKeyValueTo(Which::key(), value, Which::Encode, log_fn);</span></a>
+<a name="814"><span class="lineNum">     814 </span><span class="lineCov">        292 :   }</span></a>
+<a name="815"><span class="lineNum">     815 </span>            :   using StorageType = typename Which::ValueType;</a>
+<a name="816"><span class="lineNum">     816 </span>            :   GPR_NO_UNIQUE_ADDRESS StorageType value;</a>
+<a name="817"><span class="lineNum">     817 </span>            : };</a>
+<a name="818"><span class="lineNum">     818 </span>            : </a>
+<a name="819"><span class="lineNum">     819 </span>            : template &lt;typename Which&gt;</a>
+<a name="820"><span class="lineNum">     820 </span>            : struct Value&lt;Which, absl::enable_if_t&lt;Which::kRepeatable == false &amp;&amp;</a>
+<a name="821"><span class="lineNum">     821 </span>            :                                           !IsEncodableTrait&lt;Which&gt;::value,</a>
+<a name="822"><span class="lineNum">     822 </span>            :                                       void&gt;&gt; {</a>
+<a name="823"><span class="lineNum">     823 </span>            :   Value() = default;</a>
+<a name="824"><span class="lineNum">     824 </span>            :   explicit Value(const typename Which::ValueType&amp; value) : value(value) {}</a>
+<a name="825"><span class="lineNum">     825 </span><span class="lineCov">   17340204 :   explicit Value(typename Which::ValueType&amp;&amp; value)</span></a>
+<a name="826"><span class="lineNum">     826 </span><span class="lineCov">   17340204 :       : value(std::forward&lt;typename Which::ValueType&gt;(value)) {}</span></a>
+<a name="827"><span class="lineNum">     827 </span>            :   Value(const Value&amp;) = delete;</a>
+<a name="828"><span class="lineNum">     828 </span>            :   Value&amp; operator=(const Value&amp;) = delete;</a>
+<a name="829"><span class="lineNum">     829 </span>            :   Value(Value&amp;&amp;) noexcept = default;</a>
+<a name="830"><span class="lineNum">     830 </span><span class="lineNoCov">          0 :   Value&amp; operator=(Value&amp;&amp; other) noexcept {</span></a>
+<a name="831"><span class="lineNum">     831 </span><span class="lineNoCov">          0 :     value = std::move(other.value);</span></a>
+<a name="832"><span class="lineNum">     832 </span><span class="lineNoCov">          0 :     return *this;</span></a>
+<a name="833"><span class="lineNum">     833 </span>            :   }</a>
+<a name="834"><span class="lineNum">     834 </span>            :   template &lt;typename Encoder&gt;</a>
+<a name="835"><span class="lineNum">     835 </span><span class="lineCov">   13224646 :   void EncodeTo(Encoder*) const {}</span></a>
+<a name="836"><span class="lineNum">     836 </span><span class="lineCov">          3 :   void LogTo(LogFn log_fn) const {</span></a>
+<a name="837"><span class="lineNum">     837 </span><span class="lineCov">          3 :     LogKeyValueTo(Which::DebugKey(), value, Which::DisplayValue, log_fn);</span></a>
+<a name="838"><span class="lineNum">     838 </span><span class="lineCov">          3 :   }</span></a>
+<a name="839"><span class="lineNum">     839 </span>            :   using StorageType = typename Which::ValueType;</a>
+<a name="840"><span class="lineNum">     840 </span>            :   GPR_NO_UNIQUE_ADDRESS StorageType value;</a>
+<a name="841"><span class="lineNum">     841 </span>            : };</a>
+<a name="842"><span class="lineNum">     842 </span>            : </a>
+<a name="843"><span class="lineNum">     843 </span>            : template &lt;typename Which&gt;</a>
+<a name="844"><span class="lineNum">     844 </span>            : struct Value&lt;Which, absl::enable_if_t&lt;Which::kRepeatable == true &amp;&amp;</a>
+<a name="845"><span class="lineNum">     845 </span>            :                                           IsEncodableTrait&lt;Which&gt;::value,</a>
+<a name="846"><span class="lineNum">     846 </span>            :                                       void&gt;&gt; {</a>
+<a name="847"><span class="lineNum">     847 </span><span class="lineCov">          3 :   Value() = default;</span></a>
+<a name="848"><span class="lineNum">     848 </span>            :   explicit Value(const typename Which::ValueType&amp; value) {</a>
+<a name="849"><span class="lineNum">     849 </span>            :     this-&gt;value.push_back(value);</a>
+<a name="850"><span class="lineNum">     850 </span>            :   }</a>
+<a name="851"><span class="lineNum">     851 </span>            :   explicit Value(typename Which::ValueType&amp;&amp; value) {</a>
+<a name="852"><span class="lineNum">     852 </span>            :     this-&gt;value.emplace_back(std::forward&lt;typename Which::ValueType&gt;(value));</a>
+<a name="853"><span class="lineNum">     853 </span>            :   }</a>
+<a name="854"><span class="lineNum">     854 </span>            :   Value(const Value&amp;) = delete;</a>
+<a name="855"><span class="lineNum">     855 </span>            :   Value&amp; operator=(const Value&amp;) = delete;</a>
+<a name="856"><span class="lineNum">     856 </span><span class="lineNoCov">          0 :   Value(Value&amp;&amp; other) noexcept : value(std::move(other.value)) {}</span></a>
+<a name="857"><span class="lineNum">     857 </span><span class="lineNoCov">          0 :   Value&amp; operator=(Value&amp;&amp; other) noexcept {</span></a>
+<a name="858"><span class="lineNum">     858 </span><span class="lineNoCov">          0 :     value = std::move(other.value);</span></a>
+<a name="859"><span class="lineNum">     859 </span><span class="lineNoCov">          0 :     return *this;</span></a>
+<a name="860"><span class="lineNum">     860 </span>            :   }</a>
+<a name="861"><span class="lineNum">     861 </span>            :   template &lt;typename Encoder&gt;</a>
+<a name="862"><span class="lineNum">     862 </span><span class="lineNoCov">          0 :   void EncodeTo(Encoder* encoder) const {</span></a>
+<a name="863"><span class="lineNum">     863 </span><span class="lineNoCov">          0 :     for (const auto&amp; v : value) {</span></a>
+<a name="864"><span class="lineNum">     864 </span><span class="lineNoCov">          0 :       encoder-&gt;Encode(Which(), v);</span></a>
+<a name="865"><span class="lineNum">     865 </span>            :     }</a>
+<a name="866"><span class="lineNum">     866 </span><span class="lineNoCov">          0 :   }</span></a>
+<a name="867"><span class="lineNum">     867 </span><span class="lineNoCov">          0 :   void LogTo(LogFn log_fn) const {</span></a>
+<a name="868"><span class="lineNum">     868 </span><span class="lineNoCov">          0 :     for (const auto&amp; v : value) {</span></a>
+<a name="869"><span class="lineNum">     869 </span><span class="lineNoCov">          0 :       LogKeyValueTo(Which::key(), v, Which::Encode, log_fn);</span></a>
+<a name="870"><span class="lineNum">     870 </span>            :     }</a>
+<a name="871"><span class="lineNum">     871 </span><span class="lineNoCov">          0 :   }</span></a>
+<a name="872"><span class="lineNum">     872 </span>            :   using StorageType = absl::InlinedVector&lt;typename Which::ValueType, 1&gt;;</a>
+<a name="873"><span class="lineNum">     873 </span>            :   StorageType value;</a>
+<a name="874"><span class="lineNum">     874 </span>            : };</a>
+<a name="875"><span class="lineNum">     875 </span>            : </a>
+<a name="876"><span class="lineNum">     876 </span>            : template &lt;typename Which&gt;</a>
+<a name="877"><span class="lineNum">     877 </span>            : struct Value&lt;Which, absl::enable_if_t&lt;Which::kRepeatable == true &amp;&amp;</a>
+<a name="878"><span class="lineNum">     878 </span>            :                                           !IsEncodableTrait&lt;Which&gt;::value,</a>
+<a name="879"><span class="lineNum">     879 </span>            :                                       void&gt;&gt; {</a>
+<a name="880"><span class="lineNum">     880 </span><span class="lineCov">       3029 :   Value() = default;</span></a>
+<a name="881"><span class="lineNum">     881 </span>            :   explicit Value(const typename Which::ValueType&amp; value) {</a>
+<a name="882"><span class="lineNum">     882 </span>            :     this-&gt;value.push_back(value);</a>
+<a name="883"><span class="lineNum">     883 </span>            :   }</a>
+<a name="884"><span class="lineNum">     884 </span>            :   explicit Value(typename Which::ValueType&amp;&amp; value) {</a>
+<a name="885"><span class="lineNum">     885 </span>            :     this-&gt;value.emplace_back(std::forward&lt;typename Which::ValueType&gt;(value));</a>
+<a name="886"><span class="lineNum">     886 </span>            :   }</a>
+<a name="887"><span class="lineNum">     887 </span>            :   Value(const Value&amp;) = delete;</a>
+<a name="888"><span class="lineNum">     888 </span>            :   Value&amp; operator=(const Value&amp;) = delete;</a>
+<a name="889"><span class="lineNum">     889 </span><span class="lineCov">        735 :   Value(Value&amp;&amp; other) noexcept : value(std::move(other.value)) {}</span></a>
+<a name="890"><span class="lineNum">     890 </span><span class="lineNoCov">          0 :   Value&amp; operator=(Value&amp;&amp; other) noexcept {</span></a>
+<a name="891"><span class="lineNum">     891 </span><span class="lineNoCov">          0 :     value = std::move(other.value);</span></a>
+<a name="892"><span class="lineNum">     892 </span><span class="lineNoCov">          0 :     return *this;</span></a>
+<a name="893"><span class="lineNum">     893 </span>            :   }</a>
+<a name="894"><span class="lineNum">     894 </span>            :   template &lt;typename Encoder&gt;</a>
+<a name="895"><span class="lineNum">     895 </span><span class="lineCov">       1916 :   void EncodeTo(Encoder*) const {}</span></a>
+<a name="896"><span class="lineNum">     896 </span><span class="lineNoCov">          0 :   void LogTo(LogFn log_fn) const {</span></a>
+<a name="897"><span class="lineNum">     897 </span><span class="lineNoCov">          0 :     for (const auto&amp; v : value) {</span></a>
+<a name="898"><span class="lineNum">     898 </span><span class="lineNoCov">          0 :       LogKeyValueTo(Which::DebugKey(), v, Which::DisplayValue, log_fn);</span></a>
+<a name="899"><span class="lineNum">     899 </span>            :     }</a>
+<a name="900"><span class="lineNum">     900 </span><span class="lineNoCov">          0 :   }</span></a>
+<a name="901"><span class="lineNum">     901 </span>            :   using StorageType = absl::InlinedVector&lt;typename Which::ValueType, 1&gt;;</a>
+<a name="902"><span class="lineNum">     902 </span>            :   StorageType value;</a>
+<a name="903"><span class="lineNum">     903 </span>            : };</a>
+<a name="904"><span class="lineNum">     904 </span>            : </a>
+<a name="905"><span class="lineNum">     905 </span>            : // Encoder to copy some metadata</a>
+<a name="906"><span class="lineNum">     906 </span>            : template &lt;typename Output&gt;</a>
+<a name="907"><span class="lineNum">     907 </span>            : class CopySink {</a>
+<a name="908"><span class="lineNum">     908 </span>            :  public:</a>
+<a name="909"><span class="lineNum">     909 </span><span class="lineCov">   17619278 :   explicit CopySink(Output* dst) : dst_(dst) {}</span></a>
+<a name="910"><span class="lineNum">     910 </span>            : </a>
+<a name="911"><span class="lineNum">     911 </span>            :   template &lt;class T, class V&gt;</a>
+<a name="912"><span class="lineNum">     912 </span><span class="lineCov">    4702988 :   void Encode(T trait, V value) {</span></a>
+<a name="913"><span class="lineNum">     913 </span><span class="lineCov">    4702988 :     dst_-&gt;Set(trait, value);</span></a>
+<a name="914"><span class="lineNum">     914 </span><span class="lineCov">    4702972 :   }</span></a>
+<a name="915"><span class="lineNum">     915 </span>            : </a>
+<a name="916"><span class="lineNum">     916 </span>            :   template &lt;class T&gt;</a>
+<a name="917"><span class="lineNum">     917 </span><span class="lineCov">    9778019 :   void Encode(T trait, const Slice&amp; value) {</span></a>
+<a name="918"><span class="lineNum">     918 </span><span class="lineCov">    9778019 :     dst_-&gt;Set(trait, std::move(value.AsOwned()));</span></a>
+<a name="919"><span class="lineNum">     919 </span><span class="lineCov">    9778406 :   }</span></a>
+<a name="920"><span class="lineNum">     920 </span>            : </a>
+<a name="921"><span class="lineNum">     921 </span><span class="lineCov">    6397651 :   void Encode(const Slice&amp; key, const Slice&amp; value) {</span></a>
+<a name="922"><span class="lineNum">     922 </span><span class="lineCov">    6397651 :     dst_-&gt;AppendUnknown(key.as_string_view(), value.Ref());</span></a>
+<a name="923"><span class="lineNum">     923 </span><span class="lineCov">    6397643 :   }</span></a>
+<a name="924"><span class="lineNum">     924 </span>            : </a>
+<a name="925"><span class="lineNum">     925 </span>            :  private:</a>
+<a name="926"><span class="lineNum">     926 </span>            :   Output* dst_;</a>
+<a name="927"><span class="lineNum">     927 </span>            : };</a>
+<a name="928"><span class="lineNum">     928 </span>            : </a>
+<a name="929"><span class="lineNum">     929 </span>            : // Callable for the ForEach in Encode() -- for each value, call the</a>
+<a name="930"><span class="lineNum">     930 </span>            : // appropriate encoder method.</a>
+<a name="931"><span class="lineNum">     931 </span>            : template &lt;typename Encoder&gt;</a>
+<a name="932"><span class="lineNum">     932 </span>            : struct EncodeWrapper {</a>
+<a name="933"><span class="lineNum">     933 </span>            :   Encoder* encoder;</a>
+<a name="934"><span class="lineNum">     934 </span>            :   template &lt;typename Which&gt;</a>
+<a name="935"><span class="lineNum">     935 </span><span class="lineCov">  124237254 :   void operator()(const Value&lt;Which&gt;&amp; which) {</span></a>
+<a name="936"><span class="lineNum">     936 </span><span class="lineCov">  124237254 :     which.EncodeTo(encoder);</span></a>
+<a name="937"><span class="lineNum">     937 </span><span class="lineCov">  124238325 :   }</span></a>
+<a name="938"><span class="lineNum">     938 </span>            : };</a>
+<a name="939"><span class="lineNum">     939 </span>            : </a>
+<a name="940"><span class="lineNum">     940 </span>            : // Callable for the ForEach in Log()</a>
+<a name="941"><span class="lineNum">     941 </span>            : struct LogWrapper {</a>
+<a name="942"><span class="lineNum">     942 </span>            :   LogFn log_fn;</a>
+<a name="943"><span class="lineNum">     943 </span>            :   template &lt;typename Which&gt;</a>
+<a name="944"><span class="lineNum">     944 </span><span class="lineCov">        295 :   void operator()(const Value&lt;Which&gt;&amp; which) {</span></a>
+<a name="945"><span class="lineNum">     945 </span><span class="lineCov">        295 :     which.LogTo(log_fn);</span></a>
+<a name="946"><span class="lineNum">     946 </span><span class="lineCov">        295 :   }</span></a>
+<a name="947"><span class="lineNum">     947 </span>            : };</a>
+<a name="948"><span class="lineNum">     948 </span>            : </a>
+<a name="949"><span class="lineNum">     949 </span>            : // Encoder to compute TransportSize</a>
+<a name="950"><span class="lineNum">     950 </span>            : class TransportSizeEncoder {</a>
+<a name="951"><span class="lineNum">     951 </span>            :  public:</a>
+<a name="952"><span class="lineNum">     952 </span><span class="lineCov">    3198820 :   void Encode(const Slice&amp; key, const Slice&amp; value) {</span></a>
+<a name="953"><span class="lineNum">     953 </span><span class="lineCov">    3198820 :     size_ += key.length() + value.length() + 32;</span></a>
+<a name="954"><span class="lineNum">     954 </span><span class="lineCov">    3198817 :   }</span></a>
+<a name="955"><span class="lineNum">     955 </span>            : </a>
+<a name="956"><span class="lineNum">     956 </span>            :   template &lt;typename Which&gt;</a>
+<a name="957"><span class="lineNum">     957 </span><span class="lineCov">    7255875 :   void Encode(Which, const typename Which::ValueType&amp; value) {</span></a>
+<a name="958"><span class="lineNum">     958 </span><span class="lineCov">    7255875 :     Add(Which(), value);</span></a>
+<a name="959"><span class="lineNum">     959 </span><span class="lineCov">    7255895 :   }</span></a>
+<a name="960"><span class="lineNum">     960 </span>            : </a>
+<a name="961"><span class="lineNum">     961 </span><span class="lineCov">          1 :   void Encode(ContentTypeMetadata,</span></a>
+<a name="962"><span class="lineNum">     962 </span>            :               const typename ContentTypeMetadata::ValueType&amp; value) {</a>
+<a name="963"><span class="lineNum">     963 </span><span class="lineCov">          1 :     if (value == ContentTypeMetadata::kInvalid) return;</span></a>
+<a name="964"><span class="lineNum">     964 </span><span class="lineNoCov">          0 :     Add(ContentTypeMetadata(), value);</span></a>
+<a name="965"><span class="lineNum">     965 </span>            :   }</a>
+<a name="966"><span class="lineNum">     966 </span>            : </a>
+<a name="967"><span class="lineNum">     967 </span><span class="lineCov">    4610864 :   size_t size() const { return size_; }</span></a>
+<a name="968"><span class="lineNum">     968 </span>            : </a>
+<a name="969"><span class="lineNum">     969 </span>            :  private:</a>
+<a name="970"><span class="lineNum">     970 </span>            :   template &lt;typename Which&gt;</a>
+<a name="971"><span class="lineNum">     971 </span><span class="lineCov">    7255870 :   void Add(Which, const typename Which::ValueType&amp; value) {</span></a>
+<a name="972"><span class="lineNum">     972 </span><span class="lineCov">    7255870 :     size_ += Which::key().length() + Which::Encode(value).length() + 32;</span></a>
+<a name="973"><span class="lineNum">     973 </span><span class="lineCov">    7255901 :   }</span></a>
+<a name="974"><span class="lineNum">     974 </span>            : </a>
+<a name="975"><span class="lineNum">     975 </span>            :   uint32_t size_ = 0;</a>
+<a name="976"><span class="lineNum">     976 </span>            : };</a>
+<a name="977"><span class="lineNum">     977 </span>            : </a>
+<a name="978"><span class="lineNum">     978 </span>            : }  // namespace metadata_detail</a>
+<a name="979"><span class="lineNum">     979 </span>            : </a>
+<a name="980"><span class="lineNum">     980 </span>            : // Helper function for encoders</a>
+<a name="981"><span class="lineNum">     981 </span>            : // Given a metadata trait, convert the value to a slice.</a>
+<a name="982"><span class="lineNum">     982 </span>            : template &lt;typename Which&gt;</a>
+<a name="983"><span class="lineNum">     983 </span>            : absl::enable_if_t&lt;std::is_same&lt;typename Which::ValueType, Slice&gt;::value,</a>
+<a name="984"><span class="lineNum">     984 </span>            :                   const Slice&amp;&gt;</a>
+<a name="985"><span class="lineNum">     985 </span><span class="lineCov">     108888 : MetadataValueAsSlice(const Slice&amp; slice) {</span></a>
+<a name="986"><span class="lineNum">     986 </span><span class="lineCov">     108888 :   return slice;</span></a>
+<a name="987"><span class="lineNum">     987 </span>            : }</a>
+<a name="988"><span class="lineNum">     988 </span>            : </a>
+<a name="989"><span class="lineNum">     989 </span>            : template &lt;typename Which&gt;</a>
+<a name="990"><span class="lineNum">     990 </span>            : absl::enable_if_t&lt;!std::is_same&lt;typename Which::ValueType, Slice&gt;::value, Slice&gt;</a>
+<a name="991"><span class="lineNum">     991 </span><span class="lineCov">       1647 : MetadataValueAsSlice(typename Which::ValueType value) {</span></a>
+<a name="992"><span class="lineNum">     992 </span><span class="lineCov">       1647 :   return Slice(Which::Encode(value));</span></a>
+<a name="993"><span class="lineNum">     993 </span>            : }</a>
+<a name="994"><span class="lineNum">     994 </span>            : </a>
+<a name="995"><span class="lineNum">     995 </span>            : // MetadataMap encodes the mapping of metadata keys to metadata values.</a>
+<a name="996"><span class="lineNum">     996 </span>            : //</a>
+<a name="997"><span class="lineNum">     997 </span>            : // MetadataMap takes a derived class and list of traits. Each of these trait</a>
+<a name="998"><span class="lineNum">     998 </span>            : // objects defines one metadata field that is used by core, and so should have</a>
+<a name="999"><span class="lineNum">     999 </span>            : // more specialized handling than just using the generic APIs.</a>
+<a name="1000"><span class="lineNum">    1000 </span>            : //</a>
+<a name="1001"><span class="lineNum">    1001 </span>            : // MetadataMap is the backing type for some derived type via the curiously</a>
+<a name="1002"><span class="lineNum">    1002 </span>            : // recursive template pattern. This is because many types consumed by</a>
+<a name="1003"><span class="lineNum">    1003 </span>            : // MetadataMap require the container type to operate on, and many of those</a>
+<a name="1004"><span class="lineNum">    1004 </span>            : // types are instantiated one per trait. A naive implementation without the</a>
+<a name="1005"><span class="lineNum">    1005 </span>            : // Derived type would, for traits A,B,C, then instantiate for some</a>
+<a name="1006"><span class="lineNum">    1006 </span>            : // T&lt;Container, Trait&gt;:</a>
+<a name="1007"><span class="lineNum">    1007 </span>            : //  - T&lt;MetadataMap&lt;A,B,C&gt;, A&gt;,</a>
+<a name="1008"><span class="lineNum">    1008 </span>            : //  - T&lt;MetadataMap&lt;A,B,C&gt;, B&gt;,</a>
+<a name="1009"><span class="lineNum">    1009 </span>            : //  - T&lt;MetadataMap&lt;A,B,C&gt;, C&gt;.</a>
+<a name="1010"><span class="lineNum">    1010 </span>            : // Since these types ultimately need to be recorded in the .dynstr segment</a>
+<a name="1011"><span class="lineNum">    1011 </span>            : // for dynamic linkers (if gRPC is linked as a static library) this would</a>
+<a name="1012"><span class="lineNum">    1012 </span>            : // create O(N^2) bytes of symbols even in stripped libraries. To avoid this</a>
+<a name="1013"><span class="lineNum">    1013 </span>            : // we use the derived type (e.g. grpc_metadata_batch right now) to capture</a>
+<a name="1014"><span class="lineNum">    1014 </span>            : // the container type, and we would write T&lt;grpc_metadata_batch, A&gt;, etc...</a>
+<a name="1015"><span class="lineNum">    1015 </span>            : // Note that now the container type uses a number of bytes that is independent</a>
+<a name="1016"><span class="lineNum">    1016 </span>            : // of the number of traits, and so we return to a linear symbol table growth</a>
+<a name="1017"><span class="lineNum">    1017 </span>            : // function.</a>
+<a name="1018"><span class="lineNum">    1018 </span>            : //</a>
+<a name="1019"><span class="lineNum">    1019 </span>            : // Each trait object has one of two possible signatures, depending on whether</a>
+<a name="1020"><span class="lineNum">    1020 </span>            : // that traits field is encodable or not.</a>
+<a name="1021"><span class="lineNum">    1021 </span>            : // Non-encodable traits are carried in a MetadataMap, but are never passed to</a>
+<a name="1022"><span class="lineNum">    1022 </span>            : // the application nor serialized to wire.</a>
+<a name="1023"><span class="lineNum">    1023 </span>            : //</a>
+<a name="1024"><span class="lineNum">    1024 </span>            : // Encodable traits have the following signature:</a>
+<a name="1025"><span class="lineNum">    1025 </span>            : // // Traits for the &quot;grpc-xyz&quot; metadata field:</a>
+<a name="1026"><span class="lineNum">    1026 </span>            : // struct GrpcXyzMetadata {</a>
+<a name="1027"><span class="lineNum">    1027 </span>            : //   // Can this metadata field be repeated?</a>
+<a name="1028"><span class="lineNum">    1028 </span>            : //   static constexpr bool kRepeatable = ...;</a>
+<a name="1029"><span class="lineNum">    1029 </span>            : //   // The type that's stored on MetadataBatch</a>
+<a name="1030"><span class="lineNum">    1030 </span>            : //   using ValueType = ...;</a>
+<a name="1031"><span class="lineNum">    1031 </span>            : //   // The type that's stored in compression/decompression tables</a>
+<a name="1032"><span class="lineNum">    1032 </span>            : //   using MementoType = ...;</a>
+<a name="1033"><span class="lineNum">    1033 </span>            : //   // The string key for this metadata type (for transports that require it)</a>
+<a name="1034"><span class="lineNum">    1034 </span>            : //   static absl::string_view key() { return &quot;grpc-xyz&quot;; }</a>
+<a name="1035"><span class="lineNum">    1035 </span>            : //   // Parse a memento from a slice</a>
+<a name="1036"><span class="lineNum">    1036 </span>            : //   // Takes ownership of value</a>
+<a name="1037"><span class="lineNum">    1037 </span>            : //   // Calls fn in the case of an error that should be reported to the user</a>
+<a name="1038"><span class="lineNum">    1038 </span>            : //   static MementoType ParseMemento(Slice value, MementoParseErrorFn fn) { ...</a>
+<a name="1039"><span class="lineNum">    1039 </span>            : //   }</a>
+<a name="1040"><span class="lineNum">    1040 </span>            : //   // Convert a memento to a value</a>
+<a name="1041"><span class="lineNum">    1041 </span>            : //   static ValueType MementoToValue(MementoType memento) { ... }</a>
+<a name="1042"><span class="lineNum">    1042 </span>            : //   // Convert a value to its canonical text wire format (the format that</a>
+<a name="1043"><span class="lineNum">    1043 </span>            : //   // ParseMemento will accept!)</a>
+<a name="1044"><span class="lineNum">    1044 </span>            : //   static Slice Encode(const ValueType&amp; value);</a>
+<a name="1045"><span class="lineNum">    1045 </span>            : //   // Convert a value to something that can be passed to StrCat and displayed</a>
+<a name="1046"><span class="lineNum">    1046 </span>            : //   // for debugging</a>
+<a name="1047"><span class="lineNum">    1047 </span>            : //   static SomeStrCatableType DisplayValue(MementoType value) { ... }</a>
+<a name="1048"><span class="lineNum">    1048 </span>            : // };</a>
+<a name="1049"><span class="lineNum">    1049 </span>            : //</a>
+<a name="1050"><span class="lineNum">    1050 </span>            : // Non-encodable traits are determined by missing the key() method, and have the</a>
+<a name="1051"><span class="lineNum">    1051 </span>            : // following signature (and by convention omit the Metadata part of the type</a>
+<a name="1052"><span class="lineNum">    1052 </span>            : // name):</a>
+<a name="1053"><span class="lineNum">    1053 </span>            : // // Traits for the GrpcXyz field:</a>
+<a name="1054"><span class="lineNum">    1054 </span>            : // struct GrpcXyz {</a>
+<a name="1055"><span class="lineNum">    1055 </span>            : //   // The string key that should be used for debug dumps - should not be a</a>
+<a name="1056"><span class="lineNum">    1056 </span>            : //   // valid http2 key (ie all lower case)</a>
+<a name="1057"><span class="lineNum">    1057 </span>            : //   static absl::string_view DebugKey() { return &quot;GRPC_XYZ&quot;; }</a>
+<a name="1058"><span class="lineNum">    1058 </span>            : //   // Can this metadata field be repeated?</a>
+<a name="1059"><span class="lineNum">    1059 </span>            : //   static constexpr bool kRepeatable = ...;</a>
+<a name="1060"><span class="lineNum">    1060 </span>            : //   // The type that's stored on MetadataBatch</a>
+<a name="1061"><span class="lineNum">    1061 </span>            : //   using ValueType = ...;</a>
+<a name="1062"><span class="lineNum">    1062 </span>            : //   // Convert a value to something that can be passed to StrCat and displayed</a>
+<a name="1063"><span class="lineNum">    1063 </span>            : //   // for debugging</a>
+<a name="1064"><span class="lineNum">    1064 </span>            : //   static SomeStrCatableType DisplayValue(ValueType value) { ... }</a>
+<a name="1065"><span class="lineNum">    1065 </span>            : // };</a>
+<a name="1066"><span class="lineNum">    1066 </span>            : //</a>
+<a name="1067"><span class="lineNum">    1067 </span>            : // About parsing and mementos:</a>
+<a name="1068"><span class="lineNum">    1068 </span>            : //</a>
+<a name="1069"><span class="lineNum">    1069 </span>            : // Many gRPC transports exchange metadata as key/value strings, but also allow</a>
+<a name="1070"><span class="lineNum">    1070 </span>            : // for a more efficient representation as a single integer. We can use this</a>
+<a name="1071"><span class="lineNum">    1071 </span>            : // integer representation to avoid reparsing too, by storing the parsed value</a>
+<a name="1072"><span class="lineNum">    1072 </span>            : // in the compression table. This is what mementos are used for.</a>
+<a name="1073"><span class="lineNum">    1073 </span>            : //</a>
+<a name="1074"><span class="lineNum">    1074 </span>            : // A trait offers the capability to turn a slice into a memento via</a>
+<a name="1075"><span class="lineNum">    1075 </span>            : // ParseMemento. This is exposed to users of MetadataMap via the Parse() method,</a>
+<a name="1076"><span class="lineNum">    1076 </span>            : // that returns a ParsedMetadata object. That ParsedMetadata object can in turn</a>
+<a name="1077"><span class="lineNum">    1077 </span>            : // be used to set the same value on many different MetadataMaps without having</a>
+<a name="1078"><span class="lineNum">    1078 </span>            : // to reparse.</a>
+<a name="1079"><span class="lineNum">    1079 </span>            : //</a>
+<a name="1080"><span class="lineNum">    1080 </span>            : // Implementation wise, ParsedMetadata is a type erased wrapper around</a>
+<a name="1081"><span class="lineNum">    1081 </span>            : // MementoType. When we set a value on MetadataMap, we first turn that memento</a>
+<a name="1082"><span class="lineNum">    1082 </span>            : // into a value. For most types, this is going to be a no-op, but for example</a>
+<a name="1083"><span class="lineNum">    1083 </span>            : // for grpc-timeout we make the memento the timeout expressed on the wire, but</a>
+<a name="1084"><span class="lineNum">    1084 </span>            : // we make the value the timestamp of when the timeout will expire (i.e. the</a>
+<a name="1085"><span class="lineNum">    1085 </span>            : // deadline).</a>
+<a name="1086"><span class="lineNum">    1086 </span>            : template &lt;class Derived, typename... Traits&gt;</a>
+<a name="1087"><span class="lineNum">    1087 </span>            : class MetadataMap {</a>
+<a name="1088"><span class="lineNum">    1088 </span>            :  public:</a>
+<a name="1089"><span class="lineNum">    1089 </span>            :   explicit MetadataMap(Arena* arena);</a>
+<a name="1090"><span class="lineNum">    1090 </span>            :   ~MetadataMap();</a>
+<a name="1091"><span class="lineNum">    1091 </span>            : </a>
+<a name="1092"><span class="lineNum">    1092 </span>            :   MetadataMap(const MetadataMap&amp;) = delete;</a>
+<a name="1093"><span class="lineNum">    1093 </span>            :   MetadataMap&amp; operator=(const MetadataMap&amp;) = delete;</a>
+<a name="1094"><span class="lineNum">    1094 </span>            :   MetadataMap(MetadataMap&amp;&amp;) noexcept;</a>
+<a name="1095"><span class="lineNum">    1095 </span>            :   // We never create MetadataMap directly, instead we create Derived, but we</a>
+<a name="1096"><span class="lineNum">    1096 </span>            :   // want to be able to move it without redeclaring this.</a>
+<a name="1097"><span class="lineNum">    1097 </span>            :   // NOLINTNEXTLINE(misc-unconventional-assign-operator)</a>
+<a name="1098"><span class="lineNum">    1098 </span>            :   Derived&amp; operator=(MetadataMap&amp;&amp;) noexcept;</a>
+<a name="1099"><span class="lineNum">    1099 </span>            : </a>
+<a name="1100"><span class="lineNum">    1100 </span>            :   // Encode this metadata map into some encoder.</a>
+<a name="1101"><span class="lineNum">    1101 </span>            :   // For each field that is set in the MetadataMap, call</a>
+<a name="1102"><span class="lineNum">    1102 </span>            :   // encoder-&gt;Encode.</a>
+<a name="1103"><span class="lineNum">    1103 </span>            :   //</a>
+<a name="1104"><span class="lineNum">    1104 </span>            :   // For fields for which we have traits, this will be a method with</a>
+<a name="1105"><span class="lineNum">    1105 </span>            :   // the signature:</a>
+<a name="1106"><span class="lineNum">    1106 </span>            :   //    void Encode(TraitsType, typename TraitsType::ValueType value);</a>
+<a name="1107"><span class="lineNum">    1107 </span>            :   // For fields for which we do not have traits, this will be a method</a>
+<a name="1108"><span class="lineNum">    1108 </span>            :   // with the signature:</a>
+<a name="1109"><span class="lineNum">    1109 </span>            :   //    void Encode(grpc_mdelem md);</a>
+<a name="1110"><span class="lineNum">    1110 </span>            :   // TODO(ctiller): It's expected that the latter Encode method will</a>
+<a name="1111"><span class="lineNum">    1111 </span>            :   // become Encode(Slice, Slice) by the end of the current metadata API</a>
+<a name="1112"><span class="lineNum">    1112 </span>            :   // transitions.</a>
+<a name="1113"><span class="lineNum">    1113 </span>            :   template &lt;typename Encoder&gt;</a>
+<a name="1114"><span class="lineNum">    1114 </span><span class="lineCov">   71310363 :   void Encode(Encoder* encoder) const {</span></a>
+<a name="1115"><span class="lineNum">    1115 </span><span class="lineCov">   71310363 :     table_.ForEach(metadata_detail::EncodeWrapper&lt;Encoder&gt;{encoder});</span></a>
+<a name="1116"><span class="lineNum">    1116 </span><span class="lineCov">  159965371 :     for (const auto&amp; unk : unknown_) {</span></a>
+<a name="1117"><span class="lineNum">    1117 </span><span class="lineCov">   17332152 :       encoder-&gt;Encode(unk.first, unk.second);</span></a>
+<a name="1118"><span class="lineNum">    1118 </span>            :     }</a>
+<a name="1119"><span class="lineNum">    1119 </span><span class="lineCov">   71316950 :   }</span></a>
+<a name="1120"><span class="lineNum">    1120 </span>            : </a>
+<a name="1121"><span class="lineNum">    1121 </span>            :   // Similar to Encode, but targeted at logging: for each metadatum,</a>
+<a name="1122"><span class="lineNum">    1122 </span>            :   // call f(key, value) as absl::string_views.</a>
+<a name="1123"><span class="lineNum">    1123 </span><span class="lineCov">        408 :   void Log(metadata_detail::LogFn log_fn) const {</span></a>
+<a name="1124"><span class="lineNum">    1124 </span><span class="lineCov">        408 :     table_.ForEach(metadata_detail::LogWrapper{log_fn});</span></a>
+<a name="1125"><span class="lineNum">    1125 </span><span class="lineCov">       1080 :     for (const auto&amp; unk : unknown_) {</span></a>
+<a name="1126"><span class="lineNum">    1126 </span><span class="lineCov">        264 :       log_fn(unk.first.as_string_view(), unk.second.as_string_view());</span></a>
+<a name="1127"><span class="lineNum">    1127 </span>            :     }</a>
+<a name="1128"><span class="lineNum">    1128 </span><span class="lineCov">        408 :   }</span></a>
+<a name="1129"><span class="lineNum">    1129 </span>            : </a>
+<a name="1130"><span class="lineNum">    1130 </span><span class="lineCov">        403 :   std::string DebugString() const {</span></a>
+<a name="1131"><span class="lineNum">    1131 </span><span class="lineCov">        403 :     std::string out;</span></a>
+<a name="1132"><span class="lineNum">    1132 </span><span class="lineCov">        403 :     Log([&amp;out](absl::string_view key, absl::string_view value) {</span></a>
+<a name="1133"><span class="lineNum">    1133 </span><span class="lineCov">        537 :       if (!out.empty()) out.append(&quot;, &quot;);</span></a>
+<a name="1134"><span class="lineNum">    1134 </span><span class="lineCov">        537 :       absl::StrAppend(&amp;out, absl::CEscape(key), &quot;: &quot;, absl::CEscape(value));</span></a>
+<a name="1135"><span class="lineNum">    1135 </span>            :     });</a>
+<a name="1136"><span class="lineNum">    1136 </span><span class="lineCov">        403 :     return out;</span></a>
+<a name="1137"><span class="lineNum">    1137 </span><span class="lineNoCov">          0 :   }</span></a>
+<a name="1138"><span class="lineNum">    1138 </span>            : </a>
+<a name="1139"><span class="lineNum">    1139 </span>            :   // Get the pointer to the value of some known metadata.</a>
+<a name="1140"><span class="lineNum">    1140 </span>            :   // Returns nullptr if the metadata is not present.</a>
+<a name="1141"><span class="lineNum">    1141 </span>            :   // Causes a compilation error if Which is not an element of Traits.</a>
+<a name="1142"><span class="lineNum">    1142 </span>            :   template &lt;typename Which&gt;</a>
+<a name="1143"><span class="lineNum">    1143 </span><span class="lineCov">        734 :   const typename metadata_detail::Value&lt;Which&gt;::StorageType* get_pointer(</span></a>
+<a name="1144"><span class="lineNum">    1144 </span>            :       Which) const {</a>
+<a name="1145"><span class="lineNum">    1145 </span><span class="lineCov">        734 :     if (auto* p = table_.template get&lt;Value&lt;Which&gt;&gt;()) return &amp;p-&gt;value;</span></a>
+<a name="1146"><span class="lineNum">    1146 </span><span class="lineCov">        435 :     return nullptr;</span></a>
+<a name="1147"><span class="lineNum">    1147 </span>            :   }</a>
+<a name="1148"><span class="lineNum">    1148 </span>            : </a>
+<a name="1149"><span class="lineNum">    1149 </span>            :   // Get the pointer to the value of some known metadata.</a>
+<a name="1150"><span class="lineNum">    1150 </span>            :   // Returns nullptr if the metadata is not present.</a>
+<a name="1151"><span class="lineNum">    1151 </span>            :   // Causes a compilation error if Which is not an element of Traits.</a>
+<a name="1152"><span class="lineNum">    1152 </span>            :   template &lt;typename Which&gt;</a>
+<a name="1153"><span class="lineNum">    1153 </span><span class="lineCov">  138364255 :   typename metadata_detail::Value&lt;Which&gt;::StorageType* get_pointer(Which) {</span></a>
+<a name="1154"><span class="lineNum">    1154 </span><span class="lineCov">  138364255 :     if (auto* p = table_.template get&lt;Value&lt;Which&gt;&gt;()) return &amp;p-&gt;value;</span></a>
+<a name="1155"><span class="lineNum">    1155 </span><span class="lineCov">   67920874 :     return nullptr;</span></a>
+<a name="1156"><span class="lineNum">    1156 </span>            :   }</a>
+<a name="1157"><span class="lineNum">    1157 </span>            : </a>
+<a name="1158"><span class="lineNum">    1158 </span>            :   // Get the pointer to the value of some known metadata.</a>
+<a name="1159"><span class="lineNum">    1159 </span>            :   // Adds the default value for the metadata is not present.</a>
+<a name="1160"><span class="lineNum">    1160 </span>            :   // Causes a compilation error if Which is not an element of Traits.</a>
+<a name="1161"><span class="lineNum">    1161 </span>            :   template &lt;typename Which&gt;</a>
+<a name="1162"><span class="lineNum">    1162 </span><span class="lineCov">   15088544 :   typename metadata_detail::Value&lt;Which&gt;::StorageType* GetOrCreatePointer(</span></a>
+<a name="1163"><span class="lineNum">    1163 </span>            :       Which) {</a>
+<a name="1164"><span class="lineNum">    1164 </span><span class="lineCov">   15088544 :     return &amp;table_.template get_or_create&lt;Value&lt;Which&gt;&gt;()-&gt;value;</span></a>
+<a name="1165"><span class="lineNum">    1165 </span>            :   }</a>
+<a name="1166"><span class="lineNum">    1166 </span>            : </a>
+<a name="1167"><span class="lineNum">    1167 </span>            :   // Get the value of some known metadata.</a>
+<a name="1168"><span class="lineNum">    1168 </span>            :   // Returns nullopt if the metadata is not present.</a>
+<a name="1169"><span class="lineNum">    1169 </span>            :   // Causes a compilation error if Which is not an element of Traits.</a>
+<a name="1170"><span class="lineNum">    1170 </span>            :   template &lt;typename Which&gt;</a>
+<a name="1171"><span class="lineNum">    1171 </span><span class="lineCov">   99467062 :   absl::optional&lt;typename Which::ValueType&gt; get(Which) const {</span></a>
+<a name="1172"><span class="lineNum">    1172 </span><span class="lineCov">   99467062 :     if (auto* p = table_.template get&lt;Value&lt;Which&gt;&gt;()) return p-&gt;value;</span></a>
+<a name="1173"><span class="lineNum">    1173 </span><span class="lineCov">   66140455 :     return absl::nullopt;</span></a>
+<a name="1174"><span class="lineNum">    1174 </span>            :   }</a>
+<a name="1175"><span class="lineNum">    1175 </span>            : </a>
+<a name="1176"><span class="lineNum">    1176 </span>            :   // Set the value of some known metadata.</a>
+<a name="1177"><span class="lineNum">    1177 </span>            :   // Returns a pointer to the new value.</a>
+<a name="1178"><span class="lineNum">    1178 </span>            :   template &lt;typename Which, typename... Args&gt;</a>
+<a name="1179"><span class="lineNum">    1179 </span><span class="lineCov">  161912862 :   absl::enable_if_t&lt;Which::kRepeatable == false, void&gt; Set(Which,</span></a>
+<a name="1180"><span class="lineNum">    1180 </span>            :                                                            Args&amp;&amp;... args) {</a>
+<a name="1181"><span class="lineNum">    1181 </span><span class="lineCov">  161912862 :     table_.template set&lt;Value&lt;Which&gt;&gt;(std::forward&lt;Args&gt;(args)...);</span></a>
+<a name="1182"><span class="lineNum">    1182 </span><span class="lineCov">  161902008 :   }</span></a>
+<a name="1183"><span class="lineNum">    1183 </span>            :   template &lt;typename Which, typename... Args&gt;</a>
+<a name="1184"><span class="lineNum">    1184 </span><span class="lineCov">          3 :   absl::enable_if_t&lt;Which::kRepeatable == true, void&gt; Set(Which,</span></a>
+<a name="1185"><span class="lineNum">    1185 </span>            :                                                           Args&amp;&amp;... args) {</a>
+<a name="1186"><span class="lineNum">    1186 </span><span class="lineCov">          3 :     GetOrCreatePointer(Which())-&gt;emplace_back(std::forward&lt;Args&gt;(args)...);</span></a>
+<a name="1187"><span class="lineNum">    1187 </span><span class="lineCov">          3 :   }</span></a>
+<a name="1188"><span class="lineNum">    1188 </span>            : </a>
+<a name="1189"><span class="lineNum">    1189 </span>            :   // Remove a specific piece of known metadata.</a>
+<a name="1190"><span class="lineNum">    1190 </span>            :   template &lt;typename Which&gt;</a>
+<a name="1191"><span class="lineNum">    1191 </span><span class="lineCov">   85180524 :   void Remove(Which) {</span></a>
+<a name="1192"><span class="lineNum">    1192 </span><span class="lineCov">   85180524 :     table_.template clear&lt;Value&lt;Which&gt;&gt;();</span></a>
+<a name="1193"><span class="lineNum">    1193 </span><span class="lineCov">   85178531 :   }</span></a>
+<a name="1194"><span class="lineNum">    1194 </span>            : </a>
+<a name="1195"><span class="lineNum">    1195 </span>            :   // Remove some metadata by name</a>
+<a name="1196"><span class="lineNum">    1196 </span><span class="lineCov">      85988 :   void Remove(absl::string_view key) {</span></a>
+<a name="1197"><span class="lineNum">    1197 </span><span class="lineCov">      85988 :     metadata_detail::RemoveHelper&lt;Derived&gt; helper(static_cast&lt;Derived*&gt;(this));</span></a>
+<a name="1198"><span class="lineNum">    1198 </span><span class="lineCov">      85988 :     metadata_detail::NameLookup&lt;void, Traits...&gt;::Lookup(key, &amp;helper);</span></a>
+<a name="1199"><span class="lineNum">    1199 </span><span class="lineCov">      85988 :   }</span></a>
+<a name="1200"><span class="lineNum">    1200 </span>            : </a>
+<a name="1201"><span class="lineNum">    1201 </span>            :   void Remove(const char* key) { Remove(absl::string_view(key)); }</a>
+<a name="1202"><span class="lineNum">    1202 </span>            : </a>
+<a name="1203"><span class="lineNum">    1203 </span>            :   // Retrieve some metadata by name</a>
+<a name="1204"><span class="lineNum">    1204 </span><span class="lineCov">     162046 :   absl::optional&lt;absl::string_view&gt; GetStringValue(absl::string_view name,</span></a>
+<a name="1205"><span class="lineNum">    1205 </span>            :                                                    std::string* buffer) const {</a>
+<a name="1206"><span class="lineNum">    1206 </span><span class="lineCov">     162046 :     metadata_detail::GetStringValueHelper&lt;Derived&gt; helper(</span></a>
+<a name="1207"><span class="lineNum">    1207 </span>            :         static_cast&lt;const Derived*&gt;(this), buffer);</a>
+<a name="1208"><span class="lineNum">    1208 </span><span class="lineCov">     324089 :     return metadata_detail::NameLookup&lt;void, Traits...&gt;::Lookup(name, &amp;helper);</span></a>
+<a name="1209"><span class="lineNum">    1209 </span>            :   }</a>
+<a name="1210"><span class="lineNum">    1210 </span>            : </a>
+<a name="1211"><span class="lineNum">    1211 </span>            :   // Extract a piece of known metadata.</a>
+<a name="1212"><span class="lineNum">    1212 </span>            :   // Returns nullopt if the metadata was not present, or the value if it was.</a>
+<a name="1213"><span class="lineNum">    1213 </span>            :   // The same as:</a>
+<a name="1214"><span class="lineNum">    1214 </span>            :   //  auto value = m.get(T());</a>
+<a name="1215"><span class="lineNum">    1215 </span>            :   //  m.Remove(T());</a>
+<a name="1216"><span class="lineNum">    1216 </span>            :   template &lt;typename Which&gt;</a>
+<a name="1217"><span class="lineNum">    1217 </span>            :   absl::enable_if_t&lt;Which::kRepeatable == false,</a>
+<a name="1218"><span class="lineNum">    1218 </span>            :                     absl::optional&lt;typename Which::ValueType&gt;&gt;</a>
+<a name="1219"><span class="lineNum">    1219 </span><span class="lineCov">   82918991 :   Take(Which which) {</span></a>
+<a name="1220"><span class="lineNum">    1220 </span><span class="lineCov">   82918991 :     if (auto* p = get_pointer(which)) {</span></a>
+<a name="1221"><span class="lineNum">    1221 </span><span class="lineCov">   40927653 :       absl::optional&lt;typename Which::ValueType&gt; value(std::move(*p));</span></a>
+<a name="1222"><span class="lineNum">    1222 </span><span class="lineCov">   40927605 :       Remove(which);</span></a>
+<a name="1223"><span class="lineNum">    1223 </span><span class="lineCov">   40927325 :       return value;</span></a>
+<a name="1224"><span class="lineNum">    1224 </span><span class="lineCov">   17162204 :     }</span></a>
+<a name="1225"><span class="lineNum">    1225 </span><span class="lineCov">   41992013 :     return {};</span></a>
+<a name="1226"><span class="lineNum">    1226 </span>            :   }</a>
+<a name="1227"><span class="lineNum">    1227 </span>            : </a>
+<a name="1228"><span class="lineNum">    1228 </span>            :   // Extract repeated known metadata.</a>
+<a name="1229"><span class="lineNum">    1229 </span>            :   // Returns an empty vector if the metadata was not present.</a>
+<a name="1230"><span class="lineNum">    1230 </span>            :   template &lt;typename Which&gt;</a>
+<a name="1231"><span class="lineNum">    1231 </span>            :   absl::enable_if_t&lt;Which::kRepeatable == true,</a>
+<a name="1232"><span class="lineNum">    1232 </span>            :                     typename metadata_detail::Value&lt;Which&gt;::StorageType&gt;</a>
+<a name="1233"><span class="lineNum">    1233 </span><span class="lineCov">          6 :   Take(Which which) {</span></a>
+<a name="1234"><span class="lineNum">    1234 </span><span class="lineCov">          6 :     if (auto* p = get_pointer(which)) {</span></a>
+<a name="1235"><span class="lineNum">    1235 </span><span class="lineCov">          3 :       typename Value&lt;Which&gt;::StorageType value = std::move(*p);</span></a>
+<a name="1236"><span class="lineNum">    1236 </span><span class="lineCov">          3 :       Remove(which);</span></a>
+<a name="1237"><span class="lineNum">    1237 </span><span class="lineCov">          3 :       return value;</span></a>
+<a name="1238"><span class="lineNum">    1238 </span><span class="lineCov">          3 :     }</span></a>
+<a name="1239"><span class="lineNum">    1239 </span><span class="lineCov">          3 :     return {};</span></a>
+<a name="1240"><span class="lineNum">    1240 </span>            :   }</a>
+<a name="1241"><span class="lineNum">    1241 </span>            : </a>
+<a name="1242"><span class="lineNum">    1242 </span>            :   // Parse metadata from a key/value pair, and return an object representing</a>
+<a name="1243"><span class="lineNum">    1243 </span>            :   // that result.</a>
+<a name="1244"><span class="lineNum">    1244 </span>            :   // TODO(ctiller): key should probably be an absl::string_view.</a>
+<a name="1245"><span class="lineNum">    1245 </span>            :   // Once we don't care about interning anymore, make that change!</a>
+<a name="1246"><span class="lineNum">    1246 </span><span class="lineCov">   11355147 :   static ParsedMetadata&lt;Derived&gt; Parse(absl::string_view key, Slice value,</span></a>
+<a name="1247"><span class="lineNum">    1247 </span>            :                                        uint32_t transport_size,</a>
+<a name="1248"><span class="lineNum">    1248 </span>            :                                        MetadataParseErrorFn on_error) {</a>
+<a name="1249"><span class="lineNum">    1249 </span><span class="lineCov">   11355147 :     metadata_detail::ParseHelper&lt;Derived&gt; helper(value.TakeOwned(), on_error,</span></a>
+<a name="1250"><span class="lineNum">    1250 </span>            :                                                  transport_size);</a>
+<a name="1251"><span class="lineNum">    1251 </span><span class="lineCov">   22710301 :     return metadata_detail::NameLookup&lt;void, Traits...&gt;::Lookup(key, &amp;helper);</span></a>
+<a name="1252"><span class="lineNum">    1252 </span><span class="lineCov">   11355151 :   }</span></a>
+<a name="1253"><span class="lineNum">    1253 </span>            : </a>
+<a name="1254"><span class="lineNum">    1254 </span>            :   // Set a value from a parsed metadata object.</a>
+<a name="1255"><span class="lineNum">    1255 </span><span class="lineCov">   59889913 :   void Set(const ParsedMetadata&lt;Derived&gt;&amp; m) {</span></a>
+<a name="1256"><span class="lineNum">    1256 </span><span class="lineCov">   59889913 :     m.SetOnContainer(static_cast&lt;Derived*&gt;(this));</span></a>
+<a name="1257"><span class="lineNum">    1257 </span><span class="lineCov">   59881604 :   }</span></a>
+<a name="1258"><span class="lineNum">    1258 </span>            : </a>
+<a name="1259"><span class="lineNum">    1259 </span>            :   // Append a key/value pair - takes ownership of value</a>
+<a name="1260"><span class="lineNum">    1260 </span><span class="lineCov">    4007336 :   void Append(absl::string_view key, Slice value,</span></a>
+<a name="1261"><span class="lineNum">    1261 </span>            :               MetadataParseErrorFn on_error) {</a>
+<a name="1262"><span class="lineNum">    1262 </span><span class="lineCov">    4007336 :     metadata_detail::AppendHelper&lt;Derived&gt; helper(static_cast&lt;Derived*&gt;(this),</span></a>
+<a name="1263"><span class="lineNum">    1263 </span>            :                                                   value.TakeOwned(), on_error);</a>
+<a name="1264"><span class="lineNum">    1264 </span><span class="lineCov">    4007339 :     metadata_detail::NameLookup&lt;void, Traits...&gt;::Lookup(key, &amp;helper);</span></a>
+<a name="1265"><span class="lineNum">    1265 </span><span class="lineCov">    4007304 :   }</span></a>
+<a name="1266"><span class="lineNum">    1266 </span>            : </a>
+<a name="1267"><span class="lineNum">    1267 </span>            :   void Clear();</a>
+<a name="1268"><span class="lineNum">    1268 </span>            :   size_t TransportSize() const;</a>
+<a name="1269"><span class="lineNum">    1269 </span>            :   Derived Copy() const;</a>
+<a name="1270"><span class="lineNum">    1270 </span><span class="lineCov">   11579911 :   bool empty() const { return table_.empty() &amp;&amp; unknown_.empty(); }</span></a>
+<a name="1271"><span class="lineNum">    1271 </span><span class="lineCov">   56746609 :   size_t count() const { return table_.count() + unknown_.size(); }</span></a>
+<a name="1272"><span class="lineNum">    1272 </span>            : </a>
+<a name="1273"><span class="lineNum">    1273 </span>            :  private:</a>
+<a name="1274"><span class="lineNum">    1274 </span>            :   friend class metadata_detail::AppendHelper&lt;Derived&gt;;</a>
+<a name="1275"><span class="lineNum">    1275 </span>            :   friend class metadata_detail::GetStringValueHelper&lt;Derived&gt;;</a>
+<a name="1276"><span class="lineNum">    1276 </span>            :   friend class metadata_detail::RemoveHelper&lt;Derived&gt;;</a>
+<a name="1277"><span class="lineNum">    1277 </span>            :   friend class metadata_detail::CopySink&lt;Derived&gt;;</a>
+<a name="1278"><span class="lineNum">    1278 </span>            :   friend class ParsedMetadata&lt;Derived&gt;;</a>
+<a name="1279"><span class="lineNum">    1279 </span>            : </a>
+<a name="1280"><span class="lineNum">    1280 </span>            :   template &lt;typename Which&gt;</a>
+<a name="1281"><span class="lineNum">    1281 </span>            :   using Value = metadata_detail::Value&lt;Which&gt;;</a>
+<a name="1282"><span class="lineNum">    1282 </span>            : </a>
+<a name="1283"><span class="lineNum">    1283 </span><span class="lineCov">   14017487 :   void AppendUnknown(absl::string_view key, Slice value) {</span></a>
+<a name="1284"><span class="lineNum">    1284 </span><span class="lineCov">   14017487 :     unknown_.EmplaceBack(Slice::FromCopiedString(key), value.Ref());</span></a>
+<a name="1285"><span class="lineNum">    1285 </span><span class="lineCov">   14017427 :   }</span></a>
+<a name="1286"><span class="lineNum">    1286 </span>            : </a>
+<a name="1287"><span class="lineNum">    1287 </span><span class="lineCov">      85988 :   void RemoveUnknown(absl::string_view key) {</span></a>
+<a name="1288"><span class="lineNum">    1288 </span><span class="lineCov">      85988 :     unknown_.SetEnd(std::remove_if(unknown_.begin(), unknown_.end(),</span></a>
+<a name="1289"><span class="lineNum">    1289 </span><span class="lineCov">     337520 :                                    [key](const std::pair&lt;Slice, Slice&gt;&amp; p) {</span></a>
+<a name="1290"><span class="lineNum">    1290 </span><span class="lineCov">     337520 :                                      return p.first.as_string_view() == key;</span></a>
+<a name="1291"><span class="lineNum">    1291 </span>            :                                    }));</a>
+<a name="1292"><span class="lineNum">    1292 </span><span class="lineCov">      85988 :   }</span></a>
+<a name="1293"><span class="lineNum">    1293 </span>            : </a>
+<a name="1294"><span class="lineNum">    1294 </span><span class="lineCov">     161883 :   absl::optional&lt;absl::string_view&gt; GetStringValueUnknown(</span></a>
+<a name="1295"><span class="lineNum">    1295 </span>            :       absl::string_view key, std::string* backing) const {</a>
+<a name="1296"><span class="lineNum">    1296 </span><span class="lineCov">     161883 :     absl::optional&lt;absl::string_view&gt; out;</span></a>
+<a name="1297"><span class="lineNum">    1297 </span><span class="lineCov">     659013 :     for (const auto&amp; p : unknown_) {</span></a>
+<a name="1298"><span class="lineNum">    1298 </span><span class="lineCov">     335249 :       if (p.first.as_string_view() == key) {</span></a>
+<a name="1299"><span class="lineNum">    1299 </span><span class="lineCov">     147520 :         if (!out.has_value()) {</span></a>
+<a name="1300"><span class="lineNum">    1300 </span><span class="lineCov">     144790 :           out = p.second.as_string_view();</span></a>
+<a name="1301"><span class="lineNum">    1301 </span>            :         } else {</a>
+<a name="1302"><span class="lineNum">    1302 </span><span class="lineCov">       2730 :           out = *backing = absl::StrCat(*out, &quot;,&quot;, p.second.as_string_view());</span></a>
+<a name="1303"><span class="lineNum">    1303 </span>            :         }</a>
+<a name="1304"><span class="lineNum">    1304 </span>            :       }</a>
+<a name="1305"><span class="lineNum">    1305 </span>            :     }</a>
+<a name="1306"><span class="lineNum">    1306 </span><span class="lineCov">     161875 :     return out;</span></a>
+<a name="1307"><span class="lineNum">    1307 </span>            :   }</a>
+<a name="1308"><span class="lineNum">    1308 </span>            : </a>
+<a name="1309"><span class="lineNum">    1309 </span>            :   // Table of known metadata types.</a>
+<a name="1310"><span class="lineNum">    1310 </span>            :   Table&lt;Value&lt;Traits&gt;...&gt; table_;</a>
+<a name="1311"><span class="lineNum">    1311 </span>            :   // Backing store for added metadata.</a>
+<a name="1312"><span class="lineNum">    1312 </span>            :   ChunkedVector&lt;std::pair&lt;Slice, Slice&gt;, 10&gt; unknown_;</a>
+<a name="1313"><span class="lineNum">    1313 </span>            : };</a>
+<a name="1314"><span class="lineNum">    1314 </span>            : </a>
+<a name="1315"><span class="lineNum">    1315 </span>            : // Ok/not-ok check for metadata maps that contain GrpcStatusMetadata, so that</a>
+<a name="1316"><span class="lineNum">    1316 </span>            : // they can be used as result types for TrySeq.</a>
+<a name="1317"><span class="lineNum">    1317 </span>            : template &lt;typename Derived, typename... Args&gt;</a>
+<a name="1318"><span class="lineNum">    1318 </span><span class="lineCov">          1 : inline bool IsStatusOk(const MetadataMap&lt;Derived, Args...&gt;&amp; m) {</span></a>
+<a name="1319"><span class="lineNum">    1319 </span><span class="lineCov">          1 :   return m.get(GrpcStatusMetadata()).value_or(GRPC_STATUS_UNKNOWN) ==</span></a>
+<a name="1320"><span class="lineNum">    1320 </span><span class="lineCov">          1 :          GRPC_STATUS_OK;</span></a>
+<a name="1321"><span class="lineNum">    1321 </span>            : }</a>
+<a name="1322"><span class="lineNum">    1322 </span>            : </a>
+<a name="1323"><span class="lineNum">    1323 </span>            : template &lt;typename Derived, typename... Traits&gt;</a>
+<a name="1324"><span class="lineNum">    1324 </span><span class="lineCov">  147519378 : MetadataMap&lt;Derived, Traits...&gt;::MetadataMap(Arena* arena) : unknown_(arena) {}</span></a>
+<a name="1325"><span class="lineNum">    1325 </span>            : </a>
+<a name="1326"><span class="lineNum">    1326 </span>            : template &lt;typename Derived, typename... Traits&gt;</a>
+<a name="1327"><span class="lineNum">    1327 </span><span class="lineCov">          5 : MetadataMap&lt;Derived, Traits...&gt;::MetadataMap(MetadataMap&amp;&amp; other) noexcept</span></a>
+<a name="1328"><span class="lineNum">    1328 </span><span class="lineCov">          5 :     : table_(std::move(other.table_)), unknown_(std::move(other.unknown_)) {}</span></a>
+<a name="1329"><span class="lineNum">    1329 </span>            : </a>
+<a name="1330"><span class="lineNum">    1330 </span>            : // We never create MetadataMap directly, instead we create Derived, but we want</a>
+<a name="1331"><span class="lineNum">    1331 </span>            : // to be able to move it without redeclaring this.</a>
+<a name="1332"><span class="lineNum">    1332 </span>            : // NOLINTNEXTLINE(misc-unconventional-assign-operator)</a>
+<a name="1333"><span class="lineNum">    1333 </span>            : template &lt;typename Derived, typename... Traits&gt;</a>
+<a name="1334"><span class="lineNum">    1334 </span><span class="lineCov">   43754982 : Derived&amp; MetadataMap&lt;Derived, Traits...&gt;::operator=(</span></a>
+<a name="1335"><span class="lineNum">    1335 </span>            :     MetadataMap&amp;&amp; other) noexcept {</a>
+<a name="1336"><span class="lineNum">    1336 </span><span class="lineCov">   43754982 :   table_ = std::move(other.table_);</span></a>
+<a name="1337"><span class="lineNum">    1337 </span><span class="lineCov">   43753302 :   unknown_ = std::move(other.unknown_);</span></a>
+<a name="1338"><span class="lineNum">    1338 </span><span class="lineCov">   43754941 :   return static_cast&lt;Derived&amp;&gt;(*this);</span></a>
+<a name="1339"><span class="lineNum">    1339 </span>            : }</a>
+<a name="1340"><span class="lineNum">    1340 </span>            : </a>
+<a name="1341"><span class="lineNum">    1341 </span>            : template &lt;typename Derived, typename... Traits&gt;</a>
+<a name="1342"><span class="lineNum">    1342 </span><span class="lineCov">  147247925 : MetadataMap&lt;Derived, Traits...&gt;::~MetadataMap() = default;</span></a>
+<a name="1343"><span class="lineNum">    1343 </span>            : </a>
+<a name="1344"><span class="lineNum">    1344 </span>            : template &lt;typename Derived, typename... Traits&gt;</a>
+<a name="1345"><span class="lineNum">    1345 </span><span class="lineCov">  143798129 : void MetadataMap&lt;Derived, Traits...&gt;::Clear() {</span></a>
+<a name="1346"><span class="lineNum">    1346 </span><span class="lineCov">  143798129 :   table_.ClearAll();</span></a>
+<a name="1347"><span class="lineNum">    1347 </span><span class="lineCov">  143750687 :   unknown_.Clear();</span></a>
+<a name="1348"><span class="lineNum">    1348 </span><span class="lineCov">  143767631 : }</span></a>
+<a name="1349"><span class="lineNum">    1349 </span>            : </a>
+<a name="1350"><span class="lineNum">    1350 </span>            : template &lt;typename Derived, typename... Traits&gt;</a>
+<a name="1351"><span class="lineNum">    1351 </span><span class="lineCov">    4610879 : size_t MetadataMap&lt;Derived, Traits...&gt;::TransportSize() const {</span></a>
+<a name="1352"><span class="lineNum">    1352 </span><span class="lineCov">    4610879 :   metadata_detail::TransportSizeEncoder enc;</span></a>
+<a name="1353"><span class="lineNum">    1353 </span><span class="lineCov">    4610879 :   Encode(&amp;enc);</span></a>
+<a name="1354"><span class="lineNum">    1354 </span><span class="lineCov">    9221787 :   return enc.size();</span></a>
+<a name="1355"><span class="lineNum">    1355 </span>            : }</a>
+<a name="1356"><span class="lineNum">    1356 </span>            : </a>
+<a name="1357"><span class="lineNum">    1357 </span>            : template &lt;typename Derived, typename... Traits&gt;</a>
+<a name="1358"><span class="lineNum">    1358 </span><span class="lineCov">   17623407 : Derived MetadataMap&lt;Derived, Traits...&gt;::Copy() const {</span></a>
+<a name="1359"><span class="lineNum">    1359 </span><span class="lineCov">   17623407 :   Derived out(unknown_.arena());</span></a>
+<a name="1360"><span class="lineNum">    1360 </span><span class="lineCov">   17619103 :   metadata_detail::CopySink&lt;Derived&gt; sink(&amp;out);</span></a>
+<a name="1361"><span class="lineNum">    1361 </span><span class="lineCov">   17619258 :   Encode(&amp;sink);</span></a>
+<a name="1362"><span class="lineNum">    1362 </span><span class="lineCov">   35249228 :   return out;</span></a>
+<a name="1363"><span class="lineNum">    1363 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="1364"><span class="lineNum">    1364 </span>            : </a>
+<a name="1365"><span class="lineNum">    1365 </span>            : }  // namespace grpc_core</a>
+<a name="1366"><span class="lineNum">    1366 </span>            : </a>
+<a name="1367"><span class="lineNum">    1367 </span>            : struct grpc_metadata_batch;</a>
+<a name="1368"><span class="lineNum">    1368 </span>            : </a>
+<a name="1369"><span class="lineNum">    1369 </span>            : using grpc_metadata_batch_base = grpc_core::MetadataMap&lt;</a>
+<a name="1370"><span class="lineNum">    1370 </span>            :     grpc_metadata_batch,</a>
+<a name="1371"><span class="lineNum">    1371 </span>            :     // Colon prefixed headers first</a>
+<a name="1372"><span class="lineNum">    1372 </span>            :     grpc_core::HttpPathMetadata, grpc_core::HttpAuthorityMetadata,</a>
+<a name="1373"><span class="lineNum">    1373 </span>            :     grpc_core::HttpMethodMetadata, grpc_core::HttpStatusMetadata,</a>
+<a name="1374"><span class="lineNum">    1374 </span>            :     grpc_core::HttpSchemeMetadata,</a>
+<a name="1375"><span class="lineNum">    1375 </span>            :     // Non-colon prefixed headers begin here</a>
+<a name="1376"><span class="lineNum">    1376 </span>            :     grpc_core::ContentTypeMetadata, grpc_core::TeMetadata,</a>
+<a name="1377"><span class="lineNum">    1377 </span>            :     grpc_core::GrpcEncodingMetadata, grpc_core::GrpcInternalEncodingRequest,</a>
+<a name="1378"><span class="lineNum">    1378 </span>            :     grpc_core::GrpcAcceptEncodingMetadata, grpc_core::GrpcStatusMetadata,</a>
+<a name="1379"><span class="lineNum">    1379 </span>            :     grpc_core::GrpcTimeoutMetadata, grpc_core::GrpcPreviousRpcAttemptsMetadata,</a>
+<a name="1380"><span class="lineNum">    1380 </span>            :     grpc_core::GrpcRetryPushbackMsMetadata, grpc_core::UserAgentMetadata,</a>
+<a name="1381"><span class="lineNum">    1381 </span>            :     grpc_core::GrpcMessageMetadata, grpc_core::HostMetadata,</a>
+<a name="1382"><span class="lineNum">    1382 </span>            :     grpc_core::XEndpointLoadMetricsBinMetadata,</a>
+<a name="1383"><span class="lineNum">    1383 </span>            :     grpc_core::GrpcServerStatsBinMetadata, grpc_core::GrpcTraceBinMetadata,</a>
+<a name="1384"><span class="lineNum">    1384 </span>            :     grpc_core::GrpcTagsBinMetadata, grpc_core::GrpcLbClientStatsMetadata,</a>
+<a name="1385"><span class="lineNum">    1385 </span>            :     grpc_core::LbCostBinMetadata, grpc_core::LbTokenMetadata,</a>
+<a name="1386"><span class="lineNum">    1386 </span>            :     // Non-encodable things</a>
+<a name="1387"><span class="lineNum">    1387 </span>            :     grpc_core::GrpcStreamNetworkState, grpc_core::PeerString,</a>
+<a name="1388"><span class="lineNum">    1388 </span>            :     grpc_core::GrpcStatusContext&gt;;</a>
+<a name="1389"><span class="lineNum">    1389 </span>            : </a>
+<a name="1390"><span class="lineNum">    1390 </span>            : struct grpc_metadata_batch : public grpc_metadata_batch_base {</a>
+<a name="1391"><span class="lineNum">    1391 </span>            :   using grpc_metadata_batch_base::grpc_metadata_batch_base;</a>
+<a name="1392"><span class="lineNum">    1392 </span>            : };</a>
+<a name="1393"><span class="lineNum">    1393 </span>            : </a>
+<a name="1394"><span class="lineNum">    1394 </span>            : #endif /* GRPC_CORE_LIB_TRANSPORT_METADATA_BATCH_H */</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

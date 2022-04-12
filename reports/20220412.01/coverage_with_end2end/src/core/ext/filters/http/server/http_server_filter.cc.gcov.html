@@ -1,0 +1,398 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/core/ext/filters/http/server/http_server_filter.cc</title>
+  <link rel="stylesheet" type="text/css" href="../../../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../../../index.html">top level</a> - <a href="index.html">src/core/ext/filters/http/server</a> - http_server_filter.cc<span style="font-size: 80%;"> (source / <a href="http_server_filter.cc.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">132</td>
+            <td class="headerCovTableEntry">139</td>
+            <td class="headerCovTableEntryHi">95.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-12 14:35:39</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">13</td>
+            <td class="headerCovTableEntry">13</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<a name="2"><span class="lineNum">       2 </span>            :  *</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * Copyright 2015 gRPC authors.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * you may not use this file except in compliance with the License.</a>
+<a name="7"><span class="lineNum">       7 </span>            :  * You may obtain a copy of the License at</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *</a>
+<a name="9"><span class="lineNum">       9 </span>            :  *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="10"><span class="lineNum">      10 </span>            :  *</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * Unless required by applicable law or agreed to in writing, software</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * See the License for the specific language governing permissions and</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * limitations under the License.</a>
+<a name="16"><span class="lineNum">      16 </span>            :  *</a>
+<a name="17"><span class="lineNum">      17 </span>            :  */</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="20"><span class="lineNum">      20 </span>            : </a>
+<a name="21"><span class="lineNum">      21 </span>            : #include &quot;src/core/ext/filters/http/server/http_server_filter.h&quot;</a>
+<a name="22"><span class="lineNum">      22 </span>            : </a>
+<a name="23"><span class="lineNum">      23 </span>            : #include &lt;string.h&gt;</a>
+<a name="24"><span class="lineNum">      24 </span>            : </a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &lt;grpc/support/alloc.h&gt;</a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &lt;grpc/support/log.h&gt;</a>
+<a name="27"><span class="lineNum">      27 </span>            : </a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &quot;src/core/lib/channel/channel_args.h&quot;</a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &quot;src/core/lib/gprpp/manual_constructor.h&quot;</a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &quot;src/core/lib/profiling/timers.h&quot;</a>
+<a name="31"><span class="lineNum">      31 </span>            : #include &quot;src/core/lib/slice/b64.h&quot;</a>
+<a name="32"><span class="lineNum">      32 </span>            : #include &quot;src/core/lib/slice/percent_encoding.h&quot;</a>
+<a name="33"><span class="lineNum">      33 </span>            : #include &quot;src/core/lib/slice/slice_internal.h&quot;</a>
+<a name="34"><span class="lineNum">      34 </span>            : #include &quot;src/core/lib/slice/slice_string_helpers.h&quot;</a>
+<a name="35"><span class="lineNum">      35 </span>            : </a>
+<a name="36"><span class="lineNum">      36 </span>            : static void hs_recv_initial_metadata_ready(void* user_data,</a>
+<a name="37"><span class="lineNum">      37 </span>            :                                            grpc_error_handle err);</a>
+<a name="38"><span class="lineNum">      38 </span>            : static void hs_recv_trailing_metadata_ready(void* user_data,</a>
+<a name="39"><span class="lineNum">      39 </span>            :                                             grpc_error_handle err);</a>
+<a name="40"><span class="lineNum">      40 </span>            : </a>
+<a name="41"><span class="lineNum">      41 </span>            : namespace {</a>
+<a name="42"><span class="lineNum">      42 </span>            : </a>
+<a name="43"><span class="lineNum">      43 </span>            : struct call_data {</a>
+<a name="44"><span class="lineNum">      44 </span><span class="lineCov">    4518142 :   call_data(grpc_call_element* elem, const grpc_call_element_args&amp; args)</span></a>
+<a name="45"><span class="lineNum">      45 </span><span class="lineCov">    4518142 :       : call_combiner(args.call_combiner) {</span></a>
+<a name="46"><span class="lineNum">      46 </span><span class="lineCov">    4518142 :     GRPC_CLOSURE_INIT(&amp;recv_initial_metadata_ready,</span></a>
+<a name="47"><span class="lineNum">      47 </span>            :                       hs_recv_initial_metadata_ready, elem,</a>
+<a name="48"><span class="lineNum">      48 </span>            :                       grpc_schedule_on_exec_ctx);</a>
+<a name="49"><span class="lineNum">      49 </span><span class="lineCov">    4518202 :     GRPC_CLOSURE_INIT(&amp;recv_trailing_metadata_ready,</span></a>
+<a name="50"><span class="lineNum">      50 </span>            :                       hs_recv_trailing_metadata_ready, elem,</a>
+<a name="51"><span class="lineNum">      51 </span>            :                       grpc_schedule_on_exec_ctx);</a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineCov">    4518171 :   }</span></a>
+<a name="53"><span class="lineNum">      53 </span>            : </a>
+<a name="54"><span class="lineNum">      54 </span><span class="lineCov">    4517957 :   ~call_data() { GRPC_ERROR_UNREF(recv_initial_metadata_ready_error); }</span></a>
+<a name="55"><span class="lineNum">      55 </span>            : </a>
+<a name="56"><span class="lineNum">      56 </span>            :   grpc_core::CallCombiner* call_combiner;</a>
+<a name="57"><span class="lineNum">      57 </span>            : </a>
+<a name="58"><span class="lineNum">      58 </span>            :   // State for intercepting recv_initial_metadata.</a>
+<a name="59"><span class="lineNum">      59 </span>            :   grpc_closure recv_initial_metadata_ready;</a>
+<a name="60"><span class="lineNum">      60 </span>            :   grpc_error_handle recv_initial_metadata_ready_error = GRPC_ERROR_NONE;</a>
+<a name="61"><span class="lineNum">      61 </span>            :   grpc_closure* original_recv_initial_metadata_ready;</a>
+<a name="62"><span class="lineNum">      62 </span>            :   grpc_metadata_batch* recv_initial_metadata = nullptr;</a>
+<a name="63"><span class="lineNum">      63 </span>            :   uint32_t* recv_initial_metadata_flags;</a>
+<a name="64"><span class="lineNum">      64 </span>            :   bool seen_recv_initial_metadata_ready = false;</a>
+<a name="65"><span class="lineNum">      65 </span>            : </a>
+<a name="66"><span class="lineNum">      66 </span>            :   // State for intercepting recv_trailing_metadata</a>
+<a name="67"><span class="lineNum">      67 </span>            :   grpc_closure recv_trailing_metadata_ready;</a>
+<a name="68"><span class="lineNum">      68 </span>            :   grpc_closure* original_recv_trailing_metadata_ready;</a>
+<a name="69"><span class="lineNum">      69 </span>            :   grpc_error_handle recv_trailing_metadata_ready_error;</a>
+<a name="70"><span class="lineNum">      70 </span>            :   bool seen_recv_trailing_metadata_ready = false;</a>
+<a name="71"><span class="lineNum">      71 </span>            : };</a>
+<a name="72"><span class="lineNum">      72 </span>            : </a>
+<a name="73"><span class="lineNum">      73 </span>            : struct channel_data {</a>
+<a name="74"><span class="lineNum">      74 </span>            :   bool surface_user_agent;</a>
+<a name="75"><span class="lineNum">      75 </span>            : };</a>
+<a name="76"><span class="lineNum">      76 </span>            : </a>
+<a name="77"><span class="lineNum">      77 </span>            : }  // namespace</a>
+<a name="78"><span class="lineNum">      78 </span>            : </a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">    8388197 : static grpc_error_handle hs_filter_outgoing_metadata(grpc_metadata_batch* b) {</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">    8387817 :   if (grpc_core::Slice* grpc_message =</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">    8388197 :           b-&gt;get_pointer(grpc_core::GrpcMessageMetadata())) {</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">    2319418 :     *grpc_message = grpc_core::PercentEncodeSlice(</span></a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineCov">    2319418 :         std::move(*grpc_message), grpc_core::PercentEncodingType::Compatible);</span></a>
+<a name="84"><span class="lineNum">      84 </span>            :   }</a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineCov">    8387604 :   return GRPC_ERROR_NONE;</span></a>
+<a name="86"><span class="lineNum">      86 </span>            : }</a>
+<a name="87"><span class="lineNum">      87 </span>            : </a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineCov">    4197309 : static void hs_add_error(const char* error_name, grpc_error_handle* cumulative,</span></a>
+<a name="89"><span class="lineNum">      89 </span>            :                          grpc_error_handle new_err) {</a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">    4197309 :   if (new_err == GRPC_ERROR_NONE) return;</span></a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineCov">        870 :   if (*cumulative == GRPC_ERROR_NONE) {</span></a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">        316 :     *cumulative = GRPC_ERROR_CREATE_FROM_COPIED_STRING(error_name);</span></a>
+<a name="93"><span class="lineNum">      93 </span>            :   }</a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineCov">        870 :   *cumulative = grpc_error_add_child(*cumulative, new_err);</span></a>
+<a name="95"><span class="lineNum">      95 </span>            : }</a>
+<a name="96"><span class="lineNum">      96 </span>            : </a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineCov">    4502132 : static grpc_error_handle hs_filter_incoming_metadata(grpc_call_element* elem,</span></a>
+<a name="98"><span class="lineNum">      98 </span>            :                                                      grpc_metadata_batch* b) {</a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineCov">    4502132 :   grpc_error_handle error = GRPC_ERROR_NONE;</span></a>
+<a name="100"><span class="lineNum">     100 </span>            :   static const char* error_name = &quot;Failed processing incoming headers&quot;;</a>
+<a name="101"><span class="lineNum">     101 </span>            : </a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineCov">    4502132 :   auto method = b-&gt;get(grpc_core::HttpMethodMetadata());</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">    4502151 :   if (method.has_value()) {</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineCov">    4501886 :     switch (*method) {</span></a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">    4501852 :       case grpc_core::HttpMethodMetadata::kPost:</span></a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineCov">    4501852 :         break;</span></a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineCov">         33 :       case grpc_core::HttpMethodMetadata::kInvalid:</span></a>
+<a name="108"><span class="lineNum">     108 </span>            :       case grpc_core::HttpMethodMetadata::kGet:</a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineCov">         33 :         hs_add_error(error_name, &amp;error,</span></a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">         33 :                      GRPC_ERROR_CREATE_FROM_STATIC_STRING(&quot;Bad method header&quot;));</span></a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineCov">         33 :         break;</span></a>
+<a name="112"><span class="lineNum">     112 </span>            :     }</a>
+<a name="113"><span class="lineNum">     113 </span>            :   } else {</a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">        263 :     hs_add_error(error_name, &amp;error,</span></a>
+<a name="115"><span class="lineNum">     115 </span><span class="lineCov">        263 :                  grpc_error_set_str(</span></a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">        526 :                      GRPC_ERROR_CREATE_FROM_STATIC_STRING(&quot;Missing header&quot;),</span></a>
+<a name="117"><span class="lineNum">     117 </span>            :                      GRPC_ERROR_STR_KEY, &quot;:method&quot;));</a>
+<a name="118"><span class="lineNum">     118 </span>            :   }</a>
+<a name="119"><span class="lineNum">     119 </span>            : </a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineCov">    4502148 :   auto te = b-&gt;Take(grpc_core::TeMetadata());</span></a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineCov">    4502109 :   if (te == grpc_core::TeMetadata::kTrailers) {</span></a>
+<a name="122"><span class="lineNum">     122 </span>            :     // Do nothing, ok.</a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineCov">        293 :   } else if (!te.has_value()) {</span></a>
+<a name="124"><span class="lineNum">     124 </span><span class="lineCov">        287 :     hs_add_error(error_name, &amp;error,</span></a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineCov">        287 :                  grpc_error_set_str(</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">        574 :                      GRPC_ERROR_CREATE_FROM_STATIC_STRING(&quot;Missing header&quot;),</span></a>
+<a name="127"><span class="lineNum">     127 </span>            :                      GRPC_ERROR_STR_KEY, &quot;te&quot;));</a>
+<a name="128"><span class="lineNum">     128 </span>            :   } else {</a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineCov">          6 :     hs_add_error(error_name, &amp;error,</span></a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">         12 :                  GRPC_ERROR_CREATE_FROM_STATIC_STRING(&quot;Bad te header&quot;));</span></a>
+<a name="131"><span class="lineNum">     131 </span>            :   }</a>
+<a name="132"><span class="lineNum">     132 </span>            : </a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">    4502110 :   auto scheme = b-&gt;Take(grpc_core::HttpSchemeMetadata());</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineCov">    4502111 :   if (scheme.has_value()) {</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">    4501867 :     if (*scheme == grpc_core::HttpSchemeMetadata::kInvalid) {</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">         26 :       hs_add_error(error_name, &amp;error,</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">         52 :                    GRPC_ERROR_CREATE_FROM_STATIC_STRING(&quot;Bad :scheme header&quot;));</span></a>
+<a name="138"><span class="lineNum">     138 </span>            :     }</a>
+<a name="139"><span class="lineNum">     139 </span>            :   } else {</a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineCov">        244 :     hs_add_error(error_name, &amp;error,</span></a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineCov">        241 :                  grpc_error_set_str(</span></a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineCov">        488 :                      GRPC_ERROR_CREATE_FROM_STATIC_STRING(&quot;Missing header&quot;),</span></a>
+<a name="143"><span class="lineNum">     143 </span>            :                      GRPC_ERROR_STR_KEY, &quot;:scheme&quot;));</a>
+<a name="144"><span class="lineNum">     144 </span>            :   }</a>
+<a name="145"><span class="lineNum">     145 </span>            : </a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">    4502109 :   b-&gt;Remove(grpc_core::ContentTypeMetadata());</span></a>
+<a name="147"><span class="lineNum">     147 </span>            : </a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineCov">    4502108 :   grpc_core::Slice* path_slice = b-&gt;get_pointer(grpc_core::HttpPathMetadata());</span></a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineCov">    4502121 :   if (path_slice == nullptr) {</span></a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineCov">        240 :     hs_add_error(error_name, &amp;error,</span></a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineCov">        240 :                  grpc_error_set_str(</span></a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">        480 :                      GRPC_ERROR_CREATE_FROM_STATIC_STRING(&quot;Missing header&quot;),</span></a>
+<a name="153"><span class="lineNum">     153 </span>            :                      GRPC_ERROR_STR_KEY, &quot;:path&quot;));</a>
+<a name="154"><span class="lineNum">     154 </span>            :   }</a>
+<a name="155"><span class="lineNum">     155 </span>            : </a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineCov">    4502121 :   if (b-&gt;get_pointer(grpc_core::HttpAuthorityMetadata()) == nullptr) {</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">        289 :     absl::optional&lt;grpc_core::Slice&gt; host = b-&gt;Take(grpc_core::HostMetadata());</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineCov">        289 :     if (host.has_value()) {</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">         24 :       b-&gt;Set(grpc_core::HttpAuthorityMetadata(), std::move(*host));</span></a>
+<a name="160"><span class="lineNum">     160 </span>            :     }</a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">        289 :   }</span></a>
+<a name="162"><span class="lineNum">     162 </span>            : </a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">    4502128 :   if (b-&gt;get_pointer(grpc_core::HttpAuthorityMetadata()) == nullptr) {</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">        265 :     hs_add_error(error_name, &amp;error,</span></a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineCov">        265 :                  grpc_error_set_str(</span></a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineCov">        530 :                      GRPC_ERROR_CREATE_FROM_STATIC_STRING(&quot;Missing header&quot;),</span></a>
+<a name="167"><span class="lineNum">     167 </span>            :                      GRPC_ERROR_STR_KEY, &quot;:authority&quot;));</a>
+<a name="168"><span class="lineNum">     168 </span>            :   }</a>
+<a name="169"><span class="lineNum">     169 </span>            : </a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">    4502137 :   channel_data* chand = static_cast&lt;channel_data*&gt;(elem-&gt;channel_data);</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">    4502137 :   if (!chand-&gt;surface_user_agent) {</span></a>
+<a name="172"><span class="lineNum">     172 </span><span class="lineNoCov">          0 :     b-&gt;Remove(grpc_core::UserAgentMetadata());</span></a>
+<a name="173"><span class="lineNum">     173 </span>            :   }</a>
+<a name="174"><span class="lineNum">     174 </span>            : </a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">    4502138 :   return error;</span></a>
+<a name="176"><span class="lineNum">     176 </span>            : }</a>
+<a name="177"><span class="lineNum">     177 </span>            : </a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineCov">    4502190 : static void hs_recv_initial_metadata_ready(void* user_data,</span></a>
+<a name="179"><span class="lineNum">     179 </span>            :                                            grpc_error_handle err) {</a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineCov">    4502190 :   grpc_call_element* elem = static_cast&lt;grpc_call_element*&gt;(user_data);</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">    4502190 :   call_data* calld = static_cast&lt;call_data*&gt;(elem-&gt;call_data);</span></a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineCov">    4502190 :   calld-&gt;seen_recv_initial_metadata_ready = true;</span></a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineCov">    4502190 :   if (err == GRPC_ERROR_NONE) {</span></a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineCov">    4502131 :     err = hs_filter_incoming_metadata(elem, calld-&gt;recv_initial_metadata);</span></a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineCov">    4502138 :     calld-&gt;recv_initial_metadata_ready_error = GRPC_ERROR_REF(err);</span></a>
+<a name="186"><span class="lineNum">     186 </span>            :   } else {</a>
+<a name="187"><span class="lineNum">     187 </span><span class="lineCov">         59 :     (void)GRPC_ERROR_REF(err);</span></a>
+<a name="188"><span class="lineNum">     188 </span>            :   }</a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineCov">    4502222 :   if (calld-&gt;seen_recv_trailing_metadata_ready) {</span></a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineNoCov">          0 :     GRPC_CALL_COMBINER_START(calld-&gt;call_combiner,</span></a>
+<a name="191"><span class="lineNum">     191 </span>            :                              &amp;calld-&gt;recv_trailing_metadata_ready,</a>
+<a name="192"><span class="lineNum">     192 </span>            :                              calld-&gt;recv_trailing_metadata_ready_error,</a>
+<a name="193"><span class="lineNum">     193 </span>            :                              &quot;resuming hs_recv_trailing_metadata_ready from &quot;</a>
+<a name="194"><span class="lineNum">     194 </span>            :                              &quot;hs_recv_initial_metadata_ready&quot;);</a>
+<a name="195"><span class="lineNum">     195 </span>            :   }</a>
+<a name="196"><span class="lineNum">     196 </span><span class="lineCov">    4502222 :   grpc_core::Closure::Run(DEBUG_LOCATION,</span></a>
+<a name="197"><span class="lineNum">     197 </span>            :                           calld-&gt;original_recv_initial_metadata_ready, err);</a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineCov">    4502179 : }</span></a>
+<a name="199"><span class="lineNum">     199 </span>            : </a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineCov">    4197276 : static void hs_recv_trailing_metadata_ready(void* user_data,</span></a>
+<a name="201"><span class="lineNum">     201 </span>            :                                             grpc_error_handle err) {</a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineCov">    4197276 :   grpc_call_element* elem = static_cast&lt;grpc_call_element*&gt;(user_data);</span></a>
+<a name="203"><span class="lineNum">     203 </span><span class="lineCov">    4197276 :   call_data* calld = static_cast&lt;call_data*&gt;(elem-&gt;call_data);</span></a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineCov">    4197276 :   if (!calld-&gt;seen_recv_initial_metadata_ready) {</span></a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineNoCov">          0 :     calld-&gt;recv_trailing_metadata_ready_error = GRPC_ERROR_REF(err);</span></a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineNoCov">          0 :     calld-&gt;seen_recv_trailing_metadata_ready = true;</span></a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineNoCov">          0 :     GRPC_CALL_COMBINER_STOP(calld-&gt;call_combiner,</span></a>
+<a name="208"><span class="lineNum">     208 </span>            :                             &quot;deferring hs_recv_trailing_metadata_ready until &quot;</a>
+<a name="209"><span class="lineNum">     209 </span>            :                             &quot;ater hs_recv_initial_metadata_ready&quot;);</a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineNoCov">          0 :     return;</span></a>
+<a name="211"><span class="lineNum">     211 </span>            :   }</a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineCov">    4197276 :   err = grpc_error_add_child(</span></a>
+<a name="213"><span class="lineNum">     213 </span>            :       GRPC_ERROR_REF(err),</a>
+<a name="214"><span class="lineNum">     214 </span>            :       GRPC_ERROR_REF(calld-&gt;recv_initial_metadata_ready_error));</a>
+<a name="215"><span class="lineNum">     215 </span><span class="lineCov">    4197269 :   grpc_core::Closure::Run(DEBUG_LOCATION,</span></a>
+<a name="216"><span class="lineNum">     216 </span>            :                           calld-&gt;original_recv_trailing_metadata_ready, err);</a>
+<a name="217"><span class="lineNum">     217 </span>            : }</a>
+<a name="218"><span class="lineNum">     218 </span>            : </a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineCov">   19571857 : static grpc_error_handle hs_mutate_op(grpc_call_element* elem,</span></a>
+<a name="220"><span class="lineNum">     220 </span>            :                                       grpc_transport_stream_op_batch* op) {</a>
+<a name="221"><span class="lineNum">     221 </span>            :   /* grab pointers to our data from the call element */</a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineCov">   19571857 :   call_data* calld = static_cast&lt;call_data*&gt;(elem-&gt;call_data);</span></a>
+<a name="223"><span class="lineNum">     223 </span>            : </a>
+<a name="224"><span class="lineNum">     224 </span><span class="lineCov">   19571857 :   if (op-&gt;send_initial_metadata) {</span></a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineCov">    4196503 :     grpc_error_handle error = GRPC_ERROR_NONE;</span></a>
+<a name="226"><span class="lineNum">     226 </span>            :     static const char* error_name = &quot;Failed sending initial metadata&quot;;</a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">    4196503 :     op-&gt;payload-&gt;send_initial_metadata.send_initial_metadata-&gt;Set(</span></a>
+<a name="228"><span class="lineNum">     228 </span><span class="lineCov">    4196503 :         grpc_core::HttpStatusMetadata(), 200);</span></a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineCov">    4196497 :     op-&gt;payload-&gt;send_initial_metadata.send_initial_metadata-&gt;Set(</span></a>
+<a name="230"><span class="lineNum">     230 </span>            :         grpc_core::ContentTypeMetadata(),</a>
+<a name="231"><span class="lineNum">     231 </span><span class="lineCov">    4196497 :         grpc_core::ContentTypeMetadata::kApplicationGrpc);</span></a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineCov">    4196430 :     hs_add_error(error_name, &amp;error,</span></a>
+<a name="233"><span class="lineNum">     233 </span>            :                  hs_filter_outgoing_metadata(</a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineCov">    4196291 :                      op-&gt;payload-&gt;send_initial_metadata.send_initial_metadata));</span></a>
+<a name="235"><span class="lineNum">     235 </span><span class="lineCov">    4196413 :     if (error != GRPC_ERROR_NONE) return error;</span></a>
+<a name="236"><span class="lineNum">     236 </span>            :   }</a>
+<a name="237"><span class="lineNum">     237 </span>            : </a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineCov">   19571767 :   if (op-&gt;recv_initial_metadata) {</span></a>
+<a name="239"><span class="lineNum">     239 </span>            :     /* substitute our callback for the higher callback */</a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineCov">    4502177 :     GPR_ASSERT(op-&gt;payload-&gt;recv_initial_metadata.recv_flags != nullptr);</span></a>
+<a name="241"><span class="lineNum">     241 </span><span class="lineCov">    4502177 :     calld-&gt;recv_initial_metadata =</span></a>
+<a name="242"><span class="lineNum">     242 </span><span class="lineCov">    4502177 :         op-&gt;payload-&gt;recv_initial_metadata.recv_initial_metadata;</span></a>
+<a name="243"><span class="lineNum">     243 </span><span class="lineCov">    4502177 :     calld-&gt;recv_initial_metadata_flags =</span></a>
+<a name="244"><span class="lineNum">     244 </span><span class="lineCov">    4502177 :         op-&gt;payload-&gt;recv_initial_metadata.recv_flags;</span></a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineCov">    4502177 :     calld-&gt;original_recv_initial_metadata_ready =</span></a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineCov">    4502177 :         op-&gt;payload-&gt;recv_initial_metadata.recv_initial_metadata_ready;</span></a>
+<a name="247"><span class="lineNum">     247 </span><span class="lineCov">    4502177 :     op-&gt;payload-&gt;recv_initial_metadata.recv_initial_metadata_ready =</span></a>
+<a name="248"><span class="lineNum">     248 </span><span class="lineCov">    4502177 :         &amp;calld-&gt;recv_initial_metadata_ready;</span></a>
+<a name="249"><span class="lineNum">     249 </span>            :   }</a>
+<a name="250"><span class="lineNum">     250 </span>            : </a>
+<a name="251"><span class="lineNum">     251 </span><span class="lineCov">   19571767 :   if (op-&gt;recv_trailing_metadata) {</span></a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineCov">    4197165 :     calld-&gt;original_recv_trailing_metadata_ready =</span></a>
+<a name="253"><span class="lineNum">     253 </span><span class="lineCov">    4197165 :         op-&gt;payload-&gt;recv_trailing_metadata.recv_trailing_metadata_ready;</span></a>
+<a name="254"><span class="lineNum">     254 </span><span class="lineCov">    4197165 :     op-&gt;payload-&gt;recv_trailing_metadata.recv_trailing_metadata_ready =</span></a>
+<a name="255"><span class="lineNum">     255 </span><span class="lineCov">    4197165 :         &amp;calld-&gt;recv_trailing_metadata_ready;</span></a>
+<a name="256"><span class="lineNum">     256 </span>            :   }</a>
+<a name="257"><span class="lineNum">     257 </span>            : </a>
+<a name="258"><span class="lineNum">     258 </span><span class="lineCov">   19571767 :   if (op-&gt;send_trailing_metadata) {</span></a>
+<a name="259"><span class="lineNum">     259 </span><span class="lineCov">    8384223 :     grpc_error_handle error = hs_filter_outgoing_metadata(</span></a>
+<a name="260"><span class="lineNum">     260 </span><span class="lineCov">    4192128 :         op-&gt;payload-&gt;send_trailing_metadata.send_trailing_metadata);</span></a>
+<a name="261"><span class="lineNum">     261 </span><span class="lineCov">    4192095 :     if (error != GRPC_ERROR_NONE) return error;</span></a>
+<a name="262"><span class="lineNum">     262 </span>            :   }</a>
+<a name="263"><span class="lineNum">     263 </span>            : </a>
+<a name="264"><span class="lineNum">     264 </span><span class="lineCov">   19571734 :   return GRPC_ERROR_NONE;</span></a>
+<a name="265"><span class="lineNum">     265 </span>            : }</a>
+<a name="266"><span class="lineNum">     266 </span>            : </a>
+<a name="267"><span class="lineNum">     267 </span><span class="lineCov">   19569062 : static void hs_start_transport_stream_op_batch(</span></a>
+<a name="268"><span class="lineNum">     268 </span>            :     grpc_call_element* elem, grpc_transport_stream_op_batch* op) {</a>
+<a name="269"><span class="lineNum">     269 </span>            :   GPR_TIMER_SCOPE(&quot;hs_start_transport_stream_op_batch&quot;, 0);</a>
+<a name="270"><span class="lineNum">     270 </span><span class="lineCov">   19569062 :   call_data* calld = static_cast&lt;call_data*&gt;(elem-&gt;call_data);</span></a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineCov">   19569062 :   grpc_error_handle error = hs_mutate_op(elem, op);</span></a>
+<a name="272"><span class="lineNum">     272 </span><span class="lineCov">   19568808 :   if (error != GRPC_ERROR_NONE) {</span></a>
+<a name="273"><span class="lineNum">     273 </span><span class="lineNoCov">          0 :     grpc_transport_stream_op_batch_finish_with_failure(op, error,</span></a>
+<a name="274"><span class="lineNum">     274 </span>            :                                                        calld-&gt;call_combiner);</a>
+<a name="275"><span class="lineNum">     275 </span>            :   } else {</a>
+<a name="276"><span class="lineNum">     276 </span><span class="lineCov">   19568808 :     grpc_call_next_op(elem, op);</span></a>
+<a name="277"><span class="lineNum">     277 </span>            :   }</a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineCov">   19576582 : }</span></a>
+<a name="279"><span class="lineNum">     279 </span>            : </a>
+<a name="280"><span class="lineNum">     280 </span>            : /* Constructor for call_data */</a>
+<a name="281"><span class="lineNum">     281 </span><span class="lineCov">    4518203 : static grpc_error_handle hs_init_call_elem(grpc_call_element* elem,</span></a>
+<a name="282"><span class="lineNum">     282 </span>            :                                            const grpc_call_element_args* args) {</a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineCov">    4518203 :   new (elem-&gt;call_data) call_data(elem, *args);</span></a>
+<a name="284"><span class="lineNum">     284 </span><span class="lineCov">    4518195 :   return GRPC_ERROR_NONE;</span></a>
+<a name="285"><span class="lineNum">     285 </span>            : }</a>
+<a name="286"><span class="lineNum">     286 </span>            : </a>
+<a name="287"><span class="lineNum">     287 </span>            : /* Destructor for call_data */</a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineCov">    4518003 : static void hs_destroy_call_elem(grpc_call_element* elem,</span></a>
+<a name="289"><span class="lineNum">     289 </span>            :                                  const grpc_call_final_info* /*final_info*/,</a>
+<a name="290"><span class="lineNum">     290 </span>            :                                  grpc_closure* /*ignored*/) {</a>
+<a name="291"><span class="lineNum">     291 </span><span class="lineCov">    4518003 :   call_data* calld = static_cast&lt;call_data*&gt;(elem-&gt;call_data);</span></a>
+<a name="292"><span class="lineNum">     292 </span><span class="lineCov">    4518003 :   calld-&gt;~call_data();</span></a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineCov">    4517901 : }</span></a>
+<a name="294"><span class="lineNum">     294 </span>            : </a>
+<a name="295"><span class="lineNum">     295 </span>            : /* Constructor for channel_data */</a>
+<a name="296"><span class="lineNum">     296 </span><span class="lineCov">      42166 : static grpc_error_handle hs_init_channel_elem(grpc_channel_element* elem,</span></a>
+<a name="297"><span class="lineNum">     297 </span>            :                                               grpc_channel_element_args* args) {</a>
+<a name="298"><span class="lineNum">     298 </span><span class="lineCov">      42166 :   channel_data* chand = static_cast&lt;channel_data*&gt;(elem-&gt;channel_data);</span></a>
+<a name="299"><span class="lineNum">     299 </span><span class="lineCov">      42166 :   GPR_ASSERT(!args-&gt;is_last);</span></a>
+<a name="300"><span class="lineNum">     300 </span><span class="lineCov">      42166 :   chand-&gt;surface_user_agent = grpc_channel_arg_get_bool(</span></a>
+<a name="301"><span class="lineNum">     301 </span>            :       grpc_channel_args_find(args-&gt;channel_args,</a>
+<a name="302"><span class="lineNum">     302 </span>            :                              const_cast&lt;char*&gt;(GRPC_ARG_SURFACE_USER_AGENT)),</a>
+<a name="303"><span class="lineNum">     303 </span>            :       true);</a>
+<a name="304"><span class="lineNum">     304 </span><span class="lineCov">      42164 :   return GRPC_ERROR_NONE;</span></a>
+<a name="305"><span class="lineNum">     305 </span>            : }</a>
+<a name="306"><span class="lineNum">     306 </span>            : </a>
+<a name="307"><span class="lineNum">     307 </span>            : /* Destructor for channel data */</a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineCov">      42167 : static void hs_destroy_channel_elem(grpc_channel_element* /*elem*/) {}</span></a>
+<a name="309"><span class="lineNum">     309 </span>            : </a>
+<a name="310"><span class="lineNum">     310 </span>            : const grpc_channel_filter grpc_http_server_filter = {</a>
+<a name="311"><span class="lineNum">     311 </span>            :     hs_start_transport_stream_op_batch,</a>
+<a name="312"><span class="lineNum">     312 </span>            :     nullptr,</a>
+<a name="313"><span class="lineNum">     313 </span>            :     grpc_channel_next_op,</a>
+<a name="314"><span class="lineNum">     314 </span>            :     sizeof(call_data),</a>
+<a name="315"><span class="lineNum">     315 </span>            :     hs_init_call_elem,</a>
+<a name="316"><span class="lineNum">     316 </span>            :     grpc_call_stack_ignore_set_pollset_or_pollset_set,</a>
+<a name="317"><span class="lineNum">     317 </span>            :     hs_destroy_call_elem,</a>
+<a name="318"><span class="lineNum">     318 </span>            :     sizeof(channel_data),</a>
+<a name="319"><span class="lineNum">     319 </span>            :     hs_init_channel_elem,</a>
+<a name="320"><span class="lineNum">     320 </span>            :     hs_destroy_channel_elem,</a>
+<a name="321"><span class="lineNum">     321 </span>            :     grpc_channel_next_get_info,</a>
+<a name="322"><span class="lineNum">     322 </span>            :     &quot;http-server&quot;};</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

@@ -1,0 +1,468 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/core/ext/filters/deadline/deadline_filter.cc</title>
+  <link rel="stylesheet" type="text/css" href="../../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../../index.html">top level</a> - <a href="index.html">src/core/ext/filters/deadline</a> - deadline_filter.cc<span style="font-size: 80%;"> (source / <a href="deadline_filter.cc.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">148</td>
+            <td class="headerCovTableEntry">148</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-12 14:35:39</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">27</td>
+            <td class="headerCovTableEntry">27</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<a name="2"><span class="lineNum">       2 </span>            : // Copyright 2016 gRPC authors.</a>
+<a name="3"><span class="lineNum">       3 </span>            : //</a>
+<a name="4"><span class="lineNum">       4 </span>            : // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="5"><span class="lineNum">       5 </span>            : // you may not use this file except in compliance with the License.</a>
+<a name="6"><span class="lineNum">       6 </span>            : // You may obtain a copy of the License at</a>
+<a name="7"><span class="lineNum">       7 </span>            : //</a>
+<a name="8"><span class="lineNum">       8 </span>            : //     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="9"><span class="lineNum">       9 </span>            : //</a>
+<a name="10"><span class="lineNum">      10 </span>            : // Unless required by applicable law or agreed to in writing, software</a>
+<a name="11"><span class="lineNum">      11 </span>            : // distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="12"><span class="lineNum">      12 </span>            : // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="13"><span class="lineNum">      13 </span>            : // See the License for the specific language governing permissions and</a>
+<a name="14"><span class="lineNum">      14 </span>            : // limitations under the License.</a>
+<a name="15"><span class="lineNum">      15 </span>            : //</a>
+<a name="16"><span class="lineNum">      16 </span>            : </a>
+<a name="17"><span class="lineNum">      17 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #include &quot;src/core/ext/filters/deadline/deadline_filter.h&quot;</a>
+<a name="20"><span class="lineNum">      20 </span>            : </a>
+<a name="21"><span class="lineNum">      21 </span>            : #include &lt;stdbool.h&gt;</a>
+<a name="22"><span class="lineNum">      22 </span>            : #include &lt;string.h&gt;</a>
+<a name="23"><span class="lineNum">      23 </span>            : </a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &lt;grpc/support/alloc.h&gt;</a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &lt;grpc/support/log.h&gt;</a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &lt;grpc/support/sync.h&gt;</a>
+<a name="27"><span class="lineNum">      27 </span>            : #include &lt;grpc/support/time.h&gt;</a>
+<a name="28"><span class="lineNum">      28 </span>            : </a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &quot;src/core/lib/channel/channel_stack_builder.h&quot;</a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &quot;src/core/lib/config/core_configuration.h&quot;</a>
+<a name="31"><span class="lineNum">      31 </span>            : #include &quot;src/core/lib/gprpp/memory.h&quot;</a>
+<a name="32"><span class="lineNum">      32 </span>            : #include &quot;src/core/lib/iomgr/timer.h&quot;</a>
+<a name="33"><span class="lineNum">      33 </span>            : #include &quot;src/core/lib/slice/slice_internal.h&quot;</a>
+<a name="34"><span class="lineNum">      34 </span>            : </a>
+<a name="35"><span class="lineNum">      35 </span>            : namespace grpc_core {</a>
+<a name="36"><span class="lineNum">      36 </span>            : </a>
+<a name="37"><span class="lineNum">      37 </span>            : // A fire-and-forget class representing a pending deadline timer.</a>
+<a name="38"><span class="lineNum">      38 </span>            : // Allocated on the call arena.</a>
+<a name="39"><span class="lineNum">      39 </span>            : class TimerState {</a>
+<a name="40"><span class="lineNum">      40 </span>            :  public:</a>
+<a name="41"><span class="lineNum">      41 </span><span class="lineCov">    4829246 :   TimerState(grpc_call_element* elem, Timestamp deadline) : elem_(elem) {</span></a>
+<a name="42"><span class="lineNum">      42 </span><span class="lineCov">    4829246 :     grpc_deadline_state* deadline_state =</span></a>
+<a name="43"><span class="lineNum">      43 </span><span class="lineCov">    4829246 :         static_cast&lt;grpc_deadline_state*&gt;(elem_-&gt;call_data);</span></a>
+<a name="44"><span class="lineNum">      44 </span><span class="lineCov">    4829246 :     GRPC_CALL_STACK_REF(deadline_state-&gt;call_stack, &quot;DeadlineTimerState&quot;);</span></a>
+<a name="45"><span class="lineNum">      45 </span><span class="lineCov">    4829247 :     GRPC_CLOSURE_INIT(&amp;closure_, TimerCallback, this, nullptr);</span></a>
+<a name="46"><span class="lineNum">      46 </span><span class="lineCov">    4829247 :     grpc_timer_init(&amp;timer_, deadline, &amp;closure_);</span></a>
+<a name="47"><span class="lineNum">      47 </span><span class="lineCov">    4829247 :   }</span></a>
+<a name="48"><span class="lineNum">      48 </span>            : </a>
+<a name="49"><span class="lineNum">      49 </span><span class="lineCov">    4829208 :   void Cancel() { grpc_timer_cancel(&amp;timer_); }</span></a>
+<a name="50"><span class="lineNum">      50 </span>            : </a>
+<a name="51"><span class="lineNum">      51 </span>            :  private:</a>
+<a name="52"><span class="lineNum">      52 </span>            :   // The on_complete callback used when sending a cancel_error batch down the</a>
+<a name="53"><span class="lineNum">      53 </span>            :   // filter stack.  Yields the call combiner when the batch returns.</a>
+<a name="54"><span class="lineNum">      54 </span><span class="lineCov">      33782 :   static void YieldCallCombiner(void* arg, grpc_error_handle /*ignored*/) {</span></a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineCov">      33782 :     TimerState* self = static_cast&lt;TimerState*&gt;(arg);</span></a>
+<a name="56"><span class="lineNum">      56 </span><span class="lineCov">      33782 :     grpc_deadline_state* deadline_state =</span></a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">      33782 :         static_cast&lt;grpc_deadline_state*&gt;(self-&gt;elem_-&gt;call_data);</span></a>
+<a name="58"><span class="lineNum">      58 </span><span class="lineCov">      33782 :     GRPC_CALL_COMBINER_STOP(deadline_state-&gt;call_combiner,</span></a>
+<a name="59"><span class="lineNum">      59 </span>            :                             &quot;got on_complete from cancel_stream batch&quot;);</a>
+<a name="60"><span class="lineNum">      60 </span><span class="lineCov">      33782 :     GRPC_CALL_STACK_UNREF(deadline_state-&gt;call_stack, &quot;DeadlineTimerState&quot;);</span></a>
+<a name="61"><span class="lineNum">      61 </span><span class="lineCov">      33782 :   }</span></a>
+<a name="62"><span class="lineNum">      62 </span>            : </a>
+<a name="63"><span class="lineNum">      63 </span>            :   // This is called via the call combiner, so access to deadline_state is</a>
+<a name="64"><span class="lineNum">      64 </span>            :   // synchronized.</a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">      33782 :   static void SendCancelOpInCallCombiner(void* arg, grpc_error_handle error) {</span></a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">      33782 :     TimerState* self = static_cast&lt;TimerState*&gt;(arg);</span></a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineCov">      33782 :     grpc_transport_stream_op_batch* batch = grpc_make_transport_stream_op(</span></a>
+<a name="68"><span class="lineNum">      68 </span>            :         GRPC_CLOSURE_INIT(&amp;self-&gt;closure_, YieldCallCombiner, self, nullptr));</a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineCov">      33782 :     batch-&gt;cancel_stream = true;</span></a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineCov">      33782 :     batch-&gt;payload-&gt;cancel_stream.cancel_error = GRPC_ERROR_REF(error);</span></a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">      33782 :     self-&gt;elem_-&gt;filter-&gt;start_transport_stream_op_batch(self-&gt;elem_, batch);</span></a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">      33782 :   }</span></a>
+<a name="73"><span class="lineNum">      73 </span>            : </a>
+<a name="74"><span class="lineNum">      74 </span>            :   // Timer callback.</a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">    4829219 :   static void TimerCallback(void* arg, grpc_error_handle error) {</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">    4829219 :     TimerState* self = static_cast&lt;TimerState*&gt;(arg);</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">    4829219 :     grpc_deadline_state* deadline_state =</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">    4829219 :         static_cast&lt;grpc_deadline_state*&gt;(self-&gt;elem_-&gt;call_data);</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">    4829219 :     if (error != GRPC_ERROR_CANCELLED) {</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">      33782 :       error = grpc_error_set_int(</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">      33782 :           GRPC_ERROR_CREATE_FROM_STATIC_STRING(&quot;Deadline Exceeded&quot;),</span></a>
+<a name="82"><span class="lineNum">      82 </span>            :           GRPC_ERROR_INT_GRPC_STATUS, GRPC_STATUS_DEADLINE_EXCEEDED);</a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineCov">      33782 :       deadline_state-&gt;call_combiner-&gt;Cancel(GRPC_ERROR_REF(error));</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">      33782 :       GRPC_CLOSURE_INIT(&amp;self-&gt;closure_, SendCancelOpInCallCombiner, self,</span></a>
+<a name="85"><span class="lineNum">      85 </span>            :                         nullptr);</a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineCov">      33782 :       GRPC_CALL_COMBINER_START(deadline_state-&gt;call_combiner, &amp;self-&gt;closure_,</span></a>
+<a name="87"><span class="lineNum">      87 </span>            :                                error,</a>
+<a name="88"><span class="lineNum">      88 </span>            :                                &quot;deadline exceeded -- sending cancel_stream op&quot;);</a>
+<a name="89"><span class="lineNum">      89 </span>            :     } else {</a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">    4795437 :       GRPC_CALL_STACK_UNREF(deadline_state-&gt;call_stack, &quot;DeadlineTimerState&quot;);</span></a>
+<a name="91"><span class="lineNum">      91 </span>            :     }</a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">    4829246 :   }</span></a>
+<a name="93"><span class="lineNum">      93 </span>            : </a>
+<a name="94"><span class="lineNum">      94 </span>            :   // NOTE: This object's dtor is never called, so do not add any data</a>
+<a name="95"><span class="lineNum">      95 </span>            :   // members that require destruction!</a>
+<a name="96"><span class="lineNum">      96 </span>            :   // TODO(roth): We should ideally call this object's dtor somewhere,</a>
+<a name="97"><span class="lineNum">      97 </span>            :   // but that would require adding more synchronization, because we'd</a>
+<a name="98"><span class="lineNum">      98 </span>            :   // need to call the dtor only after both (a) the timer callback</a>
+<a name="99"><span class="lineNum">      99 </span>            :   // finishes and (b) the filter sees the call completion and attempts</a>
+<a name="100"><span class="lineNum">     100 </span>            :   // to cancel the timer.</a>
+<a name="101"><span class="lineNum">     101 </span>            :   grpc_call_element* elem_;</a>
+<a name="102"><span class="lineNum">     102 </span>            :   grpc_timer timer_;</a>
+<a name="103"><span class="lineNum">     103 </span>            :   grpc_closure closure_;</a>
+<a name="104"><span class="lineNum">     104 </span>            : };</a>
+<a name="105"><span class="lineNum">     105 </span>            : </a>
+<a name="106"><span class="lineNum">     106 </span>            : }  // namespace grpc_core</a>
+<a name="107"><span class="lineNum">     107 </span>            : </a>
+<a name="108"><span class="lineNum">     108 </span>            : //</a>
+<a name="109"><span class="lineNum">     109 </span>            : // grpc_deadline_state</a>
+<a name="110"><span class="lineNum">     110 </span>            : //</a>
+<a name="111"><span class="lineNum">     111 </span>            : </a>
+<a name="112"><span class="lineNum">     112 </span>            : // Starts the deadline timer.</a>
+<a name="113"><span class="lineNum">     113 </span>            : // This is called via the call combiner, so access to deadline_state is</a>
+<a name="114"><span class="lineNum">     114 </span>            : // synchronized.</a>
+<a name="115"><span class="lineNum">     115 </span><span class="lineCov">    9775275 : static void start_timer_if_needed(grpc_call_element* elem,</span></a>
+<a name="116"><span class="lineNum">     116 </span>            :                                   grpc_core::Timestamp deadline) {</a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineCov">    9775275 :   if (deadline == grpc_core::Timestamp::InfFuture()) return;</span></a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">    4829240 :   grpc_deadline_state* deadline_state =</span></a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineCov">    4829240 :       static_cast&lt;grpc_deadline_state*&gt;(elem-&gt;call_data);</span></a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineCov">    4829240 :   GPR_ASSERT(deadline_state-&gt;timer_state == nullptr);</span></a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineCov">    4829247 :   deadline_state-&gt;timer_state =</span></a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineCov">    4829240 :       deadline_state-&gt;arena-&gt;New&lt;grpc_core::TimerState&gt;(elem, deadline);</span></a>
+<a name="123"><span class="lineNum">     123 </span>            : }</a>
+<a name="124"><span class="lineNum">     124 </span>            : </a>
+<a name="125"><span class="lineNum">     125 </span>            : // Cancels the deadline timer.</a>
+<a name="126"><span class="lineNum">     126 </span>            : // This is called via the call combiner, so access to deadline_state is</a>
+<a name="127"><span class="lineNum">     127 </span>            : // synchronized.</a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">   30490882 : static void cancel_timer_if_needed(grpc_deadline_state* deadline_state) {</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineCov">   30490882 :   if (deadline_state-&gt;timer_state != nullptr) {</span></a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">    4829224 :     deadline_state-&gt;timer_state-&gt;Cancel();</span></a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineCov">    4829245 :     deadline_state-&gt;timer_state = nullptr;</span></a>
+<a name="132"><span class="lineNum">     132 </span>            :   }</a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">   30490903 : }</span></a>
+<a name="134"><span class="lineNum">     134 </span>            : </a>
+<a name="135"><span class="lineNum">     135 </span>            : // Callback run when we receive trailing metadata.</a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">   14525535 : static void recv_trailing_metadata_ready(void* arg, grpc_error_handle error) {</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">   14525535 :   grpc_deadline_state* deadline_state = static_cast&lt;grpc_deadline_state*&gt;(arg);</span></a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineCov">   14525535 :   cancel_timer_if_needed(deadline_state);</span></a>
+<a name="139"><span class="lineNum">     139 </span>            :   // Invoke the original callback.</a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineCov">   14526063 :   grpc_core::Closure::Run(DEBUG_LOCATION,</span></a>
+<a name="141"><span class="lineNum">     141 </span>            :                           deadline_state-&gt;original_recv_trailing_metadata_ready,</a>
+<a name="142"><span class="lineNum">     142 </span>            :                           GRPC_ERROR_REF(error));</a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineCov">   14525811 : }</span></a>
+<a name="144"><span class="lineNum">     144 </span>            : </a>
+<a name="145"><span class="lineNum">     145 </span>            : // Inject our own recv_trailing_metadata_ready callback into op.</a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">   14524740 : static void inject_recv_trailing_metadata_ready(</span></a>
+<a name="147"><span class="lineNum">     147 </span>            :     grpc_deadline_state* deadline_state, grpc_transport_stream_op_batch* op) {</a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineCov">   14524740 :   deadline_state-&gt;original_recv_trailing_metadata_ready =</span></a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineCov">   14524740 :       op-&gt;payload-&gt;recv_trailing_metadata.recv_trailing_metadata_ready;</span></a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineCov">   14524740 :   GRPC_CLOSURE_INIT(&amp;deadline_state-&gt;recv_trailing_metadata_ready,</span></a>
+<a name="151"><span class="lineNum">     151 </span>            :                     recv_trailing_metadata_ready, deadline_state,</a>
+<a name="152"><span class="lineNum">     152 </span>            :                     grpc_schedule_on_exec_ctx);</a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineCov">   14525009 :   op-&gt;payload-&gt;recv_trailing_metadata.recv_trailing_metadata_ready =</span></a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineCov">   14525009 :       &amp;deadline_state-&gt;recv_trailing_metadata_ready;</span></a>
+<a name="155"><span class="lineNum">     155 </span><span class="lineCov">   14525009 : }</span></a>
+<a name="156"><span class="lineNum">     156 </span>            : </a>
+<a name="157"><span class="lineNum">     157 </span>            : // Callback and associated state for starting the timer after call stack</a>
+<a name="158"><span class="lineNum">     158 </span>            : // initialization has been completed.</a>
+<a name="159"><span class="lineNum">     159 </span>            : struct start_timer_after_init_state {</a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineCov">    2602797 :   start_timer_after_init_state(grpc_call_element* elem,</span></a>
+<a name="161"><span class="lineNum">     161 </span>            :                                grpc_core::Timestamp deadline)</a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineCov">    2602797 :       : elem(elem), deadline(deadline) {}</span></a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">    2602797 :   ~start_timer_after_init_state() { start_timer_if_needed(elem, deadline); }</span></a>
+<a name="164"><span class="lineNum">     164 </span>            : </a>
+<a name="165"><span class="lineNum">     165 </span>            :   bool in_call_combiner = false;</a>
+<a name="166"><span class="lineNum">     166 </span>            :   grpc_call_element* elem;</a>
+<a name="167"><span class="lineNum">     167 </span>            :   grpc_core::Timestamp deadline;</a>
+<a name="168"><span class="lineNum">     168 </span>            :   grpc_closure closure;</a>
+<a name="169"><span class="lineNum">     169 </span>            : };</a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">    5205594 : static void start_timer_after_init(void* arg, grpc_error_handle error) {</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">    5205594 :   struct start_timer_after_init_state* state =</span></a>
+<a name="172"><span class="lineNum">     172 </span>            :       static_cast&lt;struct start_timer_after_init_state*&gt;(arg);</a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">    5205594 :   grpc_deadline_state* deadline_state =</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">    5205594 :       static_cast&lt;grpc_deadline_state*&gt;(state-&gt;elem-&gt;call_data);</span></a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">    5205594 :   if (!state-&gt;in_call_combiner) {</span></a>
+<a name="176"><span class="lineNum">     176 </span>            :     // We are initially called without holding the call combiner, so we</a>
+<a name="177"><span class="lineNum">     177 </span>            :     // need to bounce ourselves into it.</a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineCov">    2602797 :     state-&gt;in_call_combiner = true;</span></a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">    2602797 :     GRPC_CALL_COMBINER_START(deadline_state-&gt;call_combiner, &amp;state-&gt;closure,</span></a>
+<a name="180"><span class="lineNum">     180 </span>            :                              GRPC_ERROR_REF(error),</a>
+<a name="181"><span class="lineNum">     181 </span>            :                              &quot;scheduling deadline timer&quot;);</a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineCov">    2602797 :     return;</span></a>
+<a name="183"><span class="lineNum">     183 </span>            :   }</a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineCov">    2602797 :   delete state;</span></a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineCov">    2602797 :   GRPC_CALL_COMBINER_STOP(deadline_state-&gt;call_combiner,</span></a>
+<a name="186"><span class="lineNum">     186 </span>            :                           &quot;done scheduling deadline timer&quot;);</a>
+<a name="187"><span class="lineNum">     187 </span>            : }</a>
+<a name="188"><span class="lineNum">     188 </span>            : </a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineCov">   15015036 : grpc_deadline_state::grpc_deadline_state(grpc_call_element* elem,</span></a>
+<a name="190"><span class="lineNum">     190 </span>            :                                          const grpc_call_element_args&amp; args,</a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">   15015036 :                                          grpc_core::Timestamp deadline)</span></a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">   15015036 :     : call_stack(args.call_stack),</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">   15015036 :       call_combiner(args.call_combiner),</span></a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">   15015036 :       arena(args.arena) {</span></a>
+<a name="195"><span class="lineNum">     195 </span>            :   // Deadline will always be infinite on servers, so the timer will only be</a>
+<a name="196"><span class="lineNum">     196 </span>            :   // set on clients with a finite deadline.</a>
+<a name="197"><span class="lineNum">     197 </span><span class="lineCov">   15015036 :   if (deadline != grpc_core::Timestamp::InfFuture()) {</span></a>
+<a name="198"><span class="lineNum">     198 </span>            :     // When the deadline passes, we indicate the failure by sending down</a>
+<a name="199"><span class="lineNum">     199 </span>            :     // an op with cancel_error set.  However, we can't send down any ops</a>
+<a name="200"><span class="lineNum">     200 </span>            :     // until after the call stack is fully initialized.  If we start the</a>
+<a name="201"><span class="lineNum">     201 </span>            :     // timer here, we have no guarantee that the timer won't pop before</a>
+<a name="202"><span class="lineNum">     202 </span>            :     // call stack initialization is finished.  To avoid that problem, we</a>
+<a name="203"><span class="lineNum">     203 </span>            :     // create a closure to start the timer, and we schedule that closure</a>
+<a name="204"><span class="lineNum">     204 </span>            :     // to be run after call stack initialization is done.</a>
+<a name="205"><span class="lineNum">     205 </span>            :     struct start_timer_after_init_state* state =</a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineCov">    2602797 :         new start_timer_after_init_state(elem, deadline);</span></a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineCov">    2602797 :     GRPC_CLOSURE_INIT(&amp;state-&gt;closure, start_timer_after_init, state,</span></a>
+<a name="208"><span class="lineNum">     208 </span>            :                       grpc_schedule_on_exec_ctx);</a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineCov">    2602797 :     grpc_core::ExecCtx::Run(DEBUG_LOCATION, &amp;state-&gt;closure, GRPC_ERROR_NONE);</span></a>
+<a name="210"><span class="lineNum">     210 </span>            :   }</a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineCov">   15014886 : }</span></a>
+<a name="212"><span class="lineNum">     212 </span>            : </a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineCov">   15014058 : grpc_deadline_state::~grpc_deadline_state() { cancel_timer_if_needed(this); }</span></a>
+<a name="214"><span class="lineNum">     214 </span>            : </a>
+<a name="215"><span class="lineNum">     215 </span><span class="lineCov">        375 : void grpc_deadline_state_reset(grpc_call_element* elem,</span></a>
+<a name="216"><span class="lineNum">     216 </span>            :                                grpc_core::Timestamp new_deadline) {</a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineCov">        375 :   grpc_deadline_state* deadline_state =</span></a>
+<a name="218"><span class="lineNum">     218 </span>            :       static_cast&lt;grpc_deadline_state*&gt;(elem-&gt;call_data);</a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineCov">        375 :   cancel_timer_if_needed(deadline_state);</span></a>
+<a name="220"><span class="lineNum">     220 </span><span class="lineCov">        375 :   start_timer_if_needed(elem, new_deadline);</span></a>
+<a name="221"><span class="lineNum">     221 </span><span class="lineCov">        375 : }</span></a>
+<a name="222"><span class="lineNum">     222 </span>            : </a>
+<a name="223"><span class="lineNum">     223 </span><span class="lineCov">   16266141 : void grpc_deadline_state_client_start_transport_stream_op_batch(</span></a>
+<a name="224"><span class="lineNum">     224 </span>            :     grpc_call_element* elem, grpc_transport_stream_op_batch* op) {</a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineCov">   16266141 :   grpc_deadline_state* deadline_state =</span></a>
+<a name="226"><span class="lineNum">     226 </span>            :       static_cast&lt;grpc_deadline_state*&gt;(elem-&gt;call_data);</a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">   16266141 :   if (op-&gt;cancel_stream) {</span></a>
+<a name="228"><span class="lineNum">     228 </span><span class="lineCov">     612243 :     cancel_timer_if_needed(deadline_state);</span></a>
+<a name="229"><span class="lineNum">     229 </span>            :   } else {</a>
+<a name="230"><span class="lineNum">     230 </span>            :     // Make sure we know when the call is complete, so that we can cancel</a>
+<a name="231"><span class="lineNum">     231 </span>            :     // the timer.</a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineCov">   15653898 :     if (op-&gt;recv_trailing_metadata) {</span></a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineCov">    7659274 :       inject_recv_trailing_metadata_ready(deadline_state, op);</span></a>
+<a name="234"><span class="lineNum">     234 </span>            :     }</a>
+<a name="235"><span class="lineNum">     235 </span>            :   }</a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineCov">   16266074 : }</span></a>
+<a name="237"><span class="lineNum">     237 </span>            : </a>
+<a name="238"><span class="lineNum">     238 </span>            : //</a>
+<a name="239"><span class="lineNum">     239 </span>            : // filter code</a>
+<a name="240"><span class="lineNum">     240 </span>            : //</a>
+<a name="241"><span class="lineNum">     241 </span>            : </a>
+<a name="242"><span class="lineNum">     242 </span>            : // Constructor for channel_data.  Used for both client and server filters.</a>
+<a name="243"><span class="lineNum">     243 </span><span class="lineCov">      51739 : static grpc_error_handle deadline_init_channel_elem(</span></a>
+<a name="244"><span class="lineNum">     244 </span>            :     grpc_channel_element* /*elem*/, grpc_channel_element_args* args) {</a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineCov">      51739 :   GPR_ASSERT(!args-&gt;is_last);</span></a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineCov">      51739 :   return GRPC_ERROR_NONE;</span></a>
+<a name="247"><span class="lineNum">     247 </span>            : }</a>
+<a name="248"><span class="lineNum">     248 </span>            : </a>
+<a name="249"><span class="lineNum">     249 </span>            : // Destructor for channel_data.  Used for both client and server filters.</a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineCov">      51739 : static void deadline_destroy_channel_elem(grpc_channel_element* /*elem*/) {}</span></a>
+<a name="251"><span class="lineNum">     251 </span>            : </a>
+<a name="252"><span class="lineNum">     252 </span>            : // Call data used for both client and server filter.</a>
+<a name="253"><span class="lineNum">     253 </span>            : typedef struct base_call_data {</a>
+<a name="254"><span class="lineNum">     254 </span>            :   grpc_deadline_state deadline_state;</a>
+<a name="255"><span class="lineNum">     255 </span>            : } base_call_data;</a>
+<a name="256"><span class="lineNum">     256 </span>            : </a>
+<a name="257"><span class="lineNum">     257 </span>            : // Additional call data used only for the server filter.</a>
+<a name="258"><span class="lineNum">     258 </span>            : typedef struct server_call_data {</a>
+<a name="259"><span class="lineNum">     259 </span>            :   base_call_data base;  // Must be first.</a>
+<a name="260"><span class="lineNum">     260 </span>            :   // The closure for receiving initial metadata.</a>
+<a name="261"><span class="lineNum">     261 </span>            :   grpc_closure recv_initial_metadata_ready;</a>
+<a name="262"><span class="lineNum">     262 </span>            :   // Received initial metadata batch.</a>
+<a name="263"><span class="lineNum">     263 </span>            :   grpc_metadata_batch* recv_initial_metadata;</a>
+<a name="264"><span class="lineNum">     264 </span>            :   // The original recv_initial_metadata_ready closure, which we chain to</a>
+<a name="265"><span class="lineNum">     265 </span>            :   // after our own closure is invoked.</a>
+<a name="266"><span class="lineNum">     266 </span>            :   grpc_closure* next_recv_initial_metadata_ready;</a>
+<a name="267"><span class="lineNum">     267 </span>            : } server_call_data;</a>
+<a name="268"><span class="lineNum">     268 </span>            : </a>
+<a name="269"><span class="lineNum">     269 </span>            : // Constructor for call_data.  Used for both client and server filters.</a>
+<a name="270"><span class="lineNum">     270 </span><span class="lineCov">   10263305 : static grpc_error_handle deadline_init_call_elem(</span></a>
+<a name="271"><span class="lineNum">     271 </span>            :     grpc_call_element* elem, const grpc_call_element_args* args) {</a>
+<a name="272"><span class="lineNum">     272 </span><span class="lineCov">   10263305 :   new (elem-&gt;call_data) grpc_deadline_state(elem, *args, args-&gt;deadline);</span></a>
+<a name="273"><span class="lineNum">     273 </span><span class="lineCov">   10263257 :   return GRPC_ERROR_NONE;</span></a>
+<a name="274"><span class="lineNum">     274 </span>            : }</a>
+<a name="275"><span class="lineNum">     275 </span>            : </a>
+<a name="276"><span class="lineNum">     276 </span>            : // Destructor for call_data.  Used for both client and server filters.</a>
+<a name="277"><span class="lineNum">     277 </span><span class="lineCov">   10262978 : static void deadline_destroy_call_elem(</span></a>
+<a name="278"><span class="lineNum">     278 </span>            :     grpc_call_element* elem, const grpc_call_final_info* /*final_info*/,</a>
+<a name="279"><span class="lineNum">     279 </span>            :     grpc_closure* /*ignored*/) {</a>
+<a name="280"><span class="lineNum">     280 </span><span class="lineCov">   10262978 :   grpc_deadline_state* deadline_state =</span></a>
+<a name="281"><span class="lineNum">     281 </span>            :       static_cast&lt;grpc_deadline_state*&gt;(elem-&gt;call_data);</a>
+<a name="282"><span class="lineNum">     282 </span><span class="lineCov">   10262978 :   deadline_state-&gt;~grpc_deadline_state();</span></a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineCov">   10263134 : }</span></a>
+<a name="284"><span class="lineNum">     284 </span>            : </a>
+<a name="285"><span class="lineNum">     285 </span>            : // Method for starting a call op for client filter.</a>
+<a name="286"><span class="lineNum">     286 </span><span class="lineCov">    3207500 : static void deadline_client_start_transport_stream_op_batch(</span></a>
+<a name="287"><span class="lineNum">     287 </span>            :     grpc_call_element* elem, grpc_transport_stream_op_batch* op) {</a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineCov">    3207500 :   grpc_deadline_state_client_start_transport_stream_op_batch(elem, op);</span></a>
+<a name="289"><span class="lineNum">     289 </span>            :   // Chain to next filter.</a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineCov">    3207549 :   grpc_call_next_op(elem, op);</span></a>
+<a name="291"><span class="lineNum">     291 </span><span class="lineCov">    3207641 : }</span></a>
+<a name="292"><span class="lineNum">     292 </span>            : </a>
+<a name="293"><span class="lineNum">     293 </span>            : // Callback for receiving initial metadata on the server.</a>
+<a name="294"><span class="lineNum">     294 </span><span class="lineCov">    7172103 : static void recv_initial_metadata_ready(void* arg, grpc_error_handle error) {</span></a>
+<a name="295"><span class="lineNum">     295 </span><span class="lineCov">    7172103 :   grpc_call_element* elem = static_cast&lt;grpc_call_element*&gt;(arg);</span></a>
+<a name="296"><span class="lineNum">     296 </span><span class="lineCov">    7172103 :   server_call_data* calld = static_cast&lt;server_call_data*&gt;(elem-&gt;call_data);</span></a>
+<a name="297"><span class="lineNum">     297 </span><span class="lineCov">    7172154 :   start_timer_if_needed(</span></a>
+<a name="298"><span class="lineNum">     298 </span><span class="lineCov">    7172103 :       elem, calld-&gt;recv_initial_metadata-&gt;get(grpc_core::GrpcTimeoutMetadata())</span></a>
+<a name="299"><span class="lineNum">     299 </span><span class="lineCov">    7172154 :                 .value_or(grpc_core::Timestamp::InfFuture()));</span></a>
+<a name="300"><span class="lineNum">     300 </span>            :   // Invoke the next callback.</a>
+<a name="301"><span class="lineNum">     301 </span><span class="lineCov">    7172144 :   grpc_core::Closure::Run(DEBUG_LOCATION,</span></a>
+<a name="302"><span class="lineNum">     302 </span>            :                           calld-&gt;next_recv_initial_metadata_ready,</a>
+<a name="303"><span class="lineNum">     303 </span>            :                           GRPC_ERROR_REF(error));</a>
+<a name="304"><span class="lineNum">     304 </span><span class="lineCov">    7172015 : }</span></a>
+<a name="305"><span class="lineNum">     305 </span>            : </a>
+<a name="306"><span class="lineNum">     306 </span>            : // Method for starting a call op for server filter.</a>
+<a name="307"><span class="lineNum">     307 </span><span class="lineCov">   28898711 : static void deadline_server_start_transport_stream_op_batch(</span></a>
+<a name="308"><span class="lineNum">     308 </span>            :     grpc_call_element* elem, grpc_transport_stream_op_batch* op) {</a>
+<a name="309"><span class="lineNum">     309 </span><span class="lineCov">   28898711 :   server_call_data* calld = static_cast&lt;server_call_data*&gt;(elem-&gt;call_data);</span></a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineCov">   28898711 :   if (op-&gt;cancel_stream) {</span></a>
+<a name="311"><span class="lineNum">     311 </span><span class="lineCov">     346531 :     cancel_timer_if_needed(&amp;calld-&gt;base.deadline_state);</span></a>
+<a name="312"><span class="lineNum">     312 </span>            :   } else {</a>
+<a name="313"><span class="lineNum">     313 </span>            :     // If we're receiving initial metadata, we need to get the deadline</a>
+<a name="314"><span class="lineNum">     314 </span>            :     // from the recv_initial_metadata_ready callback.  So we inject our</a>
+<a name="315"><span class="lineNum">     315 </span>            :     // own callback into that hook.</a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineCov">   28552180 :     if (op-&gt;recv_initial_metadata) {</span></a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineCov">    7171488 :       calld-&gt;next_recv_initial_metadata_ready =</span></a>
+<a name="318"><span class="lineNum">     318 </span><span class="lineCov">    7171488 :           op-&gt;payload-&gt;recv_initial_metadata.recv_initial_metadata_ready;</span></a>
+<a name="319"><span class="lineNum">     319 </span><span class="lineCov">    7171488 :       calld-&gt;recv_initial_metadata =</span></a>
+<a name="320"><span class="lineNum">     320 </span><span class="lineCov">    7171488 :           op-&gt;payload-&gt;recv_initial_metadata.recv_initial_metadata;</span></a>
+<a name="321"><span class="lineNum">     321 </span><span class="lineCov">    7171488 :       GRPC_CLOSURE_INIT(&amp;calld-&gt;recv_initial_metadata_ready,</span></a>
+<a name="322"><span class="lineNum">     322 </span>            :                         recv_initial_metadata_ready, elem,</a>
+<a name="323"><span class="lineNum">     323 </span>            :                         grpc_schedule_on_exec_ctx);</a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineCov">    7171479 :       op-&gt;payload-&gt;recv_initial_metadata.recv_initial_metadata_ready =</span></a>
+<a name="325"><span class="lineNum">     325 </span><span class="lineCov">    7171479 :           &amp;calld-&gt;recv_initial_metadata_ready;</span></a>
+<a name="326"><span class="lineNum">     326 </span>            :     }</a>
+<a name="327"><span class="lineNum">     327 </span>            :     // Make sure we know when the call is complete, so that we can cancel</a>
+<a name="328"><span class="lineNum">     328 </span>            :     // the timer.</a>
+<a name="329"><span class="lineNum">     329 </span>            :     // Note that we trigger this on recv_trailing_metadata, even though</a>
+<a name="330"><span class="lineNum">     330 </span>            :     // the client never sends trailing metadata, because this is the</a>
+<a name="331"><span class="lineNum">     331 </span>            :     // hook that tells us when the call is complete on the server side.</a>
+<a name="332"><span class="lineNum">     332 </span><span class="lineCov">   28552171 :     if (op-&gt;recv_trailing_metadata) {</span></a>
+<a name="333"><span class="lineNum">     333 </span><span class="lineCov">    6866911 :       inject_recv_trailing_metadata_ready(&amp;calld-&gt;base.deadline_state, op);</span></a>
+<a name="334"><span class="lineNum">     334 </span>            :     }</a>
+<a name="335"><span class="lineNum">     335 </span>            :   }</a>
+<a name="336"><span class="lineNum">     336 </span>            :   // Chain to next filter.</a>
+<a name="337"><span class="lineNum">     337 </span><span class="lineCov">   28898730 :   grpc_call_next_op(elem, op);</span></a>
+<a name="338"><span class="lineNum">     338 </span><span class="lineCov">   28912936 : }</span></a>
+<a name="339"><span class="lineNum">     339 </span>            : </a>
+<a name="340"><span class="lineNum">     340 </span>            : const grpc_channel_filter grpc_client_deadline_filter = {</a>
+<a name="341"><span class="lineNum">     341 </span>            :     deadline_client_start_transport_stream_op_batch,</a>
+<a name="342"><span class="lineNum">     342 </span>            :     nullptr,</a>
+<a name="343"><span class="lineNum">     343 </span>            :     grpc_channel_next_op,</a>
+<a name="344"><span class="lineNum">     344 </span>            :     sizeof(base_call_data),</a>
+<a name="345"><span class="lineNum">     345 </span>            :     deadline_init_call_elem,</a>
+<a name="346"><span class="lineNum">     346 </span>            :     grpc_call_stack_ignore_set_pollset_or_pollset_set,</a>
+<a name="347"><span class="lineNum">     347 </span>            :     deadline_destroy_call_elem,</a>
+<a name="348"><span class="lineNum">     348 </span>            :     0,  // sizeof(channel_data)</a>
+<a name="349"><span class="lineNum">     349 </span>            :     deadline_init_channel_elem,</a>
+<a name="350"><span class="lineNum">     350 </span>            :     deadline_destroy_channel_elem,</a>
+<a name="351"><span class="lineNum">     351 </span>            :     grpc_channel_next_get_info,</a>
+<a name="352"><span class="lineNum">     352 </span>            :     &quot;deadline&quot;,</a>
+<a name="353"><span class="lineNum">     353 </span>            : };</a>
+<a name="354"><span class="lineNum">     354 </span>            : </a>
+<a name="355"><span class="lineNum">     355 </span>            : const grpc_channel_filter grpc_server_deadline_filter = {</a>
+<a name="356"><span class="lineNum">     356 </span>            :     deadline_server_start_transport_stream_op_batch,</a>
+<a name="357"><span class="lineNum">     357 </span>            :     nullptr,</a>
+<a name="358"><span class="lineNum">     358 </span>            :     grpc_channel_next_op,</a>
+<a name="359"><span class="lineNum">     359 </span>            :     sizeof(server_call_data),</a>
+<a name="360"><span class="lineNum">     360 </span>            :     deadline_init_call_elem,</a>
+<a name="361"><span class="lineNum">     361 </span>            :     grpc_call_stack_ignore_set_pollset_or_pollset_set,</a>
+<a name="362"><span class="lineNum">     362 </span>            :     deadline_destroy_call_elem,</a>
+<a name="363"><span class="lineNum">     363 </span>            :     0,  // sizeof(channel_data)</a>
+<a name="364"><span class="lineNum">     364 </span>            :     deadline_init_channel_elem,</a>
+<a name="365"><span class="lineNum">     365 </span>            :     deadline_destroy_channel_elem,</a>
+<a name="366"><span class="lineNum">     366 </span>            :     grpc_channel_next_get_info,</a>
+<a name="367"><span class="lineNum">     367 </span>            :     &quot;deadline&quot;,</a>
+<a name="368"><span class="lineNum">     368 </span>            : };</a>
+<a name="369"><span class="lineNum">     369 </span>            : </a>
+<a name="370"><span class="lineNum">     370 </span><span class="lineCov">     118706 : bool grpc_deadline_checking_enabled(const grpc_channel_args* channel_args) {</span></a>
+<a name="371"><span class="lineNum">     371 </span><span class="lineCov">     118685 :   return grpc_channel_arg_get_bool(</span></a>
+<a name="372"><span class="lineNum">     372 </span>            :       grpc_channel_args_find(channel_args, GRPC_ARG_ENABLE_DEADLINE_CHECKS),</a>
+<a name="373"><span class="lineNum">     373 </span><span class="lineCov">     237384 :       !grpc_channel_args_want_minimal_stack(channel_args));</span></a>
+<a name="374"><span class="lineNum">     374 </span>            : }</a>
+<a name="375"><span class="lineNum">     375 </span>            : </a>
+<a name="376"><span class="lineNum">     376 </span>            : namespace grpc_core {</a>
+<a name="377"><span class="lineNum">     377 </span><span class="lineCov">       7655 : void RegisterDeadlineFilter(CoreConfiguration::Builder* builder) {</span></a>
+<a name="378"><span class="lineNum">     378 </span><span class="lineCov">      15310 :   auto register_filter = [builder](grpc_channel_stack_type type,</span></a>
+<a name="379"><span class="lineNum">     379 </span><span class="lineCov">      15310 :                                    const grpc_channel_filter* filter) {</span></a>
+<a name="380"><span class="lineNum">     380 </span><span class="lineCov">      15310 :     builder-&gt;channel_init()-&gt;RegisterStage(</span></a>
+<a name="381"><span class="lineNum">     381 </span>            :         type, GRPC_CHANNEL_INIT_BUILTIN_PRIORITY,</a>
+<a name="382"><span class="lineNum">     382 </span><span class="lineCov">     108173 :         [filter](ChannelStackBuilder* builder) {</span></a>
+<a name="383"><span class="lineNum">     383 </span><span class="lineCov">      56446 :           if (grpc_deadline_checking_enabled(builder-&gt;channel_args())) {</span></a>
+<a name="384"><span class="lineNum">     384 </span><span class="lineCov">      51727 :             builder-&gt;PrependFilter(filter, nullptr);</span></a>
+<a name="385"><span class="lineNum">     385 </span>            :           }</a>
+<a name="386"><span class="lineNum">     386 </span><span class="lineCov">      56442 :           return true;</span></a>
+<a name="387"><span class="lineNum">     387 </span>            :         });</a>
+<a name="388"><span class="lineNum">     388 </span><span class="lineCov">      15308 :   };</span></a>
+<a name="389"><span class="lineNum">     389 </span><span class="lineCov">       7655 :   register_filter(GRPC_CLIENT_DIRECT_CHANNEL, &amp;grpc_client_deadline_filter);</span></a>
+<a name="390"><span class="lineNum">     390 </span><span class="lineCov">       7655 :   register_filter(GRPC_SERVER_CHANNEL, &amp;grpc_server_deadline_filter);</span></a>
+<a name="391"><span class="lineNum">     391 </span><span class="lineCov">       7654 : }</span></a>
+<a name="392"><span class="lineNum">     392 </span>            : }  // namespace grpc_core</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

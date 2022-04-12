@@ -1,0 +1,364 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/core/lib/transport/timeout_encoding.cc</title>
+  <link rel="stylesheet" type="text/css" href="../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../index.html">top level</a> - <a href="index.html">src/core/lib/transport</a> - timeout_encoding.cc<span style="font-size: 80%;"> (source / <a href="timeout_encoding.cc.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">157</td>
+            <td class="headerCovTableEntry">183</td>
+            <td class="headerCovTableEntryMed">85.8 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-12 14:35:39</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntry">11</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<a name="2"><span class="lineNum">       2 </span>            :  *</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * Copyright 2015 gRPC authors.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * you may not use this file except in compliance with the License.</a>
+<a name="7"><span class="lineNum">       7 </span>            :  * You may obtain a copy of the License at</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *</a>
+<a name="9"><span class="lineNum">       9 </span>            :  *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="10"><span class="lineNum">      10 </span>            :  *</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * Unless required by applicable law or agreed to in writing, software</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * See the License for the specific language governing permissions and</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * limitations under the License.</a>
+<a name="16"><span class="lineNum">      16 </span>            :  *</a>
+<a name="17"><span class="lineNum">      17 </span>            :  */</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="20"><span class="lineNum">      20 </span>            : </a>
+<a name="21"><span class="lineNum">      21 </span>            : #include &quot;src/core/lib/transport/timeout_encoding.h&quot;</a>
+<a name="22"><span class="lineNum">      22 </span>            : </a>
+<a name="23"><span class="lineNum">      23 </span>            : #include &lt;stdio.h&gt;</a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &lt;string.h&gt;</a>
+<a name="25"><span class="lineNum">      25 </span>            : </a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &lt;cstdint&gt;</a>
+<a name="27"><span class="lineNum">      27 </span>            : </a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &lt;grpc/support/log.h&gt;</a>
+<a name="29"><span class="lineNum">      29 </span>            : </a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &quot;src/core/lib/gpr/string.h&quot;</a>
+<a name="31"><span class="lineNum">      31 </span>            : </a>
+<a name="32"><span class="lineNum">      32 </span>            : namespace grpc_core {</a>
+<a name="33"><span class="lineNum">      33 </span>            : </a>
+<a name="34"><span class="lineNum">      34 </span>            : namespace {</a>
+<a name="35"><span class="lineNum">      35 </span>            : </a>
+<a name="36"><span class="lineNum">      36 </span><span class="lineCov">    4930801 : int64_t DivideRoundingUp(int64_t dividend, int64_t divisor) {</span></a>
+<a name="37"><span class="lineNum">      37 </span><span class="lineCov">    4930801 :   return (dividend + divisor - 1) / divisor;</span></a>
+<a name="38"><span class="lineNum">      38 </span>            : }</a>
+<a name="39"><span class="lineNum">      39 </span>            : </a>
+<a name="40"><span class="lineNum">      40 </span>            : constexpr int64_t kSecondsPerMinute = 60;</a>
+<a name="41"><span class="lineNum">      41 </span>            : constexpr int64_t kMinutesPerHour = 60;</a>
+<a name="42"><span class="lineNum">      42 </span>            : constexpr int64_t kMaxHours = 27000;</a>
+<a name="43"><span class="lineNum">      43 </span>            : </a>
+<a name="44"><span class="lineNum">      44 </span><span class="lineCov">     657828 : bool IsAllSpace(const uint8_t* p, const uint8_t* end) {</span></a>
+<a name="45"><span class="lineNum">      45 </span><span class="lineCov">     658036 :   while (p != end &amp;&amp; *p == ' ') p++;</span></a>
+<a name="46"><span class="lineNum">      46 </span><span class="lineCov">     657828 :   return p == end;</span></a>
+<a name="47"><span class="lineNum">      47 </span>            : }</a>
+<a name="48"><span class="lineNum">      48 </span>            : </a>
+<a name="49"><span class="lineNum">      49 </span>            : }  // namespace</a>
+<a name="50"><span class="lineNum">      50 </span>            : </a>
+<a name="51"><span class="lineNum">      51 </span><span class="lineCov">    4656458 : Timeout Timeout::FromDuration(Duration duration) {</span></a>
+<a name="52"><span class="lineNum">      52 </span><span class="lineCov">    4656458 :   return Timeout::FromMillis(duration.millis());</span></a>
+<a name="53"><span class="lineNum">      53 </span>            : }</a>
+<a name="54"><span class="lineNum">      54 </span>            : </a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineCov">    2210180 : double Timeout::RatioVersus(Timeout other) const {</span></a>
+<a name="56"><span class="lineNum">      56 </span><span class="lineCov">    2210180 :   double a = AsDuration().millis();</span></a>
+<a name="57"><span class="lineNum">      57 </span><span class="lineCov">    2210180 :   double b = other.AsDuration().millis();</span></a>
+<a name="58"><span class="lineNum">      58 </span><span class="lineCov">    2210180 :   if (b == 0) {</span></a>
+<a name="59"><span class="lineNum">      59 </span><span class="lineNoCov">          0 :     if (a &gt; 0) return 100;</span></a>
+<a name="60"><span class="lineNum">      60 </span><span class="lineNoCov">          0 :     if (a &lt; 0) return -100;</span></a>
+<a name="61"><span class="lineNum">      61 </span><span class="lineNoCov">          0 :     return 0;</span></a>
+<a name="62"><span class="lineNum">      62 </span>            :   }</a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">    2210180 :   return 100 * (a / b - 1);</span></a>
+<a name="64"><span class="lineNum">      64 </span>            : }</a>
+<a name="65"><span class="lineNum">      65 </span>            : </a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">    4420360 : Duration Timeout::AsDuration() const {</span></a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineCov">    4420360 :   int64_t value = value_;</span></a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">    4420360 :   switch (unit_) {</span></a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineNoCov">          0 :     case Unit::kNanoseconds:</span></a>
+<a name="70"><span class="lineNum">      70 </span><span class="lineNoCov">          0 :       return Duration::Zero();</span></a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">       3726 :     case Unit::kMilliseconds:</span></a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">       3726 :       return Duration::Milliseconds(value);</span></a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">    4121859 :     case Unit::kTenMilliseconds:</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">    4121859 :       return Duration::Milliseconds(value * 10);</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">     136235 :     case Unit::kHundredMilliseconds:</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">     136235 :       return Duration::Milliseconds(value * 100);</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">     150406 :     case Unit::kSeconds:</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">     150406 :       return Duration::Seconds(value);</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">        621 :     case Unit::kTenSeconds:</span></a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">        621 :       return Duration::Seconds(value * 10);</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineNoCov">          0 :     case Unit::kHundredSeconds:</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineNoCov">          0 :       return Duration::Seconds(value * 100);</span></a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineCov">       7513 :     case Unit::kMinutes:</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">       7513 :       return Duration::Minutes(value);</span></a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineNoCov">          0 :     case Unit::kTenMinutes:</span></a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineNoCov">          0 :       return Duration::Minutes(value * 10);</span></a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineNoCov">          0 :     case Unit::kHundredMinutes:</span></a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineNoCov">          0 :       return Duration::Minutes(value * 100);</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineNoCov">          0 :     case Unit::kHours:</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineNoCov">          0 :       return Duration::Hours(value);</span></a>
+<a name="91"><span class="lineNum">      91 </span>            :   }</a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineNoCov">          0 :   GPR_UNREACHABLE_CODE(return Duration::NegativeInfinity());</span></a>
+<a name="93"><span class="lineNum">      93 </span>            : }</a>
+<a name="94"><span class="lineNum">      94 </span>            : </a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineCov">    3085703 : Slice Timeout::Encode() const {</span></a>
+<a name="96"><span class="lineNum">      96 </span>            :   char buf[10];</a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineCov">    3085703 :   char* p = buf;</span></a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">    3085703 :   uint16_t n = value_;</span></a>
+<a name="99"><span class="lineNum">      99 </span>            :   int digits;</a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineCov">    3085703 :   if (n &gt;= 10000) {</span></a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineCov">          1 :     digits = 5;</span></a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineCov">    3085702 :   } else if (n &gt;= 1000) {</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineNoCov">          0 :     digits = 4;</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineCov">    3085702 :   } else if (n &gt;= 100) {</span></a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">    2909673 :     digits = 3;</span></a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineCov">     176029 :   } else if (n &gt;= 10) {</span></a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineCov">       9928 :     digits = 2;</span></a>
+<a name="108"><span class="lineNum">     108 </span>            :   } else {</a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineCov">     166101 :     digits = 1;</span></a>
+<a name="110"><span class="lineNum">     110 </span>            :   }</a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineCov">    3085703 :   switch (digits) {</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineCov">          1 :     case 5:</span></a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineCov">          1 :       *p++ = '0' + n / 10000;</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">          1 :       n %= 10000;</span></a>
+<a name="115"><span class="lineNum">     115 </span>            :       ABSL_FALLTHROUGH_INTENDED;</a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">          1 :     case 4:</span></a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineCov">          1 :       *p++ = '0' + n / 1000;</span></a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">          1 :       n %= 1000;</span></a>
+<a name="119"><span class="lineNum">     119 </span>            :       ABSL_FALLTHROUGH_INTENDED;</a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineCov">    2909674 :     case 3:</span></a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineCov">    2909674 :       *p++ = '0' + n / 100;</span></a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineCov">    2909674 :       n %= 100;</span></a>
+<a name="123"><span class="lineNum">     123 </span>            :       ABSL_FALLTHROUGH_INTENDED;</a>
+<a name="124"><span class="lineNum">     124 </span><span class="lineCov">    2919602 :     case 2:</span></a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineCov">    2919602 :       *p++ = '0' + n / 10;</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">    2919602 :       n %= 10;</span></a>
+<a name="127"><span class="lineNum">     127 </span>            :       ABSL_FALLTHROUGH_INTENDED;</a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">    3085703 :     case 1:</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineCov">    3085703 :       *p++ = '0' + n;</span></a>
+<a name="130"><span class="lineNum">     130 </span>            :   }</a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineCov">    3085703 :   switch (unit_) {</span></a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineCov">          6 :     case Unit::kNanoseconds:</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">          6 :       *p++ = 'n';</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineCov">          6 :       break;</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">      54494 :     case Unit::kHundredMilliseconds:</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">      54494 :       *p++ = '0';</span></a>
+<a name="137"><span class="lineNum">     137 </span>            :       ABSL_FALLTHROUGH_INTENDED;</a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineCov">    2905640 :     case Unit::kTenMilliseconds:</span></a>
+<a name="139"><span class="lineNum">     139 </span><span class="lineCov">    2905640 :       *p++ = '0';</span></a>
+<a name="140"><span class="lineNum">     140 </span>            :       ABSL_FALLTHROUGH_INTENDED;</a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineCov">    2909246 :     case Unit::kMilliseconds:</span></a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineCov">    2909246 :       *p++ = 'm';</span></a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineCov">    2909246 :       break;</span></a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineNoCov">          0 :     case Unit::kHundredSeconds:</span></a>
+<a name="145"><span class="lineNum">     145 </span><span class="lineNoCov">          0 :       *p++ = '0';</span></a>
+<a name="146"><span class="lineNum">     146 </span>            :       ABSL_FALLTHROUGH_INTENDED;</a>
+<a name="147"><span class="lineNum">     147 </span><span class="lineCov">        530 :     case Unit::kTenSeconds:</span></a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineCov">        530 :       *p++ = '0';</span></a>
+<a name="149"><span class="lineNum">     149 </span>            :       ABSL_FALLTHROUGH_INTENDED;</a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineCov">     175108 :     case Unit::kSeconds:</span></a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineCov">     175108 :       *p++ = 'S';</span></a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">     175108 :       break;</span></a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineNoCov">          0 :     case Unit::kHundredMinutes:</span></a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineNoCov">          0 :       *p++ = '0';</span></a>
+<a name="155"><span class="lineNum">     155 </span>            :       ABSL_FALLTHROUGH_INTENDED;</a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineNoCov">          0 :     case Unit::kTenMinutes:</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineNoCov">          0 :       *p++ = '0';</span></a>
+<a name="158"><span class="lineNum">     158 </span>            :       ABSL_FALLTHROUGH_INTENDED;</a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">       1225 :     case Unit::kMinutes:</span></a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineCov">       1225 :       *p++ = 'M';</span></a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">       1225 :       break;</span></a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineCov">        118 :     case Unit::kHours:</span></a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">        118 :       *p++ = 'H';</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">        118 :       break;</span></a>
+<a name="165"><span class="lineNum">     165 </span>            :   }</a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineCov">    6171406 :   return Slice::FromCopiedBuffer(buf, p - buf);</span></a>
+<a name="167"><span class="lineNum">     167 </span>            : }</a>
+<a name="168"><span class="lineNum">     168 </span>            : </a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">    4656459 : Timeout Timeout::FromMillis(int64_t millis) {</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">    4656459 :   if (millis &lt;= 0) {</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">          6 :     return Timeout(1, Unit::kNanoseconds);</span></a>
+<a name="172"><span class="lineNum">     172 </span><span class="lineCov">    4656453 :   } else if (millis &lt; 1000) {</span></a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">       4172 :     return Timeout(millis, Unit::kMilliseconds);</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">    4652281 :   } else if (millis &lt; 10000) {</span></a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">    4529509 :     int64_t value = DivideRoundingUp(millis, 10);</span></a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineCov">    4529509 :     if (value % 100 != 0) return Timeout(value, Unit::kTenMilliseconds);</span></a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineCov">     122772 :   } else if (millis &lt; 100000) {</span></a>
+<a name="178"><span class="lineNum">     178 </span><span class="lineCov">     121855 :     int64_t value = DivideRoundingUp(millis, 100);</span></a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">     121855 :     if (value % 10 != 0) return Timeout(value, Unit::kHundredMilliseconds);</span></a>
+<a name="180"><span class="lineNum">     180 </span>            :   }</a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">     273538 :   return Timeout::FromSeconds(DivideRoundingUp(millis, 1000));</span></a>
+<a name="182"><span class="lineNum">     182 </span>            : }</a>
+<a name="183"><span class="lineNum">     183 </span>            : </a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineCov">     273543 : Timeout Timeout::FromSeconds(int64_t seconds) {</span></a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineCov">     273543 :   GPR_DEBUG_ASSERT(seconds != 0);</span></a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">     273543 :   if (seconds &lt; 1000) {</span></a>
+<a name="187"><span class="lineNum">     187 </span><span class="lineCov">     272813 :     if (seconds % kSecondsPerMinute != 0) {</span></a>
+<a name="188"><span class="lineNum">     188 </span><span class="lineCov">     267884 :       return Timeout(seconds, Unit::kSeconds);</span></a>
+<a name="189"><span class="lineNum">     189 </span>            :     }</a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineCov">        730 :   } else if (seconds &lt; 10000) {</span></a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">        727 :     int64_t value = DivideRoundingUp(seconds, 10);</span></a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">        727 :     if ((value * 10) % kSecondsPerMinute != 0) {</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">        611 :       return Timeout(value, Unit::kTenSeconds);</span></a>
+<a name="194"><span class="lineNum">     194 </span>            :     }</a>
+<a name="195"><span class="lineNum">     195 </span><span class="lineCov">          3 :   } else if (seconds &lt; 100000) {</span></a>
+<a name="196"><span class="lineNum">     196 </span><span class="lineCov">          1 :     int64_t value = DivideRoundingUp(seconds, 100);</span></a>
+<a name="197"><span class="lineNum">     197 </span><span class="lineCov">          1 :     if ((value * 100) % kSecondsPerMinute != 0) {</span></a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineNoCov">          0 :       return Timeout(value, Unit::kHundredSeconds);</span></a>
+<a name="199"><span class="lineNum">     199 </span>            :     }</a>
+<a name="200"><span class="lineNum">     200 </span>            :   }</a>
+<a name="201"><span class="lineNum">     201 </span><span class="lineCov">       5048 :   return Timeout::FromMinutes(DivideRoundingUp(seconds, kSecondsPerMinute));</span></a>
+<a name="202"><span class="lineNum">     202 </span>            : }</a>
+<a name="203"><span class="lineNum">     203 </span>            : </a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineCov">       5048 : Timeout Timeout::FromMinutes(int64_t minutes) {</span></a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineCov">       5048 :   GPR_DEBUG_ASSERT(minutes != 0);</span></a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineCov">       5048 :   if (minutes &lt; 1000) {</span></a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineCov">       5046 :     if (minutes % kMinutesPerHour != 0) {</span></a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineCov">       4930 :       return Timeout(minutes, Unit::kMinutes);</span></a>
+<a name="209"><span class="lineNum">     209 </span>            :     }</a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineCov">          2 :   } else if (minutes &lt; 10000) {</span></a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineCov">          1 :     int64_t value = DivideRoundingUp(minutes, 10);</span></a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineCov">          1 :     if ((value * 10) % kMinutesPerHour != 0) {</span></a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineNoCov">          0 :       return Timeout(value, Unit::kTenMinutes);</span></a>
+<a name="214"><span class="lineNum">     214 </span>            :     }</a>
+<a name="215"><span class="lineNum">     215 </span><span class="lineCov">          1 :   } else if (minutes &lt; 100000) {</span></a>
+<a name="216"><span class="lineNum">     216 </span><span class="lineNoCov">          0 :     int64_t value = DivideRoundingUp(minutes, 100);</span></a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineNoCov">          0 :     if ((value * 100) % kMinutesPerHour != 0) {</span></a>
+<a name="218"><span class="lineNum">     218 </span><span class="lineNoCov">          0 :       return Timeout(value, Unit::kHundredMinutes);</span></a>
+<a name="219"><span class="lineNum">     219 </span>            :     }</a>
+<a name="220"><span class="lineNum">     220 </span>            :   }</a>
+<a name="221"><span class="lineNum">     221 </span><span class="lineCov">        118 :   return Timeout::FromHours(DivideRoundingUp(minutes, kMinutesPerHour));</span></a>
+<a name="222"><span class="lineNum">     222 </span>            : }</a>
+<a name="223"><span class="lineNum">     223 </span>            : </a>
+<a name="224"><span class="lineNum">     224 </span><span class="lineCov">        118 : Timeout Timeout::FromHours(int64_t hours) {</span></a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineCov">        118 :   GPR_DEBUG_ASSERT(hours != 0);</span></a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineCov">        118 :   if (hours &lt; kMaxHours) {</span></a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">        117 :     return Timeout(hours, Unit::kHours);</span></a>
+<a name="228"><span class="lineNum">     228 </span>            :   }</a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineCov">          1 :   return Timeout(kMaxHours, Unit::kHours);</span></a>
+<a name="230"><span class="lineNum">     230 </span>            : }</a>
+<a name="231"><span class="lineNum">     231 </span>            : </a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineCov">     657869 : absl::optional&lt;Duration&gt; ParseTimeout(const Slice&amp; text) {</span></a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineCov">     657869 :   int32_t x = 0;</span></a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineCov">     657869 :   const uint8_t* p = text.begin();</span></a>
+<a name="235"><span class="lineNum">     235 </span><span class="lineCov">     657869 :   const uint8_t* end = text.end();</span></a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineCov">     657869 :   int have_digit = 0;</span></a>
+<a name="237"><span class="lineNum">     237 </span>            :   /* skip whitespace */</a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineCov">     658179 :   for (; p != end &amp;&amp; *p == ' '; p++) {</span></a>
+<a name="239"><span class="lineNum">     239 </span>            :   }</a>
+<a name="240"><span class="lineNum">     240 </span>            :   /* decode numeric part */</a>
+<a name="241"><span class="lineNum">     241 </span><span class="lineCov">    3192739 :   for (; p != end &amp;&amp; *p &gt;= '0' &amp;&amp; *p &lt;= '9'; p++) {</span></a>
+<a name="242"><span class="lineNum">     242 </span><span class="lineCov">    2534877 :     int32_t digit = static_cast&lt;int32_t&gt;(*p - static_cast&lt;uint8_t&gt;('0'));</span></a>
+<a name="243"><span class="lineNum">     243 </span><span class="lineCov">    2534877 :     have_digit = 1;</span></a>
+<a name="244"><span class="lineNum">     244 </span>            :     /* spec allows max. 8 digits, but we allow values up to 1,000,000,000 */</a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineCov">    2534877 :     if (x &gt;= (100 * 1000 * 1000)) {</span></a>
+<a name="246"><span class="lineNum">     246 </span><span class="lineCov">         10 :       if (x != (100 * 1000 * 1000) || digit != 0) {</span></a>
+<a name="247"><span class="lineNum">     247 </span><span class="lineCov">          7 :         return Duration::Infinity();</span></a>
+<a name="248"><span class="lineNum">     248 </span>            :       }</a>
+<a name="249"><span class="lineNum">     249 </span>            :     }</a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineCov">    2534870 :     x = x * 10 + digit;</span></a>
+<a name="251"><span class="lineNum">     251 </span>            :   }</a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineCov">     657862 :   if (!have_digit) return absl::nullopt;</span></a>
+<a name="253"><span class="lineNum">     253 </span>            :   /* skip whitespace */</a>
+<a name="254"><span class="lineNum">     254 </span><span class="lineCov">     658059 :   for (; p != end &amp;&amp; *p == ' '; p++) {</span></a>
+<a name="255"><span class="lineNum">     255 </span>            :   }</a>
+<a name="256"><span class="lineNum">     256 </span><span class="lineCov">     657845 :   if (p == end) return absl::nullopt;</span></a>
+<a name="257"><span class="lineNum">     257 </span>            :   /* decode unit specifier */</a>
+<a name="258"><span class="lineNum">     258 </span><span class="lineCov">     657843 :   Duration timeout;</span></a>
+<a name="259"><span class="lineNum">     259 </span><span class="lineCov">     657843 :   switch (*p) {</span></a>
+<a name="260"><span class="lineNum">     260 </span><span class="lineCov">         71 :     case 'n':</span></a>
+<a name="261"><span class="lineNum">     261 </span>            :       timeout =</a>
+<a name="262"><span class="lineNum">     262 </span><span class="lineCov">         71 :           Duration::Milliseconds(x / GPR_NS_PER_MS + (x % GPR_NS_PER_MS != 0));</span></a>
+<a name="263"><span class="lineNum">     263 </span><span class="lineCov">         71 :       break;</span></a>
+<a name="264"><span class="lineNum">     264 </span><span class="lineCov">         72 :     case 'u':</span></a>
+<a name="265"><span class="lineNum">     265 </span>            :       timeout =</a>
+<a name="266"><span class="lineNum">     266 </span><span class="lineCov">         72 :           Duration::Milliseconds(x / GPR_US_PER_MS + (x % GPR_US_PER_MS != 0));</span></a>
+<a name="267"><span class="lineNum">     267 </span><span class="lineCov">         72 :       break;</span></a>
+<a name="268"><span class="lineNum">     268 </span><span class="lineCov">     616429 :     case 'm':</span></a>
+<a name="269"><span class="lineNum">     269 </span><span class="lineCov">     616429 :       timeout = Duration::Milliseconds(x);</span></a>
+<a name="270"><span class="lineNum">     270 </span><span class="lineCov">     616429 :       break;</span></a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineCov">      40700 :     case 'S':</span></a>
+<a name="272"><span class="lineNum">     272 </span><span class="lineCov">      40700 :       timeout = Duration::Seconds(x);</span></a>
+<a name="273"><span class="lineNum">     273 </span><span class="lineCov">      40700 :       break;</span></a>
+<a name="274"><span class="lineNum">     274 </span><span class="lineCov">        437 :     case 'M':</span></a>
+<a name="275"><span class="lineNum">     275 </span><span class="lineCov">        437 :       timeout = Duration::Minutes(x);</span></a>
+<a name="276"><span class="lineNum">     276 </span><span class="lineCov">        437 :       break;</span></a>
+<a name="277"><span class="lineNum">     277 </span><span class="lineCov">        119 :     case 'H':</span></a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineCov">        119 :       timeout = Duration::Hours(x);</span></a>
+<a name="279"><span class="lineNum">     279 </span><span class="lineCov">        119 :       break;</span></a>
+<a name="280"><span class="lineNum">     280 </span><span class="lineCov">         15 :     default:</span></a>
+<a name="281"><span class="lineNum">     281 </span><span class="lineCov">         15 :       return absl::nullopt;</span></a>
+<a name="282"><span class="lineNum">     282 </span>            :   }</a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineCov">     657828 :   p++;</span></a>
+<a name="284"><span class="lineNum">     284 </span><span class="lineCov">     657828 :   if (!IsAllSpace(p, end)) return absl::nullopt;</span></a>
+<a name="285"><span class="lineNum">     285 </span><span class="lineCov">     657811 :   return timeout;</span></a>
+<a name="286"><span class="lineNum">     286 </span>            : }</a>
+<a name="287"><span class="lineNum">     287 </span>            : </a>
+<a name="288"><span class="lineNum">     288 </span>            : }  // namespace grpc_core</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

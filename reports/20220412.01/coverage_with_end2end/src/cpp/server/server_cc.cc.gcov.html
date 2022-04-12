@@ -1,0 +1,1447 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/cpp/server/server_cc.cc</title>
+  <link rel="stylesheet" type="text/css" href="../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../index.html">top level</a> - <a href="index.html">src/cpp/server</a> - server_cc.cc<span style="font-size: 80%;"> (source / <a href="server_cc.cc.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">617</td>
+            <td class="headerCovTableEntry">663</td>
+            <td class="headerCovTableEntryHi">93.1 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-12 14:35:39</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">94</td>
+            <td class="headerCovTableEntry">100</td>
+            <td class="headerCovTableEntryHi">94.0 %</td>
+          </tr>
+          <tr><td><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<a name="2"><span class="lineNum">       2 </span>            :  * Copyright 2015 gRPC authors.</a>
+<a name="3"><span class="lineNum">       3 </span>            :  *</a>
+<a name="4"><span class="lineNum">       4 </span>            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * you may not use this file except in compliance with the License.</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * You may obtain a copy of the License at</a>
+<a name="7"><span class="lineNum">       7 </span>            :  *</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="9"><span class="lineNum">       9 </span>            :  *</a>
+<a name="10"><span class="lineNum">      10 </span>            :  * Unless required by applicable law or agreed to in writing, software</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * See the License for the specific language governing permissions and</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * limitations under the License.</a>
+<a name="15"><span class="lineNum">      15 </span>            :  *</a>
+<a name="16"><span class="lineNum">      16 </span>            :  */</a>
+<a name="17"><span class="lineNum">      17 </span>            : </a>
+<a name="18"><span class="lineNum">      18 </span>            : #include &lt;cstdlib&gt;</a>
+<a name="19"><span class="lineNum">      19 </span>            : #include &lt;sstream&gt;</a>
+<a name="20"><span class="lineNum">      20 </span>            : #include &lt;type_traits&gt;</a>
+<a name="21"><span class="lineNum">      21 </span>            : #include &lt;utility&gt;</a>
+<a name="22"><span class="lineNum">      22 </span>            : </a>
+<a name="23"><span class="lineNum">      23 </span>            : #include &quot;absl/memory/memory.h&quot;</a>
+<a name="24"><span class="lineNum">      24 </span>            : </a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &lt;grpc/grpc.h&gt;</a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &lt;grpc/impl/codegen/grpc_types.h&gt;</a>
+<a name="27"><span class="lineNum">      27 </span>            : #include &lt;grpc/support/alloc.h&gt;</a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &lt;grpc/support/log.h&gt;</a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &lt;grpcpp/completion_queue.h&gt;</a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &lt;grpcpp/generic/async_generic_service.h&gt;</a>
+<a name="31"><span class="lineNum">      31 </span>            : #include &lt;grpcpp/impl/codegen/async_unary_call.h&gt;</a>
+<a name="32"><span class="lineNum">      32 </span>            : #include &lt;grpcpp/impl/codegen/byte_buffer.h&gt;</a>
+<a name="33"><span class="lineNum">      33 </span>            : #include &lt;grpcpp/impl/codegen/call.h&gt;</a>
+<a name="34"><span class="lineNum">      34 </span>            : #include &lt;grpcpp/impl/codegen/completion_queue_tag.h&gt;</a>
+<a name="35"><span class="lineNum">      35 </span>            : #include &lt;grpcpp/impl/codegen/method_handler.h&gt;</a>
+<a name="36"><span class="lineNum">      36 </span>            : #include &lt;grpcpp/impl/codegen/server_interceptor.h&gt;</a>
+<a name="37"><span class="lineNum">      37 </span>            : #include &lt;grpcpp/impl/grpc_library.h&gt;</a>
+<a name="38"><span class="lineNum">      38 </span>            : #include &lt;grpcpp/impl/rpc_service_method.h&gt;</a>
+<a name="39"><span class="lineNum">      39 </span>            : #include &lt;grpcpp/impl/server_initializer.h&gt;</a>
+<a name="40"><span class="lineNum">      40 </span>            : #include &lt;grpcpp/impl/service_type.h&gt;</a>
+<a name="41"><span class="lineNum">      41 </span>            : #include &lt;grpcpp/security/server_credentials.h&gt;</a>
+<a name="42"><span class="lineNum">      42 </span>            : #include &lt;grpcpp/server.h&gt;</a>
+<a name="43"><span class="lineNum">      43 </span>            : #include &lt;grpcpp/server_context.h&gt;</a>
+<a name="44"><span class="lineNum">      44 </span>            : #include &lt;grpcpp/support/time.h&gt;</a>
+<a name="45"><span class="lineNum">      45 </span>            : </a>
+<a name="46"><span class="lineNum">      46 </span>            : #include &quot;src/core/ext/transport/inproc/inproc_transport.h&quot;</a>
+<a name="47"><span class="lineNum">      47 </span>            : #include &quot;src/core/lib/gprpp/manual_constructor.h&quot;</a>
+<a name="48"><span class="lineNum">      48 </span>            : #include &quot;src/core/lib/iomgr/exec_ctx.h&quot;</a>
+<a name="49"><span class="lineNum">      49 </span>            : #include &quot;src/core/lib/iomgr/iomgr.h&quot;</a>
+<a name="50"><span class="lineNum">      50 </span>            : #include &quot;src/core/lib/profiling/timers.h&quot;</a>
+<a name="51"><span class="lineNum">      51 </span>            : #include &quot;src/core/lib/surface/call.h&quot;</a>
+<a name="52"><span class="lineNum">      52 </span>            : #include &quot;src/core/lib/surface/completion_queue.h&quot;</a>
+<a name="53"><span class="lineNum">      53 </span>            : #include &quot;src/core/lib/surface/server.h&quot;</a>
+<a name="54"><span class="lineNum">      54 </span>            : #include &quot;src/cpp/client/create_channel_internal.h&quot;</a>
+<a name="55"><span class="lineNum">      55 </span>            : #include &quot;src/cpp/server/external_connection_acceptor_impl.h&quot;</a>
+<a name="56"><span class="lineNum">      56 </span>            : #include &quot;src/cpp/server/health/default_health_check_service.h&quot;</a>
+<a name="57"><span class="lineNum">      57 </span>            : #include &quot;src/cpp/thread_manager/thread_manager.h&quot;</a>
+<a name="58"><span class="lineNum">      58 </span>            : </a>
+<a name="59"><span class="lineNum">      59 </span>            : namespace grpc {</a>
+<a name="60"><span class="lineNum">      60 </span>            : namespace {</a>
+<a name="61"><span class="lineNum">      61 </span>            : </a>
+<a name="62"><span class="lineNum">      62 </span>            : // The default value for maximum number of threads that can be created in the</a>
+<a name="63"><span class="lineNum">      63 </span>            : // sync server. This value of INT_MAX is chosen to match the default behavior if</a>
+<a name="64"><span class="lineNum">      64 </span>            : // no ResourceQuota is set. To modify the max number of threads in a sync</a>
+<a name="65"><span class="lineNum">      65 </span>            : // server, pass a custom ResourceQuota object  (with the desired number of</a>
+<a name="66"><span class="lineNum">      66 </span>            : // max-threads set) to the server builder.</a>
+<a name="67"><span class="lineNum">      67 </span>            : #define DEFAULT_MAX_SYNC_SERVER_THREADS INT_MAX</a>
+<a name="68"><span class="lineNum">      68 </span>            : </a>
+<a name="69"><span class="lineNum">      69 </span>            : // Give a useful status error message if the resource is exhausted specifically</a>
+<a name="70"><span class="lineNum">      70 </span>            : // because the server threadpool is full.</a>
+<a name="71"><span class="lineNum">      71 </span>            : const char* kServerThreadpoolExhausted = &quot;Server Threadpool Exhausted&quot;;</a>
+<a name="72"><span class="lineNum">      72 </span>            : </a>
+<a name="73"><span class="lineNum">      73 </span>            : // Although we might like to give a useful status error message on unimplemented</a>
+<a name="74"><span class="lineNum">      74 </span>            : // RPCs, it's not always possible since that also would need to be added across</a>
+<a name="75"><span class="lineNum">      75 </span>            : // languages and isn't actually required by the spec.</a>
+<a name="76"><span class="lineNum">      76 </span>            : const char* kUnknownRpcMethod = &quot;&quot;;</a>
+<a name="77"><span class="lineNum">      77 </span>            : </a>
+<a name="78"><span class="lineNum">      78 </span>            : class DefaultGlobalCallbacks final : public Server::GlobalCallbacks {</a>
+<a name="79"><span class="lineNum">      79 </span>            :  public:</a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">        980 :   ~DefaultGlobalCallbacks() override {}</span></a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">    3667626 :   void PreSynchronousRequest(ServerContext* /*context*/) override {}</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">    3667330 :   void PostSynchronousRequest(ServerContext* /*context*/) override {}</span></a>
+<a name="83"><span class="lineNum">      83 </span>            : };</a>
+<a name="84"><span class="lineNum">      84 </span>            : </a>
+<a name="85"><span class="lineNum">      85 </span>            : std::shared_ptr&lt;Server::GlobalCallbacks&gt; g_callbacks = nullptr;</a>
+<a name="86"><span class="lineNum">      86 </span>            : gpr_once g_once_init_callbacks = GPR_ONCE_INIT;</a>
+<a name="87"><span class="lineNum">      87 </span>            : </a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineCov">        718 : void InitGlobalCallbacks() {</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">        718 :   if (!g_callbacks) {</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">        718 :     g_callbacks.reset(new DefaultGlobalCallbacks());</span></a>
+<a name="91"><span class="lineNum">      91 </span>            :   }</a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">        718 : }</span></a>
+<a name="93"><span class="lineNum">      93 </span>            : </a>
+<a name="94"><span class="lineNum">      94 </span>            : class ShutdownTag : public internal::CompletionQueueTag {</a>
+<a name="95"><span class="lineNum">      95 </span>            :  public:</a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineCov">      18302 :   bool FinalizeResult(void** /*tag*/, bool* /*status*/) override {</span></a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineCov">      18302 :     return false;</span></a>
+<a name="98"><span class="lineNum">      98 </span>            :   }</a>
+<a name="99"><span class="lineNum">      99 </span>            : };</a>
+<a name="100"><span class="lineNum">     100 </span>            : </a>
+<a name="101"><span class="lineNum">     101 </span>            : class PhonyTag : public internal::CompletionQueueTag {</a>
+<a name="102"><span class="lineNum">     102 </span>            :  public:</a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">    3667542 :   bool FinalizeResult(void** /*tag*/, bool* /*status*/) override {</span></a>
+<a name="104"><span class="lineNum">     104 </span><span class="lineCov">    3667542 :     return true;</span></a>
+<a name="105"><span class="lineNum">     105 </span>            :   }</a>
+<a name="106"><span class="lineNum">     106 </span>            : };</a>
+<a name="107"><span class="lineNum">     107 </span>            : </a>
+<a name="108"><span class="lineNum">     108 </span>            : class UnimplementedAsyncRequestContext {</a>
+<a name="109"><span class="lineNum">     109 </span>            :  protected:</a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">       5773 :   UnimplementedAsyncRequestContext() : generic_stream_(&amp;server_context_) {}</span></a>
+<a name="111"><span class="lineNum">     111 </span>            : </a>
+<a name="112"><span class="lineNum">     112 </span>            :   GenericServerContext server_context_;</a>
+<a name="113"><span class="lineNum">     113 </span>            :   GenericServerAsyncReaderWriter generic_stream_;</a>
+<a name="114"><span class="lineNum">     114 </span>            : };</a>
+<a name="115"><span class="lineNum">     115 </span>            : </a>
+<a name="116"><span class="lineNum">     116 </span>            : }  // namespace</a>
+<a name="117"><span class="lineNum">     117 </span>            : </a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">   16943483 : ServerInterface::BaseAsyncRequest::BaseAsyncRequest(</span></a>
+<a name="119"><span class="lineNum">     119 </span>            :     ServerInterface* server, ServerContext* context,</a>
+<a name="120"><span class="lineNum">     120 </span>            :     internal::ServerAsyncStreamingInterface* stream, CompletionQueue* call_cq,</a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineCov">   16943483 :     ServerCompletionQueue* notification_cq, void* tag, bool delete_on_finalize)</span></a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineCov">   16943483 :     : server_(server),</span></a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineCov">   16943483 :       context_(context),</span></a>
+<a name="124"><span class="lineNum">     124 </span><span class="lineCov">   16943483 :       stream_(stream),</span></a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineCov">   16943483 :       call_cq_(call_cq),</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">   16943483 :       notification_cq_(notification_cq),</span></a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineCov">   16943483 :       tag_(tag),</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">   16943483 :       delete_on_finalize_(delete_on_finalize),</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineCov">   16943483 :       call_(nullptr),</span></a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">   16943483 :       done_intercepting_(false) {</span></a>
+<a name="131"><span class="lineNum">     131 </span>            :   /* Set up interception state partially for the receive ops. call_wrapper_ is</a>
+<a name="132"><span class="lineNum">     132 </span>            :    * not filled at this point, but it will be filled before the interceptors are</a>
+<a name="133"><span class="lineNum">     133 </span>            :    * run. */</a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineCov">   16943398 :   interceptor_methods_.SetCall(&amp;call_wrapper_);</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">   16943403 :   interceptor_methods_.SetReverse();</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">   16943414 :   call_cq_-&gt;RegisterAvalanching();  // This op will trigger more ops</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">   16943491 : }</span></a>
+<a name="138"><span class="lineNum">     138 </span>            : </a>
+<a name="139"><span class="lineNum">     139 </span><span class="lineCov">   16942778 : ServerInterface::BaseAsyncRequest::~BaseAsyncRequest() {</span></a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineCov">   16942778 :   call_cq_-&gt;CompleteAvalanching();</span></a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineCov">   16943500 : }</span></a>
+<a name="142"><span class="lineNum">     142 </span>            : </a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineCov">   16943156 : bool ServerInterface::BaseAsyncRequest::FinalizeResult(void** tag,</span></a>
+<a name="144"><span class="lineNum">     144 </span>            :                                                        bool* status) {</a>
+<a name="145"><span class="lineNum">     145 </span><span class="lineCov">   16943156 :   if (done_intercepting_) {</span></a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">         12 :     *tag = tag_;</span></a>
+<a name="147"><span class="lineNum">     147 </span><span class="lineCov">         12 :     if (delete_on_finalize_) {</span></a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineCov">          9 :       delete this;</span></a>
+<a name="149"><span class="lineNum">     149 </span>            :     }</a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineCov">         12 :     return true;</span></a>
+<a name="151"><span class="lineNum">     151 </span>            :   }</a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">   16943144 :   context_-&gt;set_call(call_);</span></a>
+<a name="153"><span class="lineNum">     153 </span><span class="lineCov">   16943137 :   context_-&gt;cq_ = call_cq_;</span></a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineCov">   16943137 :   if (call_wrapper_.call() == nullptr) {</span></a>
+<a name="155"><span class="lineNum">     155 </span>            :     // Fill it since it is empty.</a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineCov">   14712701 :     call_wrapper_ = internal::Call(</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">   14712697 :         call_, server_, call_cq_, server_-&gt;max_receive_message_size(), nullptr);</span></a>
+<a name="158"><span class="lineNum">     158 </span>            :   }</a>
+<a name="159"><span class="lineNum">     159 </span>            : </a>
+<a name="160"><span class="lineNum">     160 </span>            :   // just the pointers inside call are copied here</a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">   16943320 :   stream_-&gt;BindCall(&amp;call_wrapper_);</span></a>
+<a name="162"><span class="lineNum">     162 </span>            : </a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">   16943314 :   if (*status &amp;&amp; call_ &amp;&amp; call_wrapper_.server_rpc_info()) {</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">         12 :     done_intercepting_ = true;</span></a>
+<a name="165"><span class="lineNum">     165 </span>            :     // Set interception point for RECV INITIAL METADATA</a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineCov">         12 :     interceptor_methods_.AddInterceptionHookPoint(</span></a>
+<a name="167"><span class="lineNum">     167 </span>            :         experimental::InterceptionHookPoints::POST_RECV_INITIAL_METADATA);</a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">         12 :     interceptor_methods_.SetRecvInitialMetadata(&amp;context_-&gt;client_metadata_);</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">         12 :     if (interceptor_methods_.RunInterceptors(</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">         12 :             [this]() { ContinueFinalizeResultAfterInterception(); })) {</span></a>
+<a name="171"><span class="lineNum">     171 </span>            :       // There are no interceptors to run. Continue</a>
+<a name="172"><span class="lineNum">     172 </span>            :     } else {</a>
+<a name="173"><span class="lineNum">     173 </span>            :       // There were interceptors to be run, so</a>
+<a name="174"><span class="lineNum">     174 </span>            :       // ContinueFinalizeResultAfterInterception will be run when interceptors</a>
+<a name="175"><span class="lineNum">     175 </span>            :       // are done.</a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineCov">         12 :       return false;</span></a>
+<a name="177"><span class="lineNum">     177 </span>            :     }</a>
+<a name="178"><span class="lineNum">     178 </span>            :   }</a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">   16943283 :   if (*status &amp;&amp; call_) {</span></a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineCov">    2230609 :     context_-&gt;BeginCompletionOp(&amp;call_wrapper_, nullptr, nullptr);</span></a>
+<a name="181"><span class="lineNum">     181 </span>            :   }</a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineCov">   16942944 :   *tag = tag_;</span></a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineCov">   16942944 :   if (delete_on_finalize_) {</span></a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineCov">   16937306 :     delete this;</span></a>
+<a name="185"><span class="lineNum">     185 </span>            :   }</a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">   16943361 :   return true;</span></a>
+<a name="187"><span class="lineNum">     187 </span>            : }</a>
+<a name="188"><span class="lineNum">     188 </span>            : </a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineCov">         12 : void ServerInterface::BaseAsyncRequest::</span></a>
+<a name="190"><span class="lineNum">     190 </span>            :     ContinueFinalizeResultAfterInterception() {</a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineCov">         12 :   context_-&gt;BeginCompletionOp(&amp;call_wrapper_, nullptr, nullptr);</span></a>
+<a name="192"><span class="lineNum">     192 </span>            :   // Queue a tag which will be returned immediately</a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">         12 :   grpc_core::ExecCtx exec_ctx;</span></a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineCov">         12 :   grpc_cq_begin_op(notification_cq_-&gt;cq(), this);</span></a>
+<a name="195"><span class="lineNum">     195 </span><span class="lineCov">         12 :   grpc_cq_end_op(</span></a>
+<a name="196"><span class="lineNum">     196 </span><span class="lineCov">         12 :       notification_cq_-&gt;cq(), this, GRPC_ERROR_NONE,</span></a>
+<a name="197"><span class="lineNum">     197 </span><span class="lineCov">         12 :       [](void* /*arg*/, grpc_cq_completion* completion) { delete completion; },</span></a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineCov">         12 :       nullptr, new grpc_cq_completion());</span></a>
+<a name="199"><span class="lineNum">     199 </span><span class="lineCov">         12 : }</span></a>
+<a name="200"><span class="lineNum">     200 </span>            : </a>
+<a name="201"><span class="lineNum">     201 </span><span class="lineCov">   14948639 : ServerInterface::RegisteredAsyncRequest::RegisteredAsyncRequest(</span></a>
+<a name="202"><span class="lineNum">     202 </span>            :     ServerInterface* server, ServerContext* context,</a>
+<a name="203"><span class="lineNum">     203 </span>            :     internal::ServerAsyncStreamingInterface* stream, CompletionQueue* call_cq,</a>
+<a name="204"><span class="lineNum">     204 </span>            :     ServerCompletionQueue* notification_cq, void* tag, const char* name,</a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineCov">   14948639 :     internal::RpcMethod::RpcType type)</span></a>
+<a name="206"><span class="lineNum">     206 </span>            :     : BaseAsyncRequest(server, context, stream, call_cq, notification_cq, tag,</a>
+<a name="207"><span class="lineNum">     207 </span>            :                        true),</a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineCov">   14948690 :       name_(name),</span></a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineCov">   14948639 :       type_(type) {}</span></a>
+<a name="210"><span class="lineNum">     210 </span>            : </a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineCov">   14948684 : void ServerInterface::RegisteredAsyncRequest::IssueRequest(</span></a>
+<a name="212"><span class="lineNum">     212 </span>            :     void* registered_method, grpc_byte_buffer** payload,</a>
+<a name="213"><span class="lineNum">     213 </span>            :     ServerCompletionQueue* notification_cq) {</a>
+<a name="214"><span class="lineNum">     214 </span>            :   // The following call_start_batch is internally-generated so no need for an</a>
+<a name="215"><span class="lineNum">     215 </span>            :   // explanatory log on failure.</a>
+<a name="216"><span class="lineNum">     216 </span><span class="lineCov">   14948684 :   GPR_ASSERT(grpc_server_request_registered_call(</span></a>
+<a name="217"><span class="lineNum">     217 </span>            :                  server_-&gt;server(), registered_method, &amp;call_,</a>
+<a name="218"><span class="lineNum">     218 </span>            :                  &amp;context_-&gt;deadline_, context_-&gt;client_metadata_.arr(),</a>
+<a name="219"><span class="lineNum">     219 </span>            :                  payload, call_cq_-&gt;cq(), notification_cq-&gt;cq(),</a>
+<a name="220"><span class="lineNum">     220 </span>            :                  this) == GRPC_CALL_OK);</a>
+<a name="221"><span class="lineNum">     221 </span><span class="lineCov">   14948691 : }</span></a>
+<a name="222"><span class="lineNum">     222 </span>            : </a>
+<a name="223"><span class="lineNum">     223 </span><span class="lineCov">    1994715 : ServerInterface::GenericAsyncRequest::GenericAsyncRequest(</span></a>
+<a name="224"><span class="lineNum">     224 </span>            :     ServerInterface* server, GenericServerContext* context,</a>
+<a name="225"><span class="lineNum">     225 </span>            :     internal::ServerAsyncStreamingInterface* stream, CompletionQueue* call_cq,</a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineCov">    1994715 :     ServerCompletionQueue* notification_cq, void* tag, bool delete_on_finalize)</span></a>
+<a name="227"><span class="lineNum">     227 </span>            :     : BaseAsyncRequest(server, context, stream, call_cq, notification_cq, tag,</a>
+<a name="228"><span class="lineNum">     228 </span><span class="lineCov">    1994715 :                        delete_on_finalize) {</span></a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineCov">    1994804 :   grpc_call_details_init(&amp;call_details_);</span></a>
+<a name="230"><span class="lineNum">     230 </span><span class="lineCov">    1994746 :   GPR_ASSERT(notification_cq);</span></a>
+<a name="231"><span class="lineNum">     231 </span><span class="lineCov">    1994746 :   GPR_ASSERT(call_cq);</span></a>
+<a name="232"><span class="lineNum">     232 </span>            :   // The following call_start_batch is internally-generated so no need for an</a>
+<a name="233"><span class="lineNum">     233 </span>            :   // explanatory log on failure.</a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineCov">    1994746 :   GPR_ASSERT(grpc_server_request_call(server-&gt;server(), &amp;call_, &amp;call_details_,</span></a>
+<a name="235"><span class="lineNum">     235 </span>            :                                       context-&gt;client_metadata_.arr(),</a>
+<a name="236"><span class="lineNum">     236 </span>            :                                       call_cq-&gt;cq(), notification_cq-&gt;cq(),</a>
+<a name="237"><span class="lineNum">     237 </span>            :                                       this) == GRPC_CALL_OK);</a>
+<a name="238"><span class="lineNum">     238 </span><span class="lineCov">    1994807 : }</span></a>
+<a name="239"><span class="lineNum">     239 </span>            : </a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineCov">    1994818 : bool ServerInterface::GenericAsyncRequest::FinalizeResult(void** tag,</span></a>
+<a name="241"><span class="lineNum">     241 </span>            :                                                           bool* status) {</a>
+<a name="242"><span class="lineNum">     242 </span>            :   // If we are done intercepting, there is nothing more for us to do</a>
+<a name="243"><span class="lineNum">     243 </span><span class="lineCov">    1994818 :   if (done_intercepting_) {</span></a>
+<a name="244"><span class="lineNum">     244 </span><span class="lineCov">          6 :     return BaseAsyncRequest::FinalizeResult(tag, status);</span></a>
+<a name="245"><span class="lineNum">     245 </span>            :   }</a>
+<a name="246"><span class="lineNum">     246 </span>            :   // TODO(yangg) remove the copy here.</a>
+<a name="247"><span class="lineNum">     247 </span><span class="lineCov">    1994812 :   if (*status) {</span></a>
+<a name="248"><span class="lineNum">     248 </span><span class="lineCov">      56442 :     static_cast&lt;GenericServerContext*&gt;(context_)-&gt;method_ =</span></a>
+<a name="249"><span class="lineNum">     249 </span><span class="lineCov">      56442 :         StringFromCopiedSlice(call_details_.method);</span></a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineCov">      56442 :     static_cast&lt;GenericServerContext*&gt;(context_)-&gt;host_ =</span></a>
+<a name="251"><span class="lineNum">     251 </span><span class="lineCov">      56442 :         StringFromCopiedSlice(call_details_.host);</span></a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineCov">      56442 :     context_-&gt;deadline_ = call_details_.deadline;</span></a>
+<a name="253"><span class="lineNum">     253 </span>            :   }</a>
+<a name="254"><span class="lineNum">     254 </span><span class="lineCov">    1994812 :   grpc_slice_unref(call_details_.method);</span></a>
+<a name="255"><span class="lineNum">     255 </span><span class="lineCov">    1994813 :   grpc_slice_unref(call_details_.host);</span></a>
+<a name="256"><span class="lineNum">     256 </span><span class="lineCov">    1994813 :   call_wrapper_ = internal::Call(</span></a>
+<a name="257"><span class="lineNum">     257 </span><span class="lineCov">    1994812 :       call_, server_, call_cq_, server_-&gt;max_receive_message_size(),</span></a>
+<a name="258"><span class="lineNum">     258 </span><span class="lineCov">    1994813 :       context_-&gt;set_server_rpc_info(</span></a>
+<a name="259"><span class="lineNum">     259 </span><span class="lineCov">    1994813 :           static_cast&lt;GenericServerContext*&gt;(context_)-&gt;method_.c_str(),</span></a>
+<a name="260"><span class="lineNum">     260 </span>            :           internal::RpcMethod::BIDI_STREAMING,</a>
+<a name="261"><span class="lineNum">     261 </span><span class="lineCov">    1994813 :           *server_-&gt;interceptor_creators()));</span></a>
+<a name="262"><span class="lineNum">     262 </span><span class="lineCov">    1994812 :   return BaseAsyncRequest::FinalizeResult(tag, status);</span></a>
+<a name="263"><span class="lineNum">     263 </span>            : }</a>
+<a name="264"><span class="lineNum">     264 </span>            : </a>
+<a name="265"><span class="lineNum">     265 </span>            : namespace {</a>
+<a name="266"><span class="lineNum">     266 </span>            : class ShutdownCallback : public grpc_completion_queue_functor {</a>
+<a name="267"><span class="lineNum">     267 </span>            :  public:</a>
+<a name="268"><span class="lineNum">     268 </span><span class="lineNoCov">          0 :   ShutdownCallback() {</span></a>
+<a name="269"><span class="lineNum">     269 </span><span class="lineNoCov">          0 :     functor_run = &amp;ShutdownCallback::Run;</span></a>
+<a name="270"><span class="lineNum">     270 </span>            :     // Set inlineable to true since this callback is trivial and thus does not</a>
+<a name="271"><span class="lineNum">     271 </span>            :     // need to be run from the executor (triggering a thread hop). This should</a>
+<a name="272"><span class="lineNum">     272 </span>            :     // only be used by internal callbacks like this and not by user application</a>
+<a name="273"><span class="lineNum">     273 </span>            :     // code.</a>
+<a name="274"><span class="lineNum">     274 </span><span class="lineNoCov">          0 :     inlineable = true;</span></a>
+<a name="275"><span class="lineNum">     275 </span><span class="lineNoCov">          0 :   }</span></a>
+<a name="276"><span class="lineNum">     276 </span>            :   // TakeCQ takes ownership of the cq into the shutdown callback</a>
+<a name="277"><span class="lineNum">     277 </span>            :   // so that the shutdown callback will be responsible for destroying it</a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineNoCov">          0 :   void TakeCQ(CompletionQueue* cq) { cq_ = cq; }</span></a>
+<a name="279"><span class="lineNum">     279 </span>            : </a>
+<a name="280"><span class="lineNum">     280 </span>            :   // The Run function will get invoked by the completion queue library</a>
+<a name="281"><span class="lineNum">     281 </span>            :   // when the shutdown is actually complete</a>
+<a name="282"><span class="lineNum">     282 </span><span class="lineNoCov">          0 :   static void Run(grpc_completion_queue_functor* cb, int) {</span></a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineNoCov">          0 :     auto* callback = static_cast&lt;ShutdownCallback*&gt;(cb);</span></a>
+<a name="284"><span class="lineNum">     284 </span><span class="lineNoCov">          0 :     delete callback-&gt;cq_;</span></a>
+<a name="285"><span class="lineNum">     285 </span><span class="lineNoCov">          0 :     delete callback;</span></a>
+<a name="286"><span class="lineNum">     286 </span><span class="lineNoCov">          0 :   }</span></a>
+<a name="287"><span class="lineNum">     287 </span>            : </a>
+<a name="288"><span class="lineNum">     288 </span>            :  private:</a>
+<a name="289"><span class="lineNum">     289 </span>            :   CompletionQueue* cq_ = nullptr;</a>
+<a name="290"><span class="lineNum">     290 </span>            : };</a>
+<a name="291"><span class="lineNum">     291 </span>            : }  // namespace</a>
+<a name="292"><span class="lineNum">     292 </span>            : </a>
+<a name="293"><span class="lineNum">     293 </span>            : /// Use private inheritance rather than composition only to establish order</a>
+<a name="294"><span class="lineNum">     294 </span>            : /// of construction, since the public base class should be constructed after the</a>
+<a name="295"><span class="lineNum">     295 </span>            : /// elements belonging to the private base class are constructed. This is not</a>
+<a name="296"><span class="lineNum">     296 </span>            : /// possible using true composition.</a>
+<a name="297"><span class="lineNum">     297 </span>            : class Server::UnimplementedAsyncRequest final</a>
+<a name="298"><span class="lineNum">     298 </span>            :     : private grpc::UnimplementedAsyncRequestContext,</a>
+<a name="299"><span class="lineNum">     299 </span>            :       public GenericAsyncRequest {</a>
+<a name="300"><span class="lineNum">     300 </span>            :  public:</a>
+<a name="301"><span class="lineNum">     301 </span><span class="lineCov">       5773 :   UnimplementedAsyncRequest(ServerInterface* server,</span></a>
+<a name="302"><span class="lineNum">     302 </span>            :                             grpc::ServerCompletionQueue* cq)</a>
+<a name="303"><span class="lineNum">     303 </span><span class="lineCov">       5773 :       : GenericAsyncRequest(server, &amp;server_context_, &amp;generic_stream_, cq, cq,</span></a>
+<a name="304"><span class="lineNum">     304 </span><span class="lineCov">       5773 :                             nullptr, false) {}</span></a>
+<a name="305"><span class="lineNum">     305 </span>            : </a>
+<a name="306"><span class="lineNum">     306 </span>            :   bool FinalizeResult(void** tag, bool* status) override;</a>
+<a name="307"><span class="lineNum">     307 </span>            : </a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineCov">         48 :   grpc::ServerContext* context() { return &amp;server_context_; }</span></a>
+<a name="309"><span class="lineNum">     309 </span><span class="lineCov">         48 :   grpc::GenericServerAsyncReaderWriter* stream() { return &amp;generic_stream_; }</span></a>
+<a name="310"><span class="lineNum">     310 </span>            : };</a>
+<a name="311"><span class="lineNum">     311 </span>            : </a>
+<a name="312"><span class="lineNum">     312 </span>            : /// UnimplementedAsyncResponse should not post user-visible completions to the</a>
+<a name="313"><span class="lineNum">     313 </span>            : /// C++ completion queue, but is generated as a CQ event by the core</a>
+<a name="314"><span class="lineNum">     314 </span>            : class Server::UnimplementedAsyncResponse final</a>
+<a name="315"><span class="lineNum">     315 </span>            :     : public grpc::internal::CallOpSet&lt;</a>
+<a name="316"><span class="lineNum">     316 </span>            :           grpc::internal::CallOpSendInitialMetadata,</a>
+<a name="317"><span class="lineNum">     317 </span>            :           grpc::internal::CallOpServerSendStatus&gt; {</a>
+<a name="318"><span class="lineNum">     318 </span>            :  public:</a>
+<a name="319"><span class="lineNum">     319 </span>            :   explicit UnimplementedAsyncResponse(UnimplementedAsyncRequest* request);</a>
+<a name="320"><span class="lineNum">     320 </span><span class="lineCov">         96 :   ~UnimplementedAsyncResponse() override { delete request_; }</span></a>
+<a name="321"><span class="lineNum">     321 </span>            : </a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineCov">         51 :   bool FinalizeResult(void** tag, bool* status) override {</span></a>
+<a name="323"><span class="lineNum">     323 </span><span class="lineCov">         51 :     if (grpc::internal::CallOpSet&lt;</span></a>
+<a name="324"><span class="lineNum">     324 </span>            :             grpc::internal::CallOpSendInitialMetadata,</a>
+<a name="325"><span class="lineNum">     325 </span><span class="lineCov">         51 :             grpc::internal::CallOpServerSendStatus&gt;::FinalizeResult(tag,</span></a>
+<a name="326"><span class="lineNum">     326 </span>            :                                                                     status)) {</a>
+<a name="327"><span class="lineNum">     327 </span><span class="lineCov">         48 :       delete this;</span></a>
+<a name="328"><span class="lineNum">     328 </span>            :     } else {</a>
+<a name="329"><span class="lineNum">     329 </span>            :       // The tag was swallowed due to interception. We will see it again.</a>
+<a name="330"><span class="lineNum">     330 </span>            :     }</a>
+<a name="331"><span class="lineNum">     331 </span><span class="lineCov">         51 :     return false;</span></a>
+<a name="332"><span class="lineNum">     332 </span>            :   }</a>
+<a name="333"><span class="lineNum">     333 </span>            : </a>
+<a name="334"><span class="lineNum">     334 </span>            :  private:</a>
+<a name="335"><span class="lineNum">     335 </span>            :   UnimplementedAsyncRequest* const request_;</a>
+<a name="336"><span class="lineNum">     336 </span>            : };</a>
+<a name="337"><span class="lineNum">     337 </span>            : </a>
+<a name="338"><span class="lineNum">     338 </span>            : class Server::SyncRequest final : public grpc::internal::CompletionQueueTag {</a>
+<a name="339"><span class="lineNum">     339 </span>            :  public:</a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineCov">    3667776 :   SyncRequest(Server* server, grpc::internal::RpcServiceMethod* method,</span></a>
+<a name="341"><span class="lineNum">     341 </span>            :               grpc_core::Server::RegisteredCallAllocation* data)</a>
+<a name="342"><span class="lineNum">     342 </span><span class="lineCov">    3667776 :       : SyncRequest(server, method) {</span></a>
+<a name="343"><span class="lineNum">     343 </span><span class="lineCov">    3667742 :     CommonSetup(data);</span></a>
+<a name="344"><span class="lineNum">     344 </span><span class="lineCov">    3667790 :     data-&gt;deadline = &amp;deadline_;</span></a>
+<a name="345"><span class="lineNum">     345 </span><span class="lineCov">    3667790 :     data-&gt;optional_payload = has_request_payload_ ? &amp;request_payload_ : nullptr;</span></a>
+<a name="346"><span class="lineNum">     346 </span><span class="lineCov">    3667790 :   }</span></a>
+<a name="347"><span class="lineNum">     347 </span>            : </a>
+<a name="348"><span class="lineNum">     348 </span><span class="lineCov">         63 :   SyncRequest(Server* server, grpc::internal::RpcServiceMethod* method,</span></a>
+<a name="349"><span class="lineNum">     349 </span>            :               grpc_core::Server::BatchCallAllocation* data)</a>
+<a name="350"><span class="lineNum">     350 </span><span class="lineCov">         63 :       : SyncRequest(server, method) {</span></a>
+<a name="351"><span class="lineNum">     351 </span><span class="lineCov">         63 :     CommonSetup(data);</span></a>
+<a name="352"><span class="lineNum">     352 </span><span class="lineCov">         63 :     call_details_ = new grpc_call_details;</span></a>
+<a name="353"><span class="lineNum">     353 </span><span class="lineCov">         63 :     grpc_call_details_init(call_details_);</span></a>
+<a name="354"><span class="lineNum">     354 </span><span class="lineCov">         63 :     data-&gt;details = call_details_;</span></a>
+<a name="355"><span class="lineNum">     355 </span><span class="lineCov">         63 :   }</span></a>
+<a name="356"><span class="lineNum">     356 </span>            : </a>
+<a name="357"><span class="lineNum">     357 </span><span class="lineCov">    7334849 :   ~SyncRequest() override {</span></a>
+<a name="358"><span class="lineNum">     358 </span>            :     // The destructor should only cleanup those objects created in the</a>
+<a name="359"><span class="lineNum">     359 </span>            :     // constructor, since some paths may or may not actually go through the</a>
+<a name="360"><span class="lineNum">     360 </span>            :     // Run stage where other objects are allocated.</a>
+<a name="361"><span class="lineNum">     361 </span><span class="lineCov">    3667440 :     if (has_request_payload_ &amp;&amp; request_payload_) {</span></a>
+<a name="362"><span class="lineNum">     362 </span><span class="lineNoCov">          0 :       grpc_byte_buffer_destroy(request_payload_);</span></a>
+<a name="363"><span class="lineNum">     363 </span>            :     }</a>
+<a name="364"><span class="lineNum">     364 </span><span class="lineCov">    3667440 :     if (call_details_ != nullptr) {</span></a>
+<a name="365"><span class="lineNum">     365 </span><span class="lineCov">         63 :       grpc_call_details_destroy(call_details_);</span></a>
+<a name="366"><span class="lineNum">     366 </span><span class="lineCov">         63 :       delete call_details_;</span></a>
+<a name="367"><span class="lineNum">     367 </span>            :     }</a>
+<a name="368"><span class="lineNum">     368 </span><span class="lineCov">    3667440 :     grpc_metadata_array_destroy(&amp;request_metadata_);</span></a>
+<a name="369"><span class="lineNum">     369 </span><span class="lineCov">    3667556 :     server_-&gt;UnrefWithPossibleNotify();</span></a>
+<a name="370"><span class="lineNum">     370 </span><span class="lineCov">    7335246 :   }</span></a>
+<a name="371"><span class="lineNum">     371 </span>            : </a>
+<a name="372"><span class="lineNum">     372 </span><span class="lineCov">    3667729 :   bool FinalizeResult(void** /*tag*/, bool* status) override {</span></a>
+<a name="373"><span class="lineNum">     373 </span><span class="lineCov">    3667729 :     if (!*status) {</span></a>
+<a name="374"><span class="lineNum">     374 </span><span class="lineNoCov">          0 :       delete this;</span></a>
+<a name="375"><span class="lineNum">     375 </span><span class="lineNoCov">          0 :       return false;</span></a>
+<a name="376"><span class="lineNum">     376 </span>            :     }</a>
+<a name="377"><span class="lineNum">     377 </span><span class="lineCov">    3667729 :     if (call_details_) {</span></a>
+<a name="378"><span class="lineNum">     378 </span><span class="lineCov">         63 :       deadline_ = call_details_-&gt;deadline;</span></a>
+<a name="379"><span class="lineNum">     379 </span>            :     }</a>
+<a name="380"><span class="lineNum">     380 </span><span class="lineCov">    3667729 :     return true;</span></a>
+<a name="381"><span class="lineNum">     381 </span>            :   }</a>
+<a name="382"><span class="lineNum">     382 </span>            : </a>
+<a name="383"><span class="lineNum">     383 </span><span class="lineCov">    3667819 :   void Run(const std::shared_ptr&lt;GlobalCallbacks&gt;&amp; global_callbacks,</span></a>
+<a name="384"><span class="lineNum">     384 </span>            :            bool resources) {</a>
+<a name="385"><span class="lineNum">     385 </span><span class="lineCov">    3667819 :     ctx_.Init(deadline_, &amp;request_metadata_);</span></a>
+<a name="386"><span class="lineNum">     386 </span><span class="lineCov">    7335515 :     wrapped_call_.Init(</span></a>
+<a name="387"><span class="lineNum">     387 </span><span class="lineCov">    3667780 :         call_, server_, &amp;cq_, server_-&gt;max_receive_message_size(),</span></a>
+<a name="388"><span class="lineNum">     388 </span><span class="lineCov">    7335545 :         ctx_-&gt;ctx.set_server_rpc_info(method_-&gt;name(), method_-&gt;method_type(),</span></a>
+<a name="389"><span class="lineNum">     389 </span><span class="lineCov">    3667810 :                                       server_-&gt;interceptor_creators_));</span></a>
+<a name="390"><span class="lineNum">     390 </span><span class="lineCov">    3667781 :     ctx_-&gt;ctx.set_call(call_);</span></a>
+<a name="391"><span class="lineNum">     391 </span><span class="lineCov">    3667781 :     ctx_-&gt;ctx.cq_ = &amp;cq_;</span></a>
+<a name="392"><span class="lineNum">     392 </span><span class="lineCov">    3667769 :     request_metadata_.count = 0;</span></a>
+<a name="393"><span class="lineNum">     393 </span>            : </a>
+<a name="394"><span class="lineNum">     394 </span><span class="lineCov">    3667769 :     global_callbacks_ = global_callbacks;</span></a>
+<a name="395"><span class="lineNum">     395 </span><span class="lineCov">    3667858 :     resources_ = resources;</span></a>
+<a name="396"><span class="lineNum">     396 </span>            : </a>
+<a name="397"><span class="lineNum">     397 </span><span class="lineCov">    3667858 :     interceptor_methods_.SetCall(&amp;*wrapped_call_);</span></a>
+<a name="398"><span class="lineNum">     398 </span><span class="lineCov">    3667846 :     interceptor_methods_.SetReverse();</span></a>
+<a name="399"><span class="lineNum">     399 </span>            :     // Set interception point for RECV INITIAL METADATA</a>
+<a name="400"><span class="lineNum">     400 </span><span class="lineCov">    3667764 :     interceptor_methods_.AddInterceptionHookPoint(</span></a>
+<a name="401"><span class="lineNum">     401 </span>            :         grpc::experimental::InterceptionHookPoints::POST_RECV_INITIAL_METADATA);</a>
+<a name="402"><span class="lineNum">     402 </span><span class="lineCov">    3667785 :     interceptor_methods_.SetRecvInitialMetadata(&amp;ctx_-&gt;ctx.client_metadata_);</span></a>
+<a name="403"><span class="lineNum">     403 </span>            : </a>
+<a name="404"><span class="lineNum">     404 </span><span class="lineCov">    3667786 :     if (has_request_payload_) {</span></a>
+<a name="405"><span class="lineNum">     405 </span>            :       // Set interception point for RECV MESSAGE</a>
+<a name="406"><span class="lineNum">     406 </span><span class="lineCov">    3651212 :       auto* handler = resources_ ? method_-&gt;handler()</span></a>
+<a name="407"><span class="lineNum">     407 </span><span class="lineCov">     865858 :                                  : server_-&gt;resource_exhausted_handler_.get();</span></a>
+<a name="408"><span class="lineNum">     408 </span><span class="lineCov">    3651238 :       deserialized_request_ = handler-&gt;Deserialize(call_, request_payload_,</span></a>
+<a name="409"><span class="lineNum">     409 </span>            :                                                    &amp;request_status_, nullptr);</a>
+<a name="410"><span class="lineNum">     410 </span><span class="lineCov">    3651200 :       if (!request_status_.ok()) {</span></a>
+<a name="411"><span class="lineNum">     411 </span><span class="lineNoCov">          0 :         gpr_log(GPR_DEBUG, &quot;Failed to deserialize message.&quot;);</span></a>
+<a name="412"><span class="lineNum">     412 </span>            :       }</a>
+<a name="413"><span class="lineNum">     413 </span><span class="lineCov">    3651211 :       request_payload_ = nullptr;</span></a>
+<a name="414"><span class="lineNum">     414 </span><span class="lineCov">    3651211 :       interceptor_methods_.AddInterceptionHookPoint(</span></a>
+<a name="415"><span class="lineNum">     415 </span>            :           grpc::experimental::InterceptionHookPoints::POST_RECV_MESSAGE);</a>
+<a name="416"><span class="lineNum">     416 </span><span class="lineCov">    3651219 :       interceptor_methods_.SetRecvMessage(deserialized_request_, nullptr);</span></a>
+<a name="417"><span class="lineNum">     417 </span>            :     }</a>
+<a name="418"><span class="lineNum">     418 </span>            : </a>
+<a name="419"><span class="lineNum">     419 </span><span class="lineCov">    3667788 :     if (interceptor_methods_.RunInterceptors(</span></a>
+<a name="420"><span class="lineNum">     420 </span><span class="lineCov">       7467 :             [this]() { ContinueRunAfterInterception(); })) {</span></a>
+<a name="421"><span class="lineNum">     421 </span><span class="lineCov">    3660282 :       ContinueRunAfterInterception();</span></a>
+<a name="422"><span class="lineNum">     422 </span>            :     } else {</a>
+<a name="423"><span class="lineNum">     423 </span>            :       // There were interceptors to be run, so ContinueRunAfterInterception</a>
+<a name="424"><span class="lineNum">     424 </span>            :       // will be run when interceptors are done.</a>
+<a name="425"><span class="lineNum">     425 </span>            :     }</a>
+<a name="426"><span class="lineNum">     426 </span><span class="lineCov">    3667565 :   }</span></a>
+<a name="427"><span class="lineNum">     427 </span>            : </a>
+<a name="428"><span class="lineNum">     428 </span><span class="lineCov">    3667648 :   void ContinueRunAfterInterception() {</span></a>
+<a name="429"><span class="lineNum">     429 </span><span class="lineCov">    3667648 :     ctx_-&gt;ctx.BeginCompletionOp(&amp;*wrapped_call_, nullptr, nullptr);</span></a>
+<a name="430"><span class="lineNum">     430 </span><span class="lineCov">    3667702 :     global_callbacks_-&gt;PreSynchronousRequest(&amp;ctx_-&gt;ctx);</span></a>
+<a name="431"><span class="lineNum">     431 </span><span class="lineCov">    3667775 :     auto* handler = resources_ ? method_-&gt;handler()</span></a>
+<a name="432"><span class="lineNum">     432 </span><span class="lineCov">     865851 :                                : server_-&gt;resource_exhausted_handler_.get();</span></a>
+<a name="433"><span class="lineNum">     433 </span><span class="lineCov">    7335442 :     handler-&gt;RunHandler(grpc::internal::MethodHandler::HandlerParameter(</span></a>
+<a name="434"><span class="lineNum">     434 </span><span class="lineCov">    3667730 :         &amp;*wrapped_call_, &amp;ctx_-&gt;ctx, deserialized_request_, request_status_,</span></a>
+<a name="435"><span class="lineNum">     435 </span>            :         nullptr, nullptr));</a>
+<a name="436"><span class="lineNum">     436 </span><span class="lineCov">    3667442 :     global_callbacks_-&gt;PostSynchronousRequest(&amp;ctx_-&gt;ctx);</span></a>
+<a name="437"><span class="lineNum">     437 </span>            : </a>
+<a name="438"><span class="lineNum">     438 </span><span class="lineCov">    3667467 :     cq_.Shutdown();</span></a>
+<a name="439"><span class="lineNum">     439 </span>            : </a>
+<a name="440"><span class="lineNum">     440 </span><span class="lineCov">    3667550 :     grpc::internal::CompletionQueueTag* op_tag = ctx_-&gt;ctx.GetCompletionOpTag();</span></a>
+<a name="441"><span class="lineNum">     441 </span><span class="lineCov">    3667593 :     cq_.TryPluck(op_tag, gpr_inf_future(GPR_CLOCK_REALTIME));</span></a>
+<a name="442"><span class="lineNum">     442 </span>            : </a>
+<a name="443"><span class="lineNum">     443 </span>            :     // Ensure the cq_ is shutdown</a>
+<a name="444"><span class="lineNum">     444 </span><span class="lineCov">    3667808 :     grpc::PhonyTag ignored_tag;</span></a>
+<a name="445"><span class="lineNum">     445 </span><span class="lineCov">    3667808 :     GPR_ASSERT(cq_.Pluck(&amp;ignored_tag) == false);</span></a>
+<a name="446"><span class="lineNum">     446 </span>            : </a>
+<a name="447"><span class="lineNum">     447 </span>            :     // Cleanup structures allocated during Run/ContinueRunAfterInterception</a>
+<a name="448"><span class="lineNum">     448 </span><span class="lineCov">    3667747 :     wrapped_call_.Destroy();</span></a>
+<a name="449"><span class="lineNum">     449 </span><span class="lineCov">    3667618 :     ctx_.Destroy();</span></a>
+<a name="450"><span class="lineNum">     450 </span>            : </a>
+<a name="451"><span class="lineNum">     451 </span><span class="lineCov">    3667306 :     delete this;</span></a>
+<a name="452"><span class="lineNum">     452 </span><span class="lineCov">    3667563 :   }</span></a>
+<a name="453"><span class="lineNum">     453 </span>            : </a>
+<a name="454"><span class="lineNum">     454 </span>            :   // For requests that must be only cleaned up but not actually Run</a>
+<a name="455"><span class="lineNum">     455 </span><span class="lineNoCov">          0 :   void Cleanup() {</span></a>
+<a name="456"><span class="lineNum">     456 </span><span class="lineNoCov">          0 :     cq_.Shutdown();</span></a>
+<a name="457"><span class="lineNum">     457 </span><span class="lineNoCov">          0 :     grpc_call_unref(call_);</span></a>
+<a name="458"><span class="lineNum">     458 </span><span class="lineNoCov">          0 :     delete this;</span></a>
+<a name="459"><span class="lineNum">     459 </span><span class="lineNoCov">          0 :   }</span></a>
+<a name="460"><span class="lineNum">     460 </span>            : </a>
+<a name="461"><span class="lineNum">     461 </span>            :  private:</a>
+<a name="462"><span class="lineNum">     462 </span><span class="lineCov">    3667852 :   SyncRequest(Server* server, grpc::internal::RpcServiceMethod* method)</span></a>
+<a name="463"><span class="lineNum">     463 </span><span class="lineCov">    7335707 :       : server_(server),</span></a>
+<a name="464"><span class="lineNum">     464 </span><span class="lineCov">    3667855 :         method_(method),</span></a>
+<a name="465"><span class="lineNum">     465 </span><span class="lineCov">    7335706 :         has_request_payload_(method-&gt;method_type() ==</span></a>
+<a name="466"><span class="lineNum">     466 </span><span class="lineCov">    3684856 :                                  grpc::internal::RpcMethod::NORMAL_RPC ||</span></a>
+<a name="467"><span class="lineNum">     467 </span><span class="lineCov">      17005 :                              method-&gt;method_type() ==</span></a>
+<a name="468"><span class="lineNum">     468 </span>            :                                  grpc::internal::RpcMethod::SERVER_STREAMING),</a>
+<a name="469"><span class="lineNum">     469 </span><span class="lineCov">    7335703 :         cq_(grpc_completion_queue_create_for_pluck(nullptr)) {}</span></a>
+<a name="470"><span class="lineNum">     470 </span>            : </a>
+<a name="471"><span class="lineNum">     471 </span>            :   template &lt;class CallAllocation&gt;</a>
+<a name="472"><span class="lineNum">     472 </span><span class="lineCov">    3667774 :   void CommonSetup(CallAllocation* data) {</span></a>
+<a name="473"><span class="lineNum">     473 </span><span class="lineCov">    3667774 :     server_-&gt;Ref();</span></a>
+<a name="474"><span class="lineNum">     474 </span><span class="lineCov">    3667862 :     grpc_metadata_array_init(&amp;request_metadata_);</span></a>
+<a name="475"><span class="lineNum">     475 </span><span class="lineCov">    3667854 :     data-&gt;tag = static_cast&lt;void*&gt;(this);</span></a>
+<a name="476"><span class="lineNum">     476 </span><span class="lineCov">    3667854 :     data-&gt;call = &amp;call_;</span></a>
+<a name="477"><span class="lineNum">     477 </span><span class="lineCov">    3667854 :     data-&gt;initial_metadata = &amp;request_metadata_;</span></a>
+<a name="478"><span class="lineNum">     478 </span><span class="lineCov">    3667854 :     data-&gt;cq = cq_.cq();</span></a>
+<a name="479"><span class="lineNum">     479 </span><span class="lineCov">    3667853 :   }</span></a>
+<a name="480"><span class="lineNum">     480 </span>            : </a>
+<a name="481"><span class="lineNum">     481 </span>            :   Server* const server_;</a>
+<a name="482"><span class="lineNum">     482 </span>            :   grpc::internal::RpcServiceMethod* const method_;</a>
+<a name="483"><span class="lineNum">     483 </span>            :   const bool has_request_payload_;</a>
+<a name="484"><span class="lineNum">     484 </span>            :   grpc_call* call_;</a>
+<a name="485"><span class="lineNum">     485 </span>            :   grpc_call_details* call_details_ = nullptr;</a>
+<a name="486"><span class="lineNum">     486 </span>            :   gpr_timespec deadline_;</a>
+<a name="487"><span class="lineNum">     487 </span>            :   grpc_metadata_array request_metadata_;</a>
+<a name="488"><span class="lineNum">     488 </span>            :   grpc_byte_buffer* request_payload_ = nullptr;</a>
+<a name="489"><span class="lineNum">     489 </span>            :   grpc::CompletionQueue cq_;</a>
+<a name="490"><span class="lineNum">     490 </span>            :   grpc::Status request_status_;</a>
+<a name="491"><span class="lineNum">     491 </span>            :   std::shared_ptr&lt;GlobalCallbacks&gt; global_callbacks_;</a>
+<a name="492"><span class="lineNum">     492 </span>            :   bool resources_;</a>
+<a name="493"><span class="lineNum">     493 </span>            :   void* deserialized_request_ = nullptr;</a>
+<a name="494"><span class="lineNum">     494 </span>            :   grpc::internal::InterceptorBatchMethodsImpl interceptor_methods_;</a>
+<a name="495"><span class="lineNum">     495 </span>            : </a>
+<a name="496"><span class="lineNum">     496 </span>            :   // ServerContextWrapper allows ManualConstructor while using a private</a>
+<a name="497"><span class="lineNum">     497 </span>            :   // contructor of ServerContext via this friend class.</a>
+<a name="498"><span class="lineNum">     498 </span>            :   struct ServerContextWrapper {</a>
+<a name="499"><span class="lineNum">     499 </span>            :     ServerContext ctx;</a>
+<a name="500"><span class="lineNum">     500 </span>            : </a>
+<a name="501"><span class="lineNum">     501 </span><span class="lineCov">    3667810 :     ServerContextWrapper(gpr_timespec deadline, grpc_metadata_array* arr)</span></a>
+<a name="502"><span class="lineNum">     502 </span><span class="lineCov">    3667810 :         : ctx(deadline, arr) {}</span></a>
+<a name="503"><span class="lineNum">     503 </span>            :   };</a>
+<a name="504"><span class="lineNum">     504 </span>            : </a>
+<a name="505"><span class="lineNum">     505 </span>            :   grpc_core::ManualConstructor&lt;ServerContextWrapper&gt; ctx_;</a>
+<a name="506"><span class="lineNum">     506 </span>            :   grpc_core::ManualConstructor&lt;internal::Call&gt; wrapped_call_;</a>
+<a name="507"><span class="lineNum">     507 </span>            : };</a>
+<a name="508"><span class="lineNum">     508 </span>            : </a>
+<a name="509"><span class="lineNum">     509 </span>            : template &lt;class ServerContextType&gt;</a>
+<a name="510"><span class="lineNum">     510 </span>            : class Server::CallbackRequest final</a>
+<a name="511"><span class="lineNum">     511 </span>            :     : public grpc::internal::CompletionQueueTag {</a>
+<a name="512"><span class="lineNum">     512 </span>            :  public:</a>
+<a name="513"><span class="lineNum">     513 </span>            :   static_assert(</a>
+<a name="514"><span class="lineNum">     514 </span>            :       std::is_base_of&lt;grpc::CallbackServerContext, ServerContextType&gt;::value,</a>
+<a name="515"><span class="lineNum">     515 </span>            :       &quot;ServerContextType must be derived from CallbackServerContext&quot;);</a>
+<a name="516"><span class="lineNum">     516 </span>            : </a>
+<a name="517"><span class="lineNum">     517 </span>            :   // For codegen services, the value of method represents the defined</a>
+<a name="518"><span class="lineNum">     518 </span>            :   // characteristics of the method being requested. For generic services, method</a>
+<a name="519"><span class="lineNum">     519 </span>            :   // is nullptr since these services don't have pre-defined methods.</a>
+<a name="520"><span class="lineNum">     520 </span><span class="lineCov">      14135 :   CallbackRequest(Server* server, grpc::internal::RpcServiceMethod* method,</span></a>
+<a name="521"><span class="lineNum">     521 </span>            :                   grpc::CompletionQueue* cq,</a>
+<a name="522"><span class="lineNum">     522 </span>            :                   grpc_core::Server::RegisteredCallAllocation* data)</a>
+<a name="523"><span class="lineNum">     523 </span><span class="lineCov">      14135 :       : server_(server),</span></a>
+<a name="524"><span class="lineNum">     524 </span><span class="lineCov">      14135 :         method_(method),</span></a>
+<a name="525"><span class="lineNum">     525 </span><span class="lineCov">      28270 :         has_request_payload_(method-&gt;method_type() ==</span></a>
+<a name="526"><span class="lineNum">     526 </span><span class="lineCov">      14934 :                                  grpc::internal::RpcMethod::NORMAL_RPC ||</span></a>
+<a name="527"><span class="lineNum">     527 </span><span class="lineCov">        799 :                              method-&gt;method_type() ==</span></a>
+<a name="528"><span class="lineNum">     528 </span>            :                                  grpc::internal::RpcMethod::SERVER_STREAMING),</a>
+<a name="529"><span class="lineNum">     529 </span><span class="lineCov">      14135 :         cq_(cq),</span></a>
+<a name="530"><span class="lineNum">     530 </span><span class="lineCov">      14135 :         tag_(this),</span></a>
+<a name="531"><span class="lineNum">     531 </span><span class="lineCov">      14135 :         ctx_(server_-&gt;context_allocator() != nullptr</span></a>
+<a name="532"><span class="lineNum">     532 </span><span class="lineCov">      14135 :                  ? server_-&gt;context_allocator()-&gt;NewCallbackServerContext()</span></a>
+<a name="533"><span class="lineNum">     533 </span><span class="lineCov">      42405 :                  : nullptr) {</span></a>
+<a name="534"><span class="lineNum">     534 </span><span class="lineCov">      14135 :     CommonSetup(server, data);</span></a>
+<a name="535"><span class="lineNum">     535 </span><span class="lineCov">      14135 :     data-&gt;deadline = &amp;deadline_;</span></a>
+<a name="536"><span class="lineNum">     536 </span><span class="lineCov">      14135 :     data-&gt;optional_payload = has_request_payload_ ? &amp;request_payload_ : nullptr;</span></a>
+<a name="537"><span class="lineNum">     537 </span><span class="lineCov">      14135 :   }</span></a>
+<a name="538"><span class="lineNum">     538 </span>            : </a>
+<a name="539"><span class="lineNum">     539 </span>            :   // For generic services, method is nullptr since these services don't have</a>
+<a name="540"><span class="lineNum">     540 </span>            :   // pre-defined methods.</a>
+<a name="541"><span class="lineNum">     541 </span><span class="lineCov">         51 :   CallbackRequest(Server* server, grpc::CompletionQueue* cq,</span></a>
+<a name="542"><span class="lineNum">     542 </span>            :                   grpc_core::Server::BatchCallAllocation* data)</a>
+<a name="543"><span class="lineNum">     543 </span><span class="lineCov">         51 :       : server_(server),</span></a>
+<a name="544"><span class="lineNum">     544 </span><span class="lineCov">         51 :         method_(nullptr),</span></a>
+<a name="545"><span class="lineNum">     545 </span><span class="lineCov">         51 :         has_request_payload_(false),</span></a>
+<a name="546"><span class="lineNum">     546 </span><span class="lineCov">         51 :         call_details_(new grpc_call_details),</span></a>
+<a name="547"><span class="lineNum">     547 </span><span class="lineCov">         51 :         cq_(cq),</span></a>
+<a name="548"><span class="lineNum">     548 </span><span class="lineCov">         51 :         tag_(this),</span></a>
+<a name="549"><span class="lineNum">     549 </span><span class="lineCov">         51 :         ctx_(server_-&gt;context_allocator() != nullptr</span></a>
+<a name="550"><span class="lineNum">     550 </span><span class="lineCov">         51 :                  ? server_-&gt;context_allocator()</span></a>
+<a name="551"><span class="lineNum">     551 </span><span class="lineNoCov">          0 :                        -&gt;NewGenericCallbackServerContext()</span></a>
+<a name="552"><span class="lineNum">     552 </span><span class="lineCov">        153 :                  : nullptr) {</span></a>
+<a name="553"><span class="lineNum">     553 </span><span class="lineCov">         51 :     CommonSetup(server, data);</span></a>
+<a name="554"><span class="lineNum">     554 </span><span class="lineCov">         51 :     grpc_call_details_init(call_details_);</span></a>
+<a name="555"><span class="lineNum">     555 </span><span class="lineCov">         51 :     data-&gt;details = call_details_;</span></a>
+<a name="556"><span class="lineNum">     556 </span><span class="lineCov">         51 :   }</span></a>
+<a name="557"><span class="lineNum">     557 </span>            : </a>
+<a name="558"><span class="lineNum">     558 </span><span class="lineCov">      28368 :   ~CallbackRequest() override {</span></a>
+<a name="559"><span class="lineNum">     559 </span><span class="lineCov">         51 :     delete call_details_;</span></a>
+<a name="560"><span class="lineNum">     560 </span><span class="lineCov">      14186 :     grpc_metadata_array_destroy(&amp;request_metadata_);</span></a>
+<a name="561"><span class="lineNum">     561 </span><span class="lineCov">      14180 :     if (has_request_payload_ &amp;&amp; request_payload_) {</span></a>
+<a name="562"><span class="lineNum">     562 </span><span class="lineNoCov">          0 :       grpc_byte_buffer_destroy(request_payload_);</span></a>
+<a name="563"><span class="lineNum">     563 </span>            :     }</a>
+<a name="564"><span class="lineNum">     564 </span><span class="lineCov">      14182 :     if (ctx_alloc_by_default_ || server_-&gt;context_allocator() == nullptr) {</span></a>
+<a name="565"><span class="lineNum">     565 </span><span class="lineCov">      14092 :       default_ctx_.Destroy();</span></a>
+<a name="566"><span class="lineNum">     566 </span>            :     }</a>
+<a name="567"><span class="lineNum">     567 </span><span class="lineCov">      14184 :     server_-&gt;UnrefWithPossibleNotify();</span></a>
+<a name="568"><span class="lineNum">     568 </span><span class="lineCov">      42554 :   }</span></a>
+<a name="569"><span class="lineNum">     569 </span>            : </a>
+<a name="570"><span class="lineNum">     570 </span>            :   // Needs specialization to account for different processing of metadata</a>
+<a name="571"><span class="lineNum">     571 </span>            :   // in generic API</a>
+<a name="572"><span class="lineNum">     572 </span>            :   bool FinalizeResult(void** tag, bool* status) override;</a>
+<a name="573"><span class="lineNum">     573 </span>            : </a>
+<a name="574"><span class="lineNum">     574 </span>            :  private:</a>
+<a name="575"><span class="lineNum">     575 </span>            :   // method_name needs to be specialized between named method and generic</a>
+<a name="576"><span class="lineNum">     576 </span>            :   const char* method_name() const;</a>
+<a name="577"><span class="lineNum">     577 </span>            : </a>
+<a name="578"><span class="lineNum">     578 </span>            :   class CallbackCallTag : public grpc_completion_queue_functor {</a>
+<a name="579"><span class="lineNum">     579 </span>            :    public:</a>
+<a name="580"><span class="lineNum">     580 </span><span class="lineCov">      14186 :     explicit CallbackCallTag(Server::CallbackRequest&lt;ServerContextType&gt;* req)</span></a>
+<a name="581"><span class="lineNum">     581 </span><span class="lineCov">      14186 :         : req_(req) {</span></a>
+<a name="582"><span class="lineNum">     582 </span><span class="lineCov">      14186 :       functor_run = &amp;CallbackCallTag::StaticRun;</span></a>
+<a name="583"><span class="lineNum">     583 </span>            :       // Set inlineable to true since this callback is internally-controlled</a>
+<a name="584"><span class="lineNum">     584 </span>            :       // without taking any locks, and thus does not need to be run from the</a>
+<a name="585"><span class="lineNum">     585 </span>            :       // executor (which triggers a thread hop). This should only be used by</a>
+<a name="586"><span class="lineNum">     586 </span>            :       // internal callbacks like this and not by user application code. The work</a>
+<a name="587"><span class="lineNum">     587 </span>            :       // here is actually non-trivial, but there is no chance of having user</a>
+<a name="588"><span class="lineNum">     588 </span>            :       // locks conflict with each other so it's ok to run inlined.</a>
+<a name="589"><span class="lineNum">     589 </span><span class="lineCov">      14186 :       inlineable = true;</span></a>
+<a name="590"><span class="lineNum">     590 </span><span class="lineCov">      14186 :     }</span></a>
+<a name="591"><span class="lineNum">     591 </span>            : </a>
+<a name="592"><span class="lineNum">     592 </span>            :     // force_run can not be performed on a tag if operations using this tag</a>
+<a name="593"><span class="lineNum">     593 </span>            :     // have been sent to PerformOpsOnCall. It is intended for error conditions</a>
+<a name="594"><span class="lineNum">     594 </span>            :     // that are detected before the operations are internally processed.</a>
+<a name="595"><span class="lineNum">     595 </span>            :     void force_run(bool ok) { Run(ok); }</a>
+<a name="596"><span class="lineNum">     596 </span>            : </a>
+<a name="597"><span class="lineNum">     597 </span>            :    private:</a>
+<a name="598"><span class="lineNum">     598 </span>            :     Server::CallbackRequest&lt;ServerContextType&gt;* req_;</a>
+<a name="599"><span class="lineNum">     599 </span>            :     grpc::internal::Call* call_;</a>
+<a name="600"><span class="lineNum">     600 </span>            : </a>
+<a name="601"><span class="lineNum">     601 </span><span class="lineCov">      14185 :     static void StaticRun(grpc_completion_queue_functor* cb, int ok) {</span></a>
+<a name="602"><span class="lineNum">     602 </span><span class="lineCov">      14185 :       static_cast&lt;CallbackCallTag*&gt;(cb)-&gt;Run(static_cast&lt;bool&gt;(ok));</span></a>
+<a name="603"><span class="lineNum">     603 </span><span class="lineCov">      14184 :     }</span></a>
+<a name="604"><span class="lineNum">     604 </span><span class="lineCov">      14185 :     void Run(bool ok) {</span></a>
+<a name="605"><span class="lineNum">     605 </span><span class="lineCov">      14185 :       void* ignored = req_;</span></a>
+<a name="606"><span class="lineNum">     606 </span><span class="lineCov">      14185 :       bool new_ok = ok;</span></a>
+<a name="607"><span class="lineNum">     607 </span><span class="lineCov">      14185 :       GPR_ASSERT(!req_-&gt;FinalizeResult(&amp;ignored, &amp;new_ok));</span></a>
+<a name="608"><span class="lineNum">     608 </span><span class="lineCov">      14185 :       GPR_ASSERT(ignored == req_);</span></a>
+<a name="609"><span class="lineNum">     609 </span>            : </a>
+<a name="610"><span class="lineNum">     610 </span><span class="lineCov">      14185 :       if (!ok) {</span></a>
+<a name="611"><span class="lineNum">     611 </span>            :         // The call has been shutdown.</a>
+<a name="612"><span class="lineNum">     612 </span>            :         // Delete its contents to free up the request.</a>
+<a name="613"><span class="lineNum">     613 </span><span class="lineNoCov">          0 :         delete req_;</span></a>
+<a name="614"><span class="lineNum">     614 </span><span class="lineNoCov">          0 :         return;</span></a>
+<a name="615"><span class="lineNum">     615 </span>            :       }</a>
+<a name="616"><span class="lineNum">     616 </span>            : </a>
+<a name="617"><span class="lineNum">     617 </span>            :       // Bind the call, deadline, and metadata from what we got</a>
+<a name="618"><span class="lineNum">     618 </span><span class="lineCov">      14185 :       req_-&gt;ctx_-&gt;set_call(req_-&gt;call_);</span></a>
+<a name="619"><span class="lineNum">     619 </span><span class="lineCov">      14185 :       req_-&gt;ctx_-&gt;cq_ = req_-&gt;cq_;</span></a>
+<a name="620"><span class="lineNum">     620 </span><span class="lineCov">      14185 :       req_-&gt;ctx_-&gt;BindDeadlineAndMetadata(req_-&gt;deadline_,</span></a>
+<a name="621"><span class="lineNum">     621 </span><span class="lineCov">      14185 :                                           &amp;req_-&gt;request_metadata_);</span></a>
+<a name="622"><span class="lineNum">     622 </span><span class="lineCov">      14186 :       req_-&gt;request_metadata_.count = 0;</span></a>
+<a name="623"><span class="lineNum">     623 </span>            : </a>
+<a name="624"><span class="lineNum">     624 </span>            :       // Create a C++ Call to control the underlying core call</a>
+<a name="625"><span class="lineNum">     625 </span><span class="lineCov">      14185 :       call_ =</span></a>
+<a name="626"><span class="lineNum">     626 </span><span class="lineCov">      14185 :           new (grpc_call_arena_alloc(req_-&gt;call_, sizeof(grpc::internal::Call)))</span></a>
+<a name="627"><span class="lineNum">     627 </span>            :               grpc::internal::Call(</a>
+<a name="628"><span class="lineNum">     628 </span><span class="lineCov">      14185 :                   req_-&gt;call_, req_-&gt;server_, req_-&gt;cq_,</span></a>
+<a name="629"><span class="lineNum">     629 </span><span class="lineCov">      14186 :                   req_-&gt;server_-&gt;max_receive_message_size(),</span></a>
+<a name="630"><span class="lineNum">     630 </span><span class="lineCov">      14236 :                   req_-&gt;ctx_-&gt;set_server_rpc_info(</span></a>
+<a name="631"><span class="lineNum">     631 </span><span class="lineCov">      14185 :                       req_-&gt;method_name(),</span></a>
+<a name="632"><span class="lineNum">     632 </span><span class="lineCov">      14185 :                       (req_-&gt;method_ != nullptr)</span></a>
+<a name="633"><span class="lineNum">     633 </span><span class="lineCov">      14134 :                           ? req_-&gt;method_-&gt;method_type()</span></a>
+<a name="634"><span class="lineNum">     634 </span>            :                           : grpc::internal::RpcMethod::BIDI_STREAMING,</a>
+<a name="635"><span class="lineNum">     635 </span><span class="lineCov">      14185 :                       req_-&gt;server_-&gt;interceptor_creators_));</span></a>
+<a name="636"><span class="lineNum">     636 </span>            : </a>
+<a name="637"><span class="lineNum">     637 </span><span class="lineCov">      14185 :       req_-&gt;interceptor_methods_.SetCall(call_);</span></a>
+<a name="638"><span class="lineNum">     638 </span><span class="lineCov">      14185 :       req_-&gt;interceptor_methods_.SetReverse();</span></a>
+<a name="639"><span class="lineNum">     639 </span>            :       // Set interception point for RECV INITIAL METADATA</a>
+<a name="640"><span class="lineNum">     640 </span><span class="lineCov">      14185 :       req_-&gt;interceptor_methods_.AddInterceptionHookPoint(</span></a>
+<a name="641"><span class="lineNum">     641 </span>            :           grpc::experimental::InterceptionHookPoints::</a>
+<a name="642"><span class="lineNum">     642 </span>            :               POST_RECV_INITIAL_METADATA);</a>
+<a name="643"><span class="lineNum">     643 </span><span class="lineCov">      14185 :       req_-&gt;interceptor_methods_.SetRecvInitialMetadata(</span></a>
+<a name="644"><span class="lineNum">     644 </span><span class="lineCov">      14185 :           &amp;req_-&gt;ctx_-&gt;client_metadata_);</span></a>
+<a name="645"><span class="lineNum">     645 </span>            : </a>
+<a name="646"><span class="lineNum">     646 </span><span class="lineCov">      14185 :       if (req_-&gt;has_request_payload_) {</span></a>
+<a name="647"><span class="lineNum">     647 </span>            :         // Set interception point for RECV MESSAGE</a>
+<a name="648"><span class="lineNum">     648 </span><span class="lineCov">      13575 :         req_-&gt;request_ = req_-&gt;method_-&gt;handler()-&gt;Deserialize(</span></a>
+<a name="649"><span class="lineNum">     649 </span><span class="lineCov">      13575 :             req_-&gt;call_, req_-&gt;request_payload_, &amp;req_-&gt;request_status_,</span></a>
+<a name="650"><span class="lineNum">     650 </span><span class="lineCov">      13575 :             &amp;req_-&gt;handler_data_);</span></a>
+<a name="651"><span class="lineNum">     651 </span><span class="lineCov">      13574 :         if (!(req_-&gt;request_status_.ok())) {</span></a>
+<a name="652"><span class="lineNum">     652 </span><span class="lineNoCov">          0 :           gpr_log(GPR_DEBUG, &quot;Failed to deserialize message.&quot;);</span></a>
+<a name="653"><span class="lineNum">     653 </span>            :         }</a>
+<a name="654"><span class="lineNum">     654 </span><span class="lineCov">      13573 :         req_-&gt;request_payload_ = nullptr;</span></a>
+<a name="655"><span class="lineNum">     655 </span><span class="lineCov">      13573 :         req_-&gt;interceptor_methods_.AddInterceptionHookPoint(</span></a>
+<a name="656"><span class="lineNum">     656 </span>            :             grpc::experimental::InterceptionHookPoints::POST_RECV_MESSAGE);</a>
+<a name="657"><span class="lineNum">     657 </span><span class="lineCov">      13573 :         req_-&gt;interceptor_methods_.SetRecvMessage(req_-&gt;request_, nullptr);</span></a>
+<a name="658"><span class="lineNum">     658 </span>            :       }</a>
+<a name="659"><span class="lineNum">     659 </span>            : </a>
+<a name="660"><span class="lineNum">     660 </span><span class="lineCov">      14183 :       if (req_-&gt;interceptor_methods_.RunInterceptors(</span></a>
+<a name="661"><span class="lineNum">     661 </span><span class="lineCov">       6769 :               [this] { ContinueRunAfterInterception(); })) {</span></a>
+<a name="662"><span class="lineNum">     662 </span><span class="lineCov">       7414 :         ContinueRunAfterInterception();</span></a>
+<a name="663"><span class="lineNum">     663 </span>            :       } else {</a>
+<a name="664"><span class="lineNum">     664 </span>            :         // There were interceptors to be run, so ContinueRunAfterInterception</a>
+<a name="665"><span class="lineNum">     665 </span>            :         // will be run when interceptors are done.</a>
+<a name="666"><span class="lineNum">     666 </span>            :       }</a>
+<a name="667"><span class="lineNum">     667 </span>            :     }</a>
+<a name="668"><span class="lineNum">     668 </span><span class="lineCov">      14183 :     void ContinueRunAfterInterception() {</span></a>
+<a name="669"><span class="lineNum">     669 </span><span class="lineCov">      28365 :       auto* handler = (req_-&gt;method_ != nullptr)</span></a>
+<a name="670"><span class="lineNum">     670 </span><span class="lineCov">      14183 :                           ? req_-&gt;method_-&gt;handler()</span></a>
+<a name="671"><span class="lineNum">     671 </span><span class="lineCov">         51 :                           : req_-&gt;server_-&gt;generic_handler_.get();</span></a>
+<a name="672"><span class="lineNum">     672 </span><span class="lineCov">      28360 :       handler-&gt;RunHandler(grpc::internal::MethodHandler::HandlerParameter(</span></a>
+<a name="673"><span class="lineNum">     673 </span><span class="lineCov">      14179 :           call_, req_-&gt;ctx_, req_-&gt;request_, req_-&gt;request_status_,</span></a>
+<a name="674"><span class="lineNum">     674 </span><span class="lineCov">      28366 :           req_-&gt;handler_data_, [this] { delete req_; }));</span></a>
+<a name="675"><span class="lineNum">     675 </span><span class="lineCov">      14186 :     }</span></a>
+<a name="676"><span class="lineNum">     676 </span>            :   };</a>
+<a name="677"><span class="lineNum">     677 </span>            : </a>
+<a name="678"><span class="lineNum">     678 </span>            :   template &lt;class CallAllocation&gt;</a>
+<a name="679"><span class="lineNum">     679 </span><span class="lineCov">      14186 :   void CommonSetup(Server* server, CallAllocation* data) {</span></a>
+<a name="680"><span class="lineNum">     680 </span><span class="lineCov">      14186 :     server-&gt;Ref();</span></a>
+<a name="681"><span class="lineNum">     681 </span><span class="lineCov">      14186 :     grpc_metadata_array_init(&amp;request_metadata_);</span></a>
+<a name="682"><span class="lineNum">     682 </span><span class="lineCov">      14186 :     data-&gt;tag = static_cast&lt;void*&gt;(&amp;tag_);</span></a>
+<a name="683"><span class="lineNum">     683 </span><span class="lineCov">      14186 :     data-&gt;call = &amp;call_;</span></a>
+<a name="684"><span class="lineNum">     684 </span><span class="lineCov">      14186 :     data-&gt;initial_metadata = &amp;request_metadata_;</span></a>
+<a name="685"><span class="lineNum">     685 </span><span class="lineCov">      14186 :     if (ctx_ == nullptr) {</span></a>
+<a name="686"><span class="lineNum">     686 </span><span class="lineCov">      14096 :       default_ctx_.Init();</span></a>
+<a name="687"><span class="lineNum">     687 </span><span class="lineCov">      14096 :       ctx_ = &amp;*default_ctx_;</span></a>
+<a name="688"><span class="lineNum">     688 </span><span class="lineCov">      14096 :       ctx_alloc_by_default_ = true;</span></a>
+<a name="689"><span class="lineNum">     689 </span>            :     }</a>
+<a name="690"><span class="lineNum">     690 </span><span class="lineCov">      14186 :     ctx_-&gt;set_context_allocator(server-&gt;context_allocator());</span></a>
+<a name="691"><span class="lineNum">     691 </span><span class="lineCov">      14186 :     data-&gt;cq = cq_-&gt;cq();</span></a>
+<a name="692"><span class="lineNum">     692 </span><span class="lineCov">      14186 :   }</span></a>
+<a name="693"><span class="lineNum">     693 </span>            : </a>
+<a name="694"><span class="lineNum">     694 </span>            :   Server* const server_;</a>
+<a name="695"><span class="lineNum">     695 </span>            :   grpc::internal::RpcServiceMethod* const method_;</a>
+<a name="696"><span class="lineNum">     696 </span>            :   const bool has_request_payload_;</a>
+<a name="697"><span class="lineNum">     697 </span>            :   grpc_byte_buffer* request_payload_ = nullptr;</a>
+<a name="698"><span class="lineNum">     698 </span>            :   void* request_ = nullptr;</a>
+<a name="699"><span class="lineNum">     699 </span>            :   void* handler_data_ = nullptr;</a>
+<a name="700"><span class="lineNum">     700 </span>            :   grpc::Status request_status_;</a>
+<a name="701"><span class="lineNum">     701 </span>            :   grpc_call_details* const call_details_ = nullptr;</a>
+<a name="702"><span class="lineNum">     702 </span>            :   grpc_call* call_;</a>
+<a name="703"><span class="lineNum">     703 </span>            :   gpr_timespec deadline_;</a>
+<a name="704"><span class="lineNum">     704 </span>            :   grpc_metadata_array request_metadata_;</a>
+<a name="705"><span class="lineNum">     705 </span>            :   grpc::CompletionQueue* const cq_;</a>
+<a name="706"><span class="lineNum">     706 </span>            :   bool ctx_alloc_by_default_ = false;</a>
+<a name="707"><span class="lineNum">     707 </span>            :   CallbackCallTag tag_;</a>
+<a name="708"><span class="lineNum">     708 </span>            :   ServerContextType* ctx_ = nullptr;</a>
+<a name="709"><span class="lineNum">     709 </span>            :   grpc_core::ManualConstructor&lt;ServerContextType&gt; default_ctx_;</a>
+<a name="710"><span class="lineNum">     710 </span>            :   grpc::internal::InterceptorBatchMethodsImpl interceptor_methods_;</a>
+<a name="711"><span class="lineNum">     711 </span>            : };</a>
+<a name="712"><span class="lineNum">     712 </span>            : </a>
+<a name="713"><span class="lineNum">     713 </span>            : template &lt;&gt;</a>
+<a name="714"><span class="lineNum">     714 </span><span class="lineCov">      14134 : bool Server::CallbackRequest&lt;grpc::CallbackServerContext&gt;::FinalizeResult(</span></a>
+<a name="715"><span class="lineNum">     715 </span>            :     void** /*tag*/, bool* /*status*/) {</a>
+<a name="716"><span class="lineNum">     716 </span><span class="lineCov">      14134 :   return false;</span></a>
+<a name="717"><span class="lineNum">     717 </span>            : }</a>
+<a name="718"><span class="lineNum">     718 </span>            : </a>
+<a name="719"><span class="lineNum">     719 </span>            : template &lt;&gt;</a>
+<a name="720"><span class="lineNum">     720 </span><span class="lineCov">         51 : bool Server::CallbackRequest&lt;</span></a>
+<a name="721"><span class="lineNum">     721 </span>            :     grpc::GenericCallbackServerContext&gt;::FinalizeResult(void** /*tag*/,</a>
+<a name="722"><span class="lineNum">     722 </span>            :                                                         bool* status) {</a>
+<a name="723"><span class="lineNum">     723 </span><span class="lineCov">         51 :   if (*status) {</span></a>
+<a name="724"><span class="lineNum">     724 </span><span class="lineCov">         51 :     deadline_ = call_details_-&gt;deadline;</span></a>
+<a name="725"><span class="lineNum">     725 </span>            :     // TODO(yangg) remove the copy here</a>
+<a name="726"><span class="lineNum">     726 </span><span class="lineCov">         51 :     ctx_-&gt;method_ = grpc::StringFromCopiedSlice(call_details_-&gt;method);</span></a>
+<a name="727"><span class="lineNum">     727 </span><span class="lineCov">         51 :     ctx_-&gt;host_ = grpc::StringFromCopiedSlice(call_details_-&gt;host);</span></a>
+<a name="728"><span class="lineNum">     728 </span>            :   }</a>
+<a name="729"><span class="lineNum">     729 </span><span class="lineCov">         51 :   grpc_slice_unref(call_details_-&gt;method);</span></a>
+<a name="730"><span class="lineNum">     730 </span><span class="lineCov">         51 :   grpc_slice_unref(call_details_-&gt;host);</span></a>
+<a name="731"><span class="lineNum">     731 </span><span class="lineCov">         51 :   return false;</span></a>
+<a name="732"><span class="lineNum">     732 </span>            : }</a>
+<a name="733"><span class="lineNum">     733 </span>            : </a>
+<a name="734"><span class="lineNum">     734 </span>            : template &lt;&gt;</a>
+<a name="735"><span class="lineNum">     735 </span><span class="lineCov">      14134 : const char* Server::CallbackRequest&lt;grpc::CallbackServerContext&gt;::method_name()</span></a>
+<a name="736"><span class="lineNum">     736 </span>            :     const {</a>
+<a name="737"><span class="lineNum">     737 </span><span class="lineCov">      14134 :   return method_-&gt;name();</span></a>
+<a name="738"><span class="lineNum">     738 </span>            : }</a>
+<a name="739"><span class="lineNum">     739 </span>            : </a>
+<a name="740"><span class="lineNum">     740 </span>            : template &lt;&gt;</a>
+<a name="741"><span class="lineNum">     741 </span><span class="lineCov">         51 : const char* Server::CallbackRequest&lt;</span></a>
+<a name="742"><span class="lineNum">     742 </span>            :     grpc::GenericCallbackServerContext&gt;::method_name() const {</a>
+<a name="743"><span class="lineNum">     743 </span><span class="lineCov">         51 :   return ctx_-&gt;method().c_str();</span></a>
+<a name="744"><span class="lineNum">     744 </span>            : }</a>
+<a name="745"><span class="lineNum">     745 </span>            : </a>
+<a name="746"><span class="lineNum">     746 </span>            : // Implementation of ThreadManager. Each instance of SyncRequestThreadManager</a>
+<a name="747"><span class="lineNum">     747 </span>            : // manages a pool of threads that poll for incoming Sync RPCs and call the</a>
+<a name="748"><span class="lineNum">     748 </span>            : // appropriate RPC handlers</a>
+<a name="749"><span class="lineNum">     749 </span>            : class Server::SyncRequestThreadManager : public grpc::ThreadManager {</a>
+<a name="750"><span class="lineNum">     750 </span>            :  public:</a>
+<a name="751"><span class="lineNum">     751 </span><span class="lineCov">      19174 :   SyncRequestThreadManager(Server* server, grpc::CompletionQueue* server_cq,</span></a>
+<a name="752"><span class="lineNum">     752 </span>            :                            std::shared_ptr&lt;GlobalCallbacks&gt; global_callbacks,</a>
+<a name="753"><span class="lineNum">     753 </span>            :                            grpc_resource_quota* rq, int min_pollers,</a>
+<a name="754"><span class="lineNum">     754 </span>            :                            int max_pollers, int cq_timeout_msec)</a>
+<a name="755"><span class="lineNum">     755 </span><span class="lineCov">      19174 :       : ThreadManager(&quot;SyncServer&quot;, rq, min_pollers, max_pollers),</span></a>
+<a name="756"><span class="lineNum">     756 </span><span class="lineCov">      19174 :         server_(server),</span></a>
+<a name="757"><span class="lineNum">     757 </span><span class="lineCov">      19174 :         server_cq_(server_cq),</span></a>
+<a name="758"><span class="lineNum">     758 </span><span class="lineCov">      19174 :         cq_timeout_msec_(cq_timeout_msec),</span></a>
+<a name="759"><span class="lineNum">     759 </span><span class="lineCov">      19174 :         global_callbacks_(std::move(global_callbacks)) {}</span></a>
+<a name="760"><span class="lineNum">     760 </span>            : </a>
+<a name="761"><span class="lineNum">     761 </span><span class="lineCov">    3756979 :   WorkStatus PollForWork(void** tag, bool* ok) override {</span></a>
+<a name="762"><span class="lineNum">     762 </span><span class="lineCov">    3756979 :     *tag = nullptr;</span></a>
+<a name="763"><span class="lineNum">     763 </span>            :     // TODO(ctiller): workaround for GPR_TIMESPAN based deadlines not working</a>
+<a name="764"><span class="lineNum">     764 </span>            :     // right now</a>
+<a name="765"><span class="lineNum">     765 </span>            :     gpr_timespec deadline =</a>
+<a name="766"><span class="lineNum">     766 </span><span class="lineCov">    3757028 :         gpr_time_add(gpr_now(GPR_CLOCK_MONOTONIC),</span></a>
+<a name="767"><span class="lineNum">     767 </span><span class="lineCov">    3756979 :                      gpr_time_from_millis(cq_timeout_msec_, GPR_TIMESPAN));</span></a>
+<a name="768"><span class="lineNum">     768 </span>            : </a>
+<a name="769"><span class="lineNum">     769 </span><span class="lineCov">    3756956 :     switch (server_cq_-&gt;AsyncNext(tag, ok, deadline)) {</span></a>
+<a name="770"><span class="lineNum">     770 </span><span class="lineCov">      61800 :       case grpc::CompletionQueue::TIMEOUT:</span></a>
+<a name="771"><span class="lineNum">     771 </span><span class="lineCov">      61800 :         return TIMEOUT;</span></a>
+<a name="772"><span class="lineNum">     772 </span><span class="lineCov">      27263 :       case grpc::CompletionQueue::SHUTDOWN:</span></a>
+<a name="773"><span class="lineNum">     773 </span><span class="lineCov">      27263 :         return SHUTDOWN;</span></a>
+<a name="774"><span class="lineNum">     774 </span><span class="lineCov">    3667860 :       case grpc::CompletionQueue::GOT_EVENT:</span></a>
+<a name="775"><span class="lineNum">     775 </span><span class="lineCov">    3667860 :         return WORK_FOUND;</span></a>
+<a name="776"><span class="lineNum">     776 </span>            :     }</a>
+<a name="777"><span class="lineNum">     777 </span>            : </a>
+<a name="778"><span class="lineNum">     778 </span><span class="lineCov">         31 :     GPR_UNREACHABLE_CODE(return TIMEOUT);</span></a>
+<a name="779"><span class="lineNum">     779 </span>            :   }</a>
+<a name="780"><span class="lineNum">     780 </span>            : </a>
+<a name="781"><span class="lineNum">     781 </span><span class="lineCov">    3667726 :   void DoWork(void* tag, bool ok, bool resources) override {</span></a>
+<a name="782"><span class="lineNum">     782 </span>            :     (void)ok;</a>
+<a name="783"><span class="lineNum">     783 </span><span class="lineCov">    3667726 :     SyncRequest* sync_req = static_cast&lt;SyncRequest*&gt;(tag);</span></a>
+<a name="784"><span class="lineNum">     784 </span>            : </a>
+<a name="785"><span class="lineNum">     785 </span>            :     // Under the AllocatingRequestMatcher model we will never see an invalid tag</a>
+<a name="786"><span class="lineNum">     786 </span>            :     // here.</a>
+<a name="787"><span class="lineNum">     787 </span><span class="lineCov">    3667726 :     GPR_DEBUG_ASSERT(sync_req != nullptr);</span></a>
+<a name="788"><span class="lineNum">     788 </span><span class="lineCov">    3667726 :     GPR_DEBUG_ASSERT(ok);</span></a>
+<a name="789"><span class="lineNum">     789 </span>            : </a>
+<a name="790"><span class="lineNum">     790 </span>            :     GPR_TIMER_SCOPE(&quot;sync_req-&gt;Run()&quot;, 0);</a>
+<a name="791"><span class="lineNum">     791 </span><span class="lineCov">    3667726 :     sync_req-&gt;Run(global_callbacks_, resources);</span></a>
+<a name="792"><span class="lineNum">     792 </span><span class="lineCov">    3667583 :   }</span></a>
+<a name="793"><span class="lineNum">     793 </span>            : </a>
+<a name="794"><span class="lineNum">     794 </span><span class="lineCov">     304295 :   void AddSyncMethod(grpc::internal::RpcServiceMethod* method, void* tag) {</span></a>
+<a name="795"><span class="lineNum">     795 </span><span class="lineCov">     304295 :     grpc_core::Server::FromC(server_-&gt;server())</span></a>
+<a name="796"><span class="lineNum">     796 </span><span class="lineCov">     304295 :         -&gt;SetRegisteredMethodAllocator(server_cq_-&gt;cq(), tag, [this, method] {</span></a>
+<a name="797"><span class="lineNum">     797 </span>            :           grpc_core::Server::RegisteredCallAllocation result;</a>
+<a name="798"><span class="lineNum">     798 </span><span class="lineCov">    3667730 :           new SyncRequest(server_, method, &amp;result);</span></a>
+<a name="799"><span class="lineNum">     799 </span><span class="lineCov">    3667789 :           return result;</span></a>
+<a name="800"><span class="lineNum">     800 </span>            :         });</a>
+<a name="801"><span class="lineNum">     801 </span><span class="lineCov">     304295 :     has_sync_method_ = true;</span></a>
+<a name="802"><span class="lineNum">     802 </span><span class="lineCov">     304295 :   }</span></a>
+<a name="803"><span class="lineNum">     803 </span>            : </a>
+<a name="804"><span class="lineNum">     804 </span><span class="lineCov">      11131 :   void AddUnknownSyncMethod() {</span></a>
+<a name="805"><span class="lineNum">     805 </span><span class="lineCov">      11131 :     if (has_sync_method_) {</span></a>
+<a name="806"><span class="lineNum">     806 </span><span class="lineCov">      11131 :       unknown_method_ = absl::make_unique&lt;grpc::internal::RpcServiceMethod&gt;(</span></a>
+<a name="807"><span class="lineNum">     807 </span><span class="lineNoCov">          0 :           &quot;unknown&quot;, grpc::internal::RpcMethod::BIDI_STREAMING,</span></a>
+<a name="808"><span class="lineNum">     808 </span><span class="lineCov">      22262 :           new grpc::internal::UnknownMethodHandler(kUnknownRpcMethod));</span></a>
+<a name="809"><span class="lineNum">     809 </span><span class="lineCov">      11131 :       grpc_core::Server::FromC(server_-&gt;server())</span></a>
+<a name="810"><span class="lineNum">     810 </span><span class="lineCov">      11131 :           -&gt;SetBatchMethodAllocator(server_cq_-&gt;cq(), [this] {</span></a>
+<a name="811"><span class="lineNum">     811 </span>            :             grpc_core::Server::BatchCallAllocation result;</a>
+<a name="812"><span class="lineNum">     812 </span><span class="lineCov">         63 :             new SyncRequest(server_, unknown_method_.get(), &amp;result);</span></a>
+<a name="813"><span class="lineNum">     813 </span><span class="lineCov">         63 :             return result;</span></a>
+<a name="814"><span class="lineNum">     814 </span>            :           });</a>
+<a name="815"><span class="lineNum">     815 </span>            :     }</a>
+<a name="816"><span class="lineNum">     816 </span><span class="lineCov">      11131 :   }</span></a>
+<a name="817"><span class="lineNum">     817 </span>            : </a>
+<a name="818"><span class="lineNum">     818 </span><span class="lineCov">      19177 :   void Shutdown() override {</span></a>
+<a name="819"><span class="lineNum">     819 </span><span class="lineCov">      19177 :     ThreadManager::Shutdown();</span></a>
+<a name="820"><span class="lineNum">     820 </span><span class="lineCov">      19177 :     server_cq_-&gt;Shutdown();</span></a>
+<a name="821"><span class="lineNum">     821 </span><span class="lineCov">      19177 :   }</span></a>
+<a name="822"><span class="lineNum">     822 </span>            : </a>
+<a name="823"><span class="lineNum">     823 </span><span class="lineCov">      19165 :   void Wait() override {</span></a>
+<a name="824"><span class="lineNum">     824 </span><span class="lineCov">      19165 :     ThreadManager::Wait();</span></a>
+<a name="825"><span class="lineNum">     825 </span>            :     // Drain any pending items from the queue</a>
+<a name="826"><span class="lineNum">     826 </span>            :     void* tag;</a>
+<a name="827"><span class="lineNum">     827 </span>            :     bool ok;</a>
+<a name="828"><span class="lineNum">     828 </span><span class="lineCov">      19165 :     while (server_cq_-&gt;Next(&amp;tag, &amp;ok)) {</span></a>
+<a name="829"><span class="lineNum">     829 </span>            :       // This problem can arise if the server CQ gets a request queued to it</a>
+<a name="830"><span class="lineNum">     830 </span>            :       // before it gets shutdown but then pulls it after shutdown.</a>
+<a name="831"><span class="lineNum">     831 </span><span class="lineNoCov">          0 :       static_cast&lt;SyncRequest*&gt;(tag)-&gt;Cleanup();</span></a>
+<a name="832"><span class="lineNum">     832 </span>            :     }</a>
+<a name="833"><span class="lineNum">     833 </span><span class="lineCov">      19165 :   }</span></a>
+<a name="834"><span class="lineNum">     834 </span>            : </a>
+<a name="835"><span class="lineNum">     835 </span><span class="lineCov">      19162 :   void Start() {</span></a>
+<a name="836"><span class="lineNum">     836 </span><span class="lineCov">      19162 :     if (has_sync_method_) {</span></a>
+<a name="837"><span class="lineNum">     837 </span><span class="lineCov">      19162 :       Initialize();  // ThreadManager's Initialize()</span></a>
+<a name="838"><span class="lineNum">     838 </span>            :     }</a>
+<a name="839"><span class="lineNum">     839 </span><span class="lineCov">      19162 :   }</span></a>
+<a name="840"><span class="lineNum">     840 </span>            : </a>
+<a name="841"><span class="lineNum">     841 </span>            :  private:</a>
+<a name="842"><span class="lineNum">     842 </span>            :   Server* server_;</a>
+<a name="843"><span class="lineNum">     843 </span>            :   grpc::CompletionQueue* server_cq_;</a>
+<a name="844"><span class="lineNum">     844 </span>            :   int cq_timeout_msec_;</a>
+<a name="845"><span class="lineNum">     845 </span>            :   bool has_sync_method_ = false;</a>
+<a name="846"><span class="lineNum">     846 </span>            :   std::unique_ptr&lt;grpc::internal::RpcServiceMethod&gt; unknown_method_;</a>
+<a name="847"><span class="lineNum">     847 </span>            :   std::shared_ptr&lt;Server::GlobalCallbacks&gt; global_callbacks_;</a>
+<a name="848"><span class="lineNum">     848 </span>            : };</a>
+<a name="849"><span class="lineNum">     849 </span>            : </a>
+<a name="850"><span class="lineNum">     850 </span>            : static grpc::internal::GrpcLibraryInitializer g_gli_initializer;</a>
+<a name="851"><span class="lineNum">     851 </span><span class="lineCov">      18311 : Server::Server(</span></a>
+<a name="852"><span class="lineNum">     852 </span>            :     grpc::ChannelArguments* args,</a>
+<a name="853"><span class="lineNum">     853 </span>            :     std::shared_ptr&lt;std::vector&lt;std::unique_ptr&lt;grpc::ServerCompletionQueue&gt;&gt;&gt;</a>
+<a name="854"><span class="lineNum">     854 </span>            :         sync_server_cqs,</a>
+<a name="855"><span class="lineNum">     855 </span>            :     int min_pollers, int max_pollers, int sync_cq_timeout_msec,</a>
+<a name="856"><span class="lineNum">     856 </span>            :     std::vector&lt;std::shared_ptr&lt;grpc::internal::ExternalConnectionAcceptorImpl&gt;&gt;</a>
+<a name="857"><span class="lineNum">     857 </span>            :         acceptors,</a>
+<a name="858"><span class="lineNum">     858 </span>            :     grpc_server_config_fetcher* server_config_fetcher,</a>
+<a name="859"><span class="lineNum">     859 </span>            :     grpc_resource_quota* server_rq,</a>
+<a name="860"><span class="lineNum">     860 </span>            :     std::vector&lt;</a>
+<a name="861"><span class="lineNum">     861 </span>            :         std::unique_ptr&lt;grpc::experimental::ServerInterceptorFactoryInterface&gt;&gt;</a>
+<a name="862"><span class="lineNum">     862 </span><span class="lineCov">      18311 :         interceptor_creators)</span></a>
+<a name="863"><span class="lineNum">     863 </span><span class="lineCov">      18311 :     : acceptors_(std::move(acceptors)),</span></a>
+<a name="864"><span class="lineNum">     864 </span><span class="lineCov">      18311 :       interceptor_creators_(std::move(interceptor_creators)),</span></a>
+<a name="865"><span class="lineNum">     865 </span><span class="lineCov">      18311 :       max_receive_message_size_(INT_MIN),</span></a>
+<a name="866"><span class="lineNum">     866 </span><span class="lineCov">      18311 :       sync_server_cqs_(std::move(sync_server_cqs)),</span></a>
+<a name="867"><span class="lineNum">     867 </span><span class="lineCov">      18311 :       started_(false),</span></a>
+<a name="868"><span class="lineNum">     868 </span><span class="lineCov">      18311 :       shutdown_(false),</span></a>
+<a name="869"><span class="lineNum">     869 </span><span class="lineCov">      18311 :       shutdown_notified_(false),</span></a>
+<a name="870"><span class="lineNum">     870 </span><span class="lineCov">      18311 :       server_(nullptr),</span></a>
+<a name="871"><span class="lineNum">     871 </span><span class="lineCov">      18311 :       server_initializer_(new ServerInitializer(this)),</span></a>
+<a name="872"><span class="lineNum">     872 </span><span class="lineCov">      54933 :       health_check_service_disabled_(false) {</span></a>
+<a name="873"><span class="lineNum">     873 </span><span class="lineCov">      18311 :   g_gli_initializer.summon();</span></a>
+<a name="874"><span class="lineNum">     874 </span><span class="lineCov">      18311 :   gpr_once_init(&amp;grpc::g_once_init_callbacks, grpc::InitGlobalCallbacks);</span></a>
+<a name="875"><span class="lineNum">     875 </span><span class="lineCov">      18311 :   global_callbacks_ = grpc::g_callbacks;</span></a>
+<a name="876"><span class="lineNum">     876 </span><span class="lineCov">      18311 :   global_callbacks_-&gt;UpdateArguments(args);</span></a>
+<a name="877"><span class="lineNum">     877 </span>            : </a>
+<a name="878"><span class="lineNum">     878 </span><span class="lineCov">      18311 :   if (sync_server_cqs_ != nullptr) {</span></a>
+<a name="879"><span class="lineNum">     879 </span><span class="lineCov">      18311 :     bool default_rq_created = false;</span></a>
+<a name="880"><span class="lineNum">     880 </span><span class="lineCov">      18311 :     if (server_rq == nullptr) {</span></a>
+<a name="881"><span class="lineNum">     881 </span><span class="lineCov">      18269 :       server_rq = grpc_resource_quota_create(&quot;SyncServer-default-rq&quot;);</span></a>
+<a name="882"><span class="lineNum">     882 </span><span class="lineCov">      18269 :       grpc_resource_quota_set_max_threads(server_rq,</span></a>
+<a name="883"><span class="lineNum">     883 </span>            :                                           DEFAULT_MAX_SYNC_SERVER_THREADS);</a>
+<a name="884"><span class="lineNum">     884 </span><span class="lineCov">      18269 :       default_rq_created = true;</span></a>
+<a name="885"><span class="lineNum">     885 </span>            :     }</a>
+<a name="886"><span class="lineNum">     886 </span>            : </a>
+<a name="887"><span class="lineNum">     887 </span><span class="lineCov">      37485 :     for (const auto&amp; it : *sync_server_cqs_) {</span></a>
+<a name="888"><span class="lineNum">     888 </span><span class="lineCov">      19174 :       sync_req_mgrs_.emplace_back(new SyncRequestThreadManager(</span></a>
+<a name="889"><span class="lineNum">     889 </span><span class="lineCov">      19174 :           this, it.get(), global_callbacks_, server_rq, min_pollers,</span></a>
+<a name="890"><span class="lineNum">     890 </span><span class="lineCov">      19174 :           max_pollers, sync_cq_timeout_msec));</span></a>
+<a name="891"><span class="lineNum">     891 </span>            :     }</a>
+<a name="892"><span class="lineNum">     892 </span>            : </a>
+<a name="893"><span class="lineNum">     893 </span><span class="lineCov">      18311 :     if (default_rq_created) {</span></a>
+<a name="894"><span class="lineNum">     894 </span><span class="lineCov">      18269 :       grpc_resource_quota_unref(server_rq);</span></a>
+<a name="895"><span class="lineNum">     895 </span>            :     }</a>
+<a name="896"><span class="lineNum">     896 </span>            :   }</a>
+<a name="897"><span class="lineNum">     897 </span>            : </a>
+<a name="898"><span class="lineNum">     898 </span><span class="lineCov">      18455 :   for (auto&amp; acceptor : acceptors_) {</span></a>
+<a name="899"><span class="lineNum">     899 </span><span class="lineCov">        144 :     acceptor-&gt;SetToChannelArgs(args);</span></a>
+<a name="900"><span class="lineNum">     900 </span>            :   }</a>
+<a name="901"><span class="lineNum">     901 </span>            : </a>
+<a name="902"><span class="lineNum">     902 </span>            :   grpc_channel_args channel_args;</a>
+<a name="903"><span class="lineNum">     903 </span><span class="lineCov">      18311 :   args-&gt;SetChannelArgs(&amp;channel_args);</span></a>
+<a name="904"><span class="lineNum">     904 </span>            : </a>
+<a name="905"><span class="lineNum">     905 </span><span class="lineCov">      68943 :   for (size_t i = 0; i &lt; channel_args.num_args; i++) {</span></a>
+<a name="906"><span class="lineNum">     906 </span><span class="lineCov">      50632 :     if (0 == strcmp(channel_args.args[i].key,</span></a>
+<a name="907"><span class="lineNum">     907 </span>            :                     grpc::kHealthCheckServiceInterfaceArg)) {</a>
+<a name="908"><span class="lineNum">     908 </span><span class="lineCov">          9 :       if (channel_args.args[i].value.pointer.p == nullptr) {</span></a>
+<a name="909"><span class="lineNum">     909 </span><span class="lineCov">          3 :         health_check_service_disabled_ = true;</span></a>
+<a name="910"><span class="lineNum">     910 </span>            :       } else {</a>
+<a name="911"><span class="lineNum">     911 </span><span class="lineCov">          6 :         health_check_service_.reset(</span></a>
+<a name="912"><span class="lineNum">     912 </span>            :             static_cast&lt;grpc::HealthCheckServiceInterface*&gt;(</a>
+<a name="913"><span class="lineNum">     913 </span><span class="lineCov">          6 :                 channel_args.args[i].value.pointer.p));</span></a>
+<a name="914"><span class="lineNum">     914 </span>            :       }</a>
+<a name="915"><span class="lineNum">     915 </span>            :     }</a>
+<a name="916"><span class="lineNum">     916 </span><span class="lineCov">      50632 :     if (0 ==</span></a>
+<a name="917"><span class="lineNum">     917 </span><span class="lineCov">      50632 :         strcmp(channel_args.args[i].key, GRPC_ARG_MAX_RECEIVE_MESSAGE_LENGTH)) {</span></a>
+<a name="918"><span class="lineNum">     918 </span><span class="lineCov">       6007 :       max_receive_message_size_ = channel_args.args[i].value.integer;</span></a>
+<a name="919"><span class="lineNum">     919 </span>            :     }</a>
+<a name="920"><span class="lineNum">     920 </span>            :   }</a>
+<a name="921"><span class="lineNum">     921 </span><span class="lineCov">      18311 :   server_ = grpc_server_create(&amp;channel_args, nullptr);</span></a>
+<a name="922"><span class="lineNum">     922 </span><span class="lineCov">      18311 :   grpc_server_set_config_fetcher(server_, server_config_fetcher);</span></a>
+<a name="923"><span class="lineNum">     923 </span><span class="lineCov">      18311 : }</span></a>
+<a name="924"><span class="lineNum">     924 </span>            : </a>
+<a name="925"><span class="lineNum">     925 </span><span class="lineCov">      36622 : Server::~Server() {</span></a>
+<a name="926"><span class="lineNum">     926 </span>            :   {</a>
+<a name="927"><span class="lineNum">     927 </span><span class="lineCov">      18311 :     grpc::internal::ReleasableMutexLock lock(&amp;mu_);</span></a>
+<a name="928"><span class="lineNum">     928 </span><span class="lineCov">      18311 :     if (started_ &amp;&amp; !shutdown_) {</span></a>
+<a name="929"><span class="lineNum">     929 </span><span class="lineCov">       2140 :       lock.Release();</span></a>
+<a name="930"><span class="lineNum">     930 </span><span class="lineCov">       2140 :       Shutdown();</span></a>
+<a name="931"><span class="lineNum">     931 </span><span class="lineCov">      16171 :     } else if (!started_) {</span></a>
+<a name="932"><span class="lineNum">     932 </span>            :       // Shutdown the completion queues</a>
+<a name="933"><span class="lineNum">     933 </span><span class="lineCov">         24 :       for (const auto&amp; value : sync_req_mgrs_) {</span></a>
+<a name="934"><span class="lineNum">     934 </span><span class="lineCov">         12 :         value-&gt;Shutdown();</span></a>
+<a name="935"><span class="lineNum">     935 </span>            :       }</a>
+<a name="936"><span class="lineNum">     936 </span>            :       CompletionQueue* callback_cq =</a>
+<a name="937"><span class="lineNum">     937 </span><span class="lineCov">         12 :           callback_cq_.load(std::memory_order_relaxed);</span></a>
+<a name="938"><span class="lineNum">     938 </span><span class="lineCov">         12 :       if (callback_cq != nullptr) {</span></a>
+<a name="939"><span class="lineNum">     939 </span><span class="lineNoCov">          0 :         if (grpc_iomgr_run_in_background()) {</span></a>
+<a name="940"><span class="lineNum">     940 </span>            :           // gRPC-core provides the backing needed for the preferred CQ type</a>
+<a name="941"><span class="lineNum">     941 </span><span class="lineNoCov">          0 :           callback_cq-&gt;Shutdown();</span></a>
+<a name="942"><span class="lineNum">     942 </span>            :         } else {</a>
+<a name="943"><span class="lineNum">     943 </span><span class="lineNoCov">          0 :           CompletionQueue::ReleaseCallbackAlternativeCQ(callback_cq);</span></a>
+<a name="944"><span class="lineNum">     944 </span>            :         }</a>
+<a name="945"><span class="lineNum">     945 </span><span class="lineNoCov">          0 :         callback_cq_.store(nullptr, std::memory_order_release);</span></a>
+<a name="946"><span class="lineNum">     946 </span>            :       }</a>
+<a name="947"><span class="lineNum">     947 </span>            :     }</a>
+<a name="948"><span class="lineNum">     948 </span><span class="lineCov">      18311 :   }</span></a>
+<a name="949"><span class="lineNum">     949 </span>            :   // Destroy health check service before we destroy the C server so that</a>
+<a name="950"><span class="lineNum">     950 </span>            :   // it does not call grpc_server_request_registered_call() after the C</a>
+<a name="951"><span class="lineNum">     951 </span>            :   // server has been destroyed.</a>
+<a name="952"><span class="lineNum">     952 </span><span class="lineCov">      18311 :   health_check_service_.reset();</span></a>
+<a name="953"><span class="lineNum">     953 </span><span class="lineCov">      18311 :   grpc_server_destroy(server_);</span></a>
+<a name="954"><span class="lineNum">     954 </span><span class="lineCov">      36622 : }</span></a>
+<a name="955"><span class="lineNum">     955 </span>            : </a>
+<a name="956"><span class="lineNum">     956 </span><span class="lineNoCov">          0 : void Server::SetGlobalCallbacks(GlobalCallbacks* callbacks) {</span></a>
+<a name="957"><span class="lineNum">     957 </span><span class="lineNoCov">          0 :   GPR_ASSERT(!grpc::g_callbacks);</span></a>
+<a name="958"><span class="lineNum">     958 </span><span class="lineNoCov">          0 :   GPR_ASSERT(callbacks);</span></a>
+<a name="959"><span class="lineNum">     959 </span><span class="lineNoCov">          0 :   grpc::g_callbacks.reset(callbacks);</span></a>
+<a name="960"><span class="lineNum">     960 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="961"><span class="lineNum">     961 </span>            : </a>
+<a name="962"><span class="lineNum">     962 </span><span class="lineCov">       1904 : grpc_server* Server::c_server() { return server_; }</span></a>
+<a name="963"><span class="lineNum">     963 </span>            : </a>
+<a name="964"><span class="lineNum">     964 </span><span class="lineCov">       3307 : std::shared_ptr&lt;grpc::Channel&gt; Server::InProcessChannel(</span></a>
+<a name="965"><span class="lineNum">     965 </span>            :     const grpc::ChannelArguments&amp; args) {</a>
+<a name="966"><span class="lineNum">     966 </span><span class="lineCov">       3307 :   grpc_channel_args channel_args = args.c_channel_args();</span></a>
+<a name="967"><span class="lineNum">     967 </span>            :   return grpc::CreateChannelInternal(</a>
+<a name="968"><span class="lineNum">     968 </span>            :       &quot;inproc&quot;, grpc_inproc_channel_create(server_, &amp;channel_args, nullptr),</a>
+<a name="969"><span class="lineNum">     969 </span><span class="lineCov">       6614 :       std::vector&lt;std::unique_ptr&lt;</span></a>
+<a name="970"><span class="lineNum">     970 </span><span class="lineCov">       6614 :           grpc::experimental::ClientInterceptorFactoryInterface&gt;&gt;());</span></a>
+<a name="971"><span class="lineNum">     971 </span>            : }</a>
+<a name="972"><span class="lineNum">     972 </span>            : </a>
+<a name="973"><span class="lineNum">     973 </span>            : std::shared_ptr&lt;grpc::Channel&gt;</a>
+<a name="974"><span class="lineNum">     974 </span><span class="lineCov">        543 : Server::experimental_type::InProcessChannelWithInterceptors(</span></a>
+<a name="975"><span class="lineNum">     975 </span>            :     const grpc::ChannelArguments&amp; args,</a>
+<a name="976"><span class="lineNum">     976 </span>            :     std::vector&lt;</a>
+<a name="977"><span class="lineNum">     977 </span>            :         std::unique_ptr&lt;grpc::experimental::ClientInterceptorFactoryInterface&gt;&gt;</a>
+<a name="978"><span class="lineNum">     978 </span>            :         interceptor_creators) {</a>
+<a name="979"><span class="lineNum">     979 </span><span class="lineCov">        543 :   grpc_channel_args channel_args = args.c_channel_args();</span></a>
+<a name="980"><span class="lineNum">     980 </span>            :   return grpc::CreateChannelInternal(</a>
+<a name="981"><span class="lineNum">     981 </span>            :       &quot;inproc&quot;,</a>
+<a name="982"><span class="lineNum">     982 </span><span class="lineCov">        543 :       grpc_inproc_channel_create(server_-&gt;server_, &amp;channel_args, nullptr),</span></a>
+<a name="983"><span class="lineNum">     983 </span><span class="lineCov">        543 :       std::move(interceptor_creators));</span></a>
+<a name="984"><span class="lineNum">     984 </span>            : }</a>
+<a name="985"><span class="lineNum">     985 </span>            : </a>
+<a name="986"><span class="lineNum">     986 </span><span class="lineCov">     253093 : static grpc_server_register_method_payload_handling PayloadHandlingForMethod(</span></a>
+<a name="987"><span class="lineNum">     987 </span>            :     grpc::internal::RpcServiceMethod* method) {</a>
+<a name="988"><span class="lineNum">     988 </span><span class="lineCov">     253093 :   switch (method-&gt;method_type()) {</span></a>
+<a name="989"><span class="lineNum">     989 </span><span class="lineCov">     177970 :     case grpc::internal::RpcMethod::NORMAL_RPC:</span></a>
+<a name="990"><span class="lineNum">     990 </span>            :     case grpc::internal::RpcMethod::SERVER_STREAMING:</a>
+<a name="991"><span class="lineNum">     991 </span><span class="lineCov">     177970 :       return GRPC_SRM_PAYLOAD_READ_INITIAL_BYTE_BUFFER;</span></a>
+<a name="992"><span class="lineNum">     992 </span><span class="lineCov">      75123 :     case grpc::internal::RpcMethod::CLIENT_STREAMING:</span></a>
+<a name="993"><span class="lineNum">     993 </span>            :     case grpc::internal::RpcMethod::BIDI_STREAMING:</a>
+<a name="994"><span class="lineNum">     994 </span><span class="lineCov">      75123 :       return GRPC_SRM_PAYLOAD_NONE;</span></a>
+<a name="995"><span class="lineNum">     995 </span>            :   }</a>
+<a name="996"><span class="lineNum">     996 </span><span class="lineNoCov">          0 :   GPR_UNREACHABLE_CODE(return GRPC_SRM_PAYLOAD_NONE;);</span></a>
+<a name="997"><span class="lineNum">     997 </span>            : }</a>
+<a name="998"><span class="lineNum">     998 </span>            : </a>
+<a name="999"><span class="lineNum">     999 </span><span class="lineCov">      37934 : bool Server::RegisterService(const std::string* addr, grpc::Service* service) {</span></a>
+<a name="1000"><span class="lineNum">    1000 </span><span class="lineCov">      37934 :   bool has_async_methods = service-&gt;has_async_methods();</span></a>
+<a name="1001"><span class="lineNum">    1001 </span><span class="lineCov">      37934 :   if (has_async_methods) {</span></a>
+<a name="1002"><span class="lineNum">    1002 </span><span class="lineCov">       5305 :     GPR_ASSERT(service-&gt;server_ == nullptr &amp;&amp;</span></a>
+<a name="1003"><span class="lineNum">    1003 </span>            :                &quot;Can only register an asynchronous service against one server.&quot;);</a>
+<a name="1004"><span class="lineNum">    1004 </span><span class="lineCov">       5305 :     service-&gt;server_ = this;</span></a>
+<a name="1005"><span class="lineNum">    1005 </span>            :   }</a>
+<a name="1006"><span class="lineNum">    1006 </span>            : </a>
+<a name="1007"><span class="lineNum">    1007 </span><span class="lineCov">      37934 :   const char* method_name = nullptr;</span></a>
+<a name="1008"><span class="lineNum">    1008 </span>            : </a>
+<a name="1009"><span class="lineNum">    1009 </span><span class="lineCov">     291063 :   for (const auto&amp; method : service-&gt;methods_) {</span></a>
+<a name="1010"><span class="lineNum">    1010 </span><span class="lineCov">     253129 :     if (method == nullptr) {  // Handled by generic service if any.</span></a>
+<a name="1011"><span class="lineNum">    1011 </span><span class="lineCov">         36 :       continue;</span></a>
+<a name="1012"><span class="lineNum">    1012 </span>            :     }</a>
+<a name="1013"><span class="lineNum">    1013 </span>            : </a>
+<a name="1014"><span class="lineNum">    1014 </span><span class="lineCov">     506186 :     void* method_registration_tag = grpc_server_register_method(</span></a>
+<a name="1015"><span class="lineNum">    1015 </span><span class="lineCov">     253093 :         server_, method-&gt;name(), addr ? addr-&gt;c_str() : nullptr,</span></a>
+<a name="1016"><span class="lineNum">    1016 </span>            :         PayloadHandlingForMethod(method.get()), 0);</a>
+<a name="1017"><span class="lineNum">    1017 </span><span class="lineCov">     253093 :     if (method_registration_tag == nullptr) {</span></a>
+<a name="1018"><span class="lineNum">    1018 </span><span class="lineNoCov">          0 :       gpr_log(GPR_DEBUG, &quot;Attempt to register %s multiple times&quot;,</span></a>
+<a name="1019"><span class="lineNum">    1019 </span><span class="lineNoCov">          0 :               method-&gt;name());</span></a>
+<a name="1020"><span class="lineNum">    1020 </span><span class="lineNoCov">          0 :       return false;</span></a>
+<a name="1021"><span class="lineNum">    1021 </span>            :     }</a>
+<a name="1022"><span class="lineNum">    1022 </span>            : </a>
+<a name="1023"><span class="lineNum">    1023 </span><span class="lineCov">     253093 :     if (method-&gt;handler() == nullptr) {  // Async method without handler</span></a>
+<a name="1024"><span class="lineNum">    1024 </span><span class="lineCov">      56609 :       method-&gt;set_server_tag(method_registration_tag);</span></a>
+<a name="1025"><span class="lineNum">    1025 </span><span class="lineCov">     196484 :     } else if (method-&gt;api_type() ==</span></a>
+<a name="1026"><span class="lineNum">    1026 </span>            :                grpc::internal::RpcServiceMethod::ApiType::SYNC) {</a>
+<a name="1027"><span class="lineNum">    1027 </span><span class="lineCov">     480250 :       for (const auto&amp; value : sync_req_mgrs_) {</span></a>
+<a name="1028"><span class="lineNum">    1028 </span><span class="lineCov">     304295 :         value-&gt;AddSyncMethod(method.get(), method_registration_tag);</span></a>
+<a name="1029"><span class="lineNum">    1029 </span>            :       }</a>
+<a name="1030"><span class="lineNum">    1030 </span>            :     } else {</a>
+<a name="1031"><span class="lineNum">    1031 </span><span class="lineCov">      20529 :       has_callback_methods_ = true;</span></a>
+<a name="1032"><span class="lineNum">    1032 </span><span class="lineCov">      20529 :       grpc::internal::RpcServiceMethod* method_value = method.get();</span></a>
+<a name="1033"><span class="lineNum">    1033 </span><span class="lineCov">      20529 :       grpc::CompletionQueue* cq = CallbackCQ();</span></a>
+<a name="1034"><span class="lineNum">    1034 </span><span class="lineCov">      20529 :       grpc_core::Server::FromC(server_)-&gt;SetRegisteredMethodAllocator(</span></a>
+<a name="1035"><span class="lineNum">    1035 </span><span class="lineCov">      28270 :           cq-&gt;cq(), method_registration_tag, [this, cq, method_value] {</span></a>
+<a name="1036"><span class="lineNum">    1036 </span>            :             grpc_core::Server::RegisteredCallAllocation result;</a>
+<a name="1037"><span class="lineNum">    1037 </span>            :             new CallbackRequest&lt;grpc::CallbackServerContext&gt;(this, method_value,</a>
+<a name="1038"><span class="lineNum">    1038 </span><span class="lineCov">      14135 :                                                              cq, &amp;result);</span></a>
+<a name="1039"><span class="lineNum">    1039 </span><span class="lineCov">      14135 :             return result;</span></a>
+<a name="1040"><span class="lineNum">    1040 </span>            :           });</a>
+<a name="1041"><span class="lineNum">    1041 </span>            :     }</a>
+<a name="1042"><span class="lineNum">    1042 </span>            : </a>
+<a name="1043"><span class="lineNum">    1043 </span><span class="lineCov">     253093 :     method_name = method-&gt;name();</span></a>
+<a name="1044"><span class="lineNum">    1044 </span>            :   }</a>
+<a name="1045"><span class="lineNum">    1045 </span>            : </a>
+<a name="1046"><span class="lineNum">    1046 </span>            :   // Parse service name.</a>
+<a name="1047"><span class="lineNum">    1047 </span><span class="lineCov">      37934 :   if (method_name != nullptr) {</span></a>
+<a name="1048"><span class="lineNum">    1048 </span><span class="lineCov">      75868 :     std::stringstream ss(method_name);</span></a>
+<a name="1049"><span class="lineNum">    1049 </span><span class="lineCov">      37934 :     std::string service_name;</span></a>
+<a name="1050"><span class="lineNum">    1050 </span><span class="lineCov">      75868 :     if (std::getline(ss, service_name, '/') &amp;&amp;</span></a>
+<a name="1051"><span class="lineNum">    1051 </span><span class="lineCov">      37934 :         std::getline(ss, service_name, '/')) {</span></a>
+<a name="1052"><span class="lineNum">    1052 </span><span class="lineCov">      37934 :       services_.push_back(service_name);</span></a>
+<a name="1053"><span class="lineNum">    1053 </span>            :     }</a>
+<a name="1054"><span class="lineNum">    1054 </span><span class="lineCov">      37934 :   }</span></a>
+<a name="1055"><span class="lineNum">    1055 </span><span class="lineCov">      37934 :   return true;</span></a>
+<a name="1056"><span class="lineNum">    1056 </span>            : }</a>
+<a name="1057"><span class="lineNum">    1057 </span>            : </a>
+<a name="1058"><span class="lineNum">    1058 </span><span class="lineCov">         96 : void Server::RegisterAsyncGenericService(grpc::AsyncGenericService* service) {</span></a>
+<a name="1059"><span class="lineNum">    1059 </span><span class="lineCov">         96 :   GPR_ASSERT(service-&gt;server_ == nullptr &amp;&amp;</span></a>
+<a name="1060"><span class="lineNum">    1060 </span>            :              &quot;Can only register an async generic service against one server.&quot;);</a>
+<a name="1061"><span class="lineNum">    1061 </span><span class="lineCov">         96 :   service-&gt;server_ = this;</span></a>
+<a name="1062"><span class="lineNum">    1062 </span><span class="lineCov">         96 :   has_async_generic_service_ = true;</span></a>
+<a name="1063"><span class="lineNum">    1063 </span><span class="lineCov">         96 : }</span></a>
+<a name="1064"><span class="lineNum">    1064 </span>            : </a>
+<a name="1065"><span class="lineNum">    1065 </span><span class="lineCov">       1875 : void Server::RegisterCallbackGenericService(</span></a>
+<a name="1066"><span class="lineNum">    1066 </span>            :     grpc::CallbackGenericService* service) {</a>
+<a name="1067"><span class="lineNum">    1067 </span><span class="lineCov">       1875 :   GPR_ASSERT(</span></a>
+<a name="1068"><span class="lineNum">    1068 </span>            :       service-&gt;server_ == nullptr &amp;&amp;</a>
+<a name="1069"><span class="lineNum">    1069 </span>            :       &quot;Can only register a callback generic service against one server.&quot;);</a>
+<a name="1070"><span class="lineNum">    1070 </span><span class="lineCov">       1875 :   service-&gt;server_ = this;</span></a>
+<a name="1071"><span class="lineNum">    1071 </span><span class="lineCov">       1875 :   has_callback_generic_service_ = true;</span></a>
+<a name="1072"><span class="lineNum">    1072 </span><span class="lineCov">       1875 :   generic_handler_.reset(service-&gt;Handler());</span></a>
+<a name="1073"><span class="lineNum">    1073 </span>            : </a>
+<a name="1074"><span class="lineNum">    1074 </span><span class="lineCov">       1875 :   grpc::CompletionQueue* cq = CallbackCQ();</span></a>
+<a name="1075"><span class="lineNum">    1075 </span><span class="lineCov">       1875 :   grpc_core::Server::FromC(server_)-&gt;SetBatchMethodAllocator(cq-&gt;cq(), [this,</span></a>
+<a name="1076"><span class="lineNum">    1076 </span><span class="lineCov">         51 :                                                                         cq] {</span></a>
+<a name="1077"><span class="lineNum">    1077 </span>            :     grpc_core::Server::BatchCallAllocation result;</a>
+<a name="1078"><span class="lineNum">    1078 </span><span class="lineCov">         51 :     new CallbackRequest&lt;grpc::GenericCallbackServerContext&gt;(this, cq, &amp;result);</span></a>
+<a name="1079"><span class="lineNum">    1079 </span><span class="lineCov">         51 :     return result;</span></a>
+<a name="1080"><span class="lineNum">    1080 </span>            :   });</a>
+<a name="1081"><span class="lineNum">    1081 </span><span class="lineCov">       1875 : }</span></a>
+<a name="1082"><span class="lineNum">    1082 </span>            : </a>
+<a name="1083"><span class="lineNum">    1083 </span><span class="lineCov">      14225 : int Server::AddListeningPort(const std::string&amp; addr,</span></a>
+<a name="1084"><span class="lineNum">    1084 </span>            :                              grpc::ServerCredentials* creds) {</a>
+<a name="1085"><span class="lineNum">    1085 </span><span class="lineCov">      14225 :   GPR_ASSERT(!started_);</span></a>
+<a name="1086"><span class="lineNum">    1086 </span><span class="lineCov">      14225 :   int port = creds-&gt;AddPortToServer(addr, server_);</span></a>
+<a name="1087"><span class="lineNum">    1087 </span><span class="lineCov">      14225 :   global_callbacks_-&gt;AddPort(this, addr, creds, port);</span></a>
+<a name="1088"><span class="lineNum">    1088 </span><span class="lineCov">      14225 :   return port;</span></a>
+<a name="1089"><span class="lineNum">    1089 </span>            : }</a>
+<a name="1090"><span class="lineNum">    1090 </span>            : </a>
+<a name="1091"><span class="lineNum">    1091 </span><span class="lineCov">    3681983 : void Server::Ref() {</span></a>
+<a name="1092"><span class="lineNum">    1092 </span><span class="lineCov">    3681983 :   shutdown_refs_outstanding_.fetch_add(1, std::memory_order_relaxed);</span></a>
+<a name="1093"><span class="lineNum">    1093 </span><span class="lineCov">    3681983 : }</span></a>
+<a name="1094"><span class="lineNum">    1094 </span>            : </a>
+<a name="1095"><span class="lineNum">    1095 </span><span class="lineCov">    3681611 : void Server::UnrefWithPossibleNotify() {</span></a>
+<a name="1096"><span class="lineNum">    1096 </span><span class="lineCov">    7363222 :   if (GPR_UNLIKELY(shutdown_refs_outstanding_.fetch_sub(</span></a>
+<a name="1097"><span class="lineNum">    1097 </span>            :                        1, std::memory_order_acq_rel) == 1)) {</a>
+<a name="1098"><span class="lineNum">    1098 </span>            :     // No refs outstanding means that shutdown has been initiated and no more</a>
+<a name="1099"><span class="lineNum">    1099 </span>            :     // callback requests are outstanding.</a>
+<a name="1100"><span class="lineNum">    1100 </span><span class="lineCov">       3409 :     grpc::internal::MutexLock lock(&amp;mu_);</span></a>
+<a name="1101"><span class="lineNum">    1101 </span><span class="lineCov">       3409 :     GPR_ASSERT(shutdown_);</span></a>
+<a name="1102"><span class="lineNum">    1102 </span><span class="lineCov">       3409 :     shutdown_done_ = true;</span></a>
+<a name="1103"><span class="lineNum">    1103 </span><span class="lineCov">       3409 :     shutdown_done_cv_.Signal();</span></a>
+<a name="1104"><span class="lineNum">    1104 </span><span class="lineCov">       3409 :   }</span></a>
+<a name="1105"><span class="lineNum">    1105 </span><span class="lineCov">    3681611 : }</span></a>
+<a name="1106"><span class="lineNum">    1106 </span>            : </a>
+<a name="1107"><span class="lineNum">    1107 </span><span class="lineCov">      18302 : void Server::UnrefAndWaitLocked() {</span></a>
+<a name="1108"><span class="lineNum">    1108 </span><span class="lineCov">      36604 :   if (GPR_UNLIKELY(shutdown_refs_outstanding_.fetch_sub(</span></a>
+<a name="1109"><span class="lineNum">    1109 </span>            :                        1, std::memory_order_acq_rel) == 1)) {</a>
+<a name="1110"><span class="lineNum">    1110 </span><span class="lineCov">      14893 :     shutdown_done_ = true;</span></a>
+<a name="1111"><span class="lineNum">    1111 </span><span class="lineCov">      14893 :     return;  // no need to wait on CV since done condition already set</span></a>
+<a name="1112"><span class="lineNum">    1112 </span>            :   }</a>
+<a name="1113"><span class="lineNum">    1113 </span><span class="lineCov">       6818 :   while (!shutdown_done_) {</span></a>
+<a name="1114"><span class="lineNum">    1114 </span><span class="lineCov">       3409 :     shutdown_done_cv_.Wait(&amp;mu_);</span></a>
+<a name="1115"><span class="lineNum">    1115 </span>            :   }</a>
+<a name="1116"><span class="lineNum">    1116 </span>            : }</a>
+<a name="1117"><span class="lineNum">    1117 </span>            : </a>
+<a name="1118"><span class="lineNum">    1118 </span><span class="lineCov">      18299 : void Server::Start(grpc::ServerCompletionQueue** cqs, size_t num_cqs) {</span></a>
+<a name="1119"><span class="lineNum">    1119 </span><span class="lineCov">      18299 :   GPR_ASSERT(!started_);</span></a>
+<a name="1120"><span class="lineNum">    1120 </span><span class="lineCov">      18299 :   global_callbacks_-&gt;PreServerStart(this);</span></a>
+<a name="1121"><span class="lineNum">    1121 </span><span class="lineCov">      18299 :   started_ = true;</span></a>
+<a name="1122"><span class="lineNum">    1122 </span>            : </a>
+<a name="1123"><span class="lineNum">    1123 </span>            :   // Only create default health check service when user did not provide an</a>
+<a name="1124"><span class="lineNum">    1124 </span>            :   // explicit one.</a>
+<a name="1125"><span class="lineNum">    1125 </span><span class="lineCov">      18299 :   grpc::ServerCompletionQueue* health_check_cq = nullptr;</span></a>
+<a name="1126"><span class="lineNum">    1126 </span>            :   grpc::DefaultHealthCheckService::HealthCheckServiceImpl*</a>
+<a name="1127"><span class="lineNum">    1127 </span><span class="lineCov">      18299 :       default_health_check_service_impl = nullptr;</span></a>
+<a name="1128"><span class="lineNum">    1128 </span><span class="lineCov">      36589 :   if (health_check_service_ == nullptr &amp;&amp; !health_check_service_disabled_ &amp;&amp;</span></a>
+<a name="1129"><span class="lineNum">    1129 </span><span class="lineCov">      18290 :       grpc::DefaultHealthCheckServiceEnabled()) {</span></a>
+<a name="1130"><span class="lineNum">    1130 </span><span class="lineCov">         33 :     auto* default_hc_service = new grpc::DefaultHealthCheckService;</span></a>
+<a name="1131"><span class="lineNum">    1131 </span><span class="lineCov">         33 :     health_check_service_.reset(default_hc_service);</span></a>
+<a name="1132"><span class="lineNum">    1132 </span>            :     // We create a non-polling CQ to avoid impacting application</a>
+<a name="1133"><span class="lineNum">    1133 </span>            :     // performance.  This ensures that we don't introduce thread hops</a>
+<a name="1134"><span class="lineNum">    1134 </span>            :     // for application requests that wind up on this CQ, which is polled</a>
+<a name="1135"><span class="lineNum">    1135 </span>            :     // in its own thread.</a>
+<a name="1136"><span class="lineNum">    1136 </span><span class="lineCov">         33 :     health_check_cq = new grpc::ServerCompletionQueue(</span></a>
+<a name="1137"><span class="lineNum">    1137 </span><span class="lineCov">         33 :         GRPC_CQ_NEXT, GRPC_CQ_NON_POLLING, nullptr);</span></a>
+<a name="1138"><span class="lineNum">    1138 </span><span class="lineCov">         33 :     grpc_server_register_completion_queue(server_, health_check_cq-&gt;cq(),</span></a>
+<a name="1139"><span class="lineNum">    1139 </span>            :                                           nullptr);</a>
+<a name="1140"><span class="lineNum">    1140 </span>            :     default_health_check_service_impl =</a>
+<a name="1141"><span class="lineNum">    1141 </span><span class="lineCov">         33 :         default_hc_service-&gt;GetHealthCheckService(</span></a>
+<a name="1142"><span class="lineNum">    1142 </span><span class="lineCov">         66 :             std::unique_ptr&lt;grpc::ServerCompletionQueue&gt;(health_check_cq));</span></a>
+<a name="1143"><span class="lineNum">    1143 </span><span class="lineCov">         33 :     RegisterService(nullptr, default_health_check_service_impl);</span></a>
+<a name="1144"><span class="lineNum">    1144 </span>            :   }</a>
+<a name="1145"><span class="lineNum">    1145 </span>            : </a>
+<a name="1146"><span class="lineNum">    1146 </span><span class="lineCov">      18443 :   for (auto&amp; acceptor : acceptors_) {</span></a>
+<a name="1147"><span class="lineNum">    1147 </span><span class="lineCov">        144 :     acceptor-&gt;GetCredentials()-&gt;AddPortToServer(acceptor-&gt;name(), server_);</span></a>
+<a name="1148"><span class="lineNum">    1148 </span>            :   }</a>
+<a name="1149"><span class="lineNum">    1149 </span>            : </a>
+<a name="1150"><span class="lineNum">    1150 </span>            :   // If this server uses callback methods, then create a callback generic</a>
+<a name="1151"><span class="lineNum">    1151 </span>            :   // service to handle any unimplemented methods using the default reactor</a>
+<a name="1152"><span class="lineNum">    1152 </span>            :   // creator</a>
+<a name="1153"><span class="lineNum">    1153 </span><span class="lineCov">      18299 :   if (has_callback_methods_ &amp;&amp; !has_callback_generic_service_) {</span></a>
+<a name="1154"><span class="lineNum">    1154 </span><span class="lineCov">       1869 :     unimplemented_service_ = absl::make_unique&lt;grpc::CallbackGenericService&gt;();</span></a>
+<a name="1155"><span class="lineNum">    1155 </span><span class="lineCov">       1869 :     RegisterCallbackGenericService(unimplemented_service_.get());</span></a>
+<a name="1156"><span class="lineNum">    1156 </span>            :   }</a>
+<a name="1157"><span class="lineNum">    1157 </span>            : </a>
+<a name="1158"><span class="lineNum">    1158 </span>            : #ifndef NDEBUG</a>
+<a name="1159"><span class="lineNum">    1159 </span><span class="lineCov">      24795 :   for (size_t i = 0; i &lt; num_cqs; i++) {</span></a>
+<a name="1160"><span class="lineNum">    1160 </span><span class="lineCov">       6496 :     cq_list_.push_back(cqs[i]);</span></a>
+<a name="1161"><span class="lineNum">    1161 </span>            :   }</a>
+<a name="1162"><span class="lineNum">    1162 </span>            : #endif</a>
+<a name="1163"><span class="lineNum">    1163 </span>            : </a>
+<a name="1164"><span class="lineNum">    1164 </span>            :   // If we have a generic service, all unmatched method names go there.</a>
+<a name="1165"><span class="lineNum">    1165 </span>            :   // Otherwise, we must provide at least one RPC request for an &quot;unimplemented&quot;</a>
+<a name="1166"><span class="lineNum">    1166 </span>            :   // RPC, which covers any RPC for a method name that isn't matched. If we</a>
+<a name="1167"><span class="lineNum">    1167 </span>            :   // have a sync service, let it be a sync unimplemented RPC, which must be</a>
+<a name="1168"><span class="lineNum">    1168 </span>            :   // registered before server start (to initialize an AllocatingRequestMatcher).</a>
+<a name="1169"><span class="lineNum">    1169 </span>            :   // If we have an AllocatingRequestMatcher, we can't also specify other</a>
+<a name="1170"><span class="lineNum">    1170 </span>            :   // unimplemented RPCs via explicit async requests, so we won't do so. If we</a>
+<a name="1171"><span class="lineNum">    1171 </span>            :   // only have async services, we can specify unimplemented RPCs on each async</a>
+<a name="1172"><span class="lineNum">    1172 </span>            :   // CQ so that some user polling thread will move them along as long as some</a>
+<a name="1173"><span class="lineNum">    1173 </span>            :   // progress is being made on any RPCs in the system.</a>
+<a name="1174"><span class="lineNum">    1174 </span><span class="lineCov">      18299 :   bool unknown_rpc_needed =</span></a>
+<a name="1175"><span class="lineNum">    1175 </span><span class="lineCov">      18299 :       !has_async_generic_service_ &amp;&amp; !has_callback_generic_service_;</span></a>
+<a name="1176"><span class="lineNum">    1176 </span>            : </a>
+<a name="1177"><span class="lineNum">    1177 </span><span class="lineCov">      18299 :   if (unknown_rpc_needed &amp;&amp; !sync_req_mgrs_.empty()) {</span></a>
+<a name="1178"><span class="lineNum">    1178 </span><span class="lineCov">      11131 :     sync_req_mgrs_[0]-&gt;AddUnknownSyncMethod();</span></a>
+<a name="1179"><span class="lineNum">    1179 </span><span class="lineCov">      11131 :     unknown_rpc_needed = false;</span></a>
+<a name="1180"><span class="lineNum">    1180 </span>            :   }</a>
+<a name="1181"><span class="lineNum">    1181 </span>            : </a>
+<a name="1182"><span class="lineNum">    1182 </span><span class="lineCov">      18299 :   grpc_server_start(server_);</span></a>
+<a name="1183"><span class="lineNum">    1183 </span>            : </a>
+<a name="1184"><span class="lineNum">    1184 </span><span class="lineCov">      18299 :   if (unknown_rpc_needed) {</span></a>
+<a name="1185"><span class="lineNum">    1185 </span><span class="lineCov">      10922 :     for (size_t i = 0; i &lt; num_cqs; i++) {</span></a>
+<a name="1186"><span class="lineNum">    1186 </span><span class="lineCov">       5725 :       if (cqs[i]-&gt;IsFrequentlyPolled()) {</span></a>
+<a name="1187"><span class="lineNum">    1187 </span><span class="lineCov">       5725 :         new UnimplementedAsyncRequest(this, cqs[i]);</span></a>
+<a name="1188"><span class="lineNum">    1188 </span>            :       }</a>
+<a name="1189"><span class="lineNum">    1189 </span>            :     }</a>
+<a name="1190"><span class="lineNum">    1190 </span><span class="lineCov">       5197 :     if (health_check_cq != nullptr) {</span></a>
+<a name="1191"><span class="lineNum">    1191 </span><span class="lineNoCov">          0 :       new UnimplementedAsyncRequest(this, health_check_cq);</span></a>
+<a name="1192"><span class="lineNum">    1192 </span>            :     }</a>
+<a name="1193"><span class="lineNum">    1193 </span><span class="lineCov">       5197 :     unknown_rpc_needed = false;</span></a>
+<a name="1194"><span class="lineNum">    1194 </span>            :   }</a>
+<a name="1195"><span class="lineNum">    1195 </span>            : </a>
+<a name="1196"><span class="lineNum">    1196 </span>            :   // If this server has any support for synchronous methods (has any sync</a>
+<a name="1197"><span class="lineNum">    1197 </span>            :   // server CQs), make sure that we have a ResourceExhausted handler</a>
+<a name="1198"><span class="lineNum">    1198 </span>            :   // to deal with the case of thread exhaustion</a>
+<a name="1199"><span class="lineNum">    1199 </span><span class="lineCov">      18299 :   if (sync_server_cqs_ != nullptr &amp;&amp; !sync_server_cqs_-&gt;empty()) {</span></a>
+<a name="1200"><span class="lineNum">    1200 </span>            :     resource_exhausted_handler_ =</a>
+<a name="1201"><span class="lineNum">    1201 </span><span class="lineCov">      24356 :         absl::make_unique&lt;grpc::internal::ResourceExhaustedHandler&gt;(</span></a>
+<a name="1202"><span class="lineNum">    1202 </span><span class="lineCov">      12178 :             kServerThreadpoolExhausted);</span></a>
+<a name="1203"><span class="lineNum">    1203 </span>            :   }</a>
+<a name="1204"><span class="lineNum">    1204 </span>            : </a>
+<a name="1205"><span class="lineNum">    1205 </span><span class="lineCov">      37461 :   for (const auto&amp; value : sync_req_mgrs_) {</span></a>
+<a name="1206"><span class="lineNum">    1206 </span><span class="lineCov">      19162 :     value-&gt;Start();</span></a>
+<a name="1207"><span class="lineNum">    1207 </span>            :   }</a>
+<a name="1208"><span class="lineNum">    1208 </span>            : </a>
+<a name="1209"><span class="lineNum">    1209 </span><span class="lineCov">      18299 :   if (default_health_check_service_impl != nullptr) {</span></a>
+<a name="1210"><span class="lineNum">    1210 </span><span class="lineCov">         33 :     default_health_check_service_impl-&gt;StartServingThread();</span></a>
+<a name="1211"><span class="lineNum">    1211 </span>            :   }</a>
+<a name="1212"><span class="lineNum">    1212 </span>            : </a>
+<a name="1213"><span class="lineNum">    1213 </span><span class="lineCov">      18443 :   for (auto&amp; acceptor : acceptors_) {</span></a>
+<a name="1214"><span class="lineNum">    1214 </span><span class="lineCov">        144 :     acceptor-&gt;Start();</span></a>
+<a name="1215"><span class="lineNum">    1215 </span>            :   }</a>
+<a name="1216"><span class="lineNum">    1216 </span><span class="lineCov">      18299 : }</span></a>
+<a name="1217"><span class="lineNum">    1217 </span>            : </a>
+<a name="1218"><span class="lineNum">    1218 </span><span class="lineCov">      18392 : void Server::ShutdownInternal(gpr_timespec deadline) {</span></a>
+<a name="1219"><span class="lineNum">    1219 </span><span class="lineCov">      18392 :   grpc::internal::MutexLock lock(&amp;mu_);</span></a>
+<a name="1220"><span class="lineNum">    1220 </span><span class="lineCov">      18392 :   if (shutdown_) {</span></a>
+<a name="1221"><span class="lineNum">    1221 </span><span class="lineCov">         90 :     return;</span></a>
+<a name="1222"><span class="lineNum">    1222 </span>            :   }</a>
+<a name="1223"><span class="lineNum">    1223 </span>            : </a>
+<a name="1224"><span class="lineNum">    1224 </span><span class="lineCov">      18302 :   shutdown_ = true;</span></a>
+<a name="1225"><span class="lineNum">    1225 </span>            : </a>
+<a name="1226"><span class="lineNum">    1226 </span><span class="lineCov">      18446 :   for (auto&amp; acceptor : acceptors_) {</span></a>
+<a name="1227"><span class="lineNum">    1227 </span><span class="lineCov">        144 :     acceptor-&gt;Shutdown();</span></a>
+<a name="1228"><span class="lineNum">    1228 </span>            :   }</a>
+<a name="1229"><span class="lineNum">    1229 </span>            : </a>
+<a name="1230"><span class="lineNum">    1230 </span>            :   /// The completion queue to use for server shutdown completion notification</a>
+<a name="1231"><span class="lineNum">    1231 </span><span class="lineCov">      18302 :   grpc::CompletionQueue shutdown_cq;</span></a>
+<a name="1232"><span class="lineNum">    1232 </span><span class="lineCov">      18302 :   grpc::ShutdownTag shutdown_tag;  // Phony shutdown tag</span></a>
+<a name="1233"><span class="lineNum">    1233 </span><span class="lineCov">      18302 :   grpc_server_shutdown_and_notify(server_, shutdown_cq.cq(), &amp;shutdown_tag);</span></a>
+<a name="1234"><span class="lineNum">    1234 </span>            : </a>
+<a name="1235"><span class="lineNum">    1235 </span><span class="lineCov">      18302 :   shutdown_cq.Shutdown();</span></a>
+<a name="1236"><span class="lineNum">    1236 </span>            : </a>
+<a name="1237"><span class="lineNum">    1237 </span>            :   void* tag;</a>
+<a name="1238"><span class="lineNum">    1238 </span>            :   bool ok;</a>
+<a name="1239"><span class="lineNum">    1239 </span>            :   grpc::CompletionQueue::NextStatus status =</a>
+<a name="1240"><span class="lineNum">    1240 </span><span class="lineCov">      18302 :       shutdown_cq.AsyncNext(&amp;tag, &amp;ok, deadline);</span></a>
+<a name="1241"><span class="lineNum">    1241 </span>            : </a>
+<a name="1242"><span class="lineNum">    1242 </span>            :   // If this timed out, it means we are done with the grace period for a clean</a>
+<a name="1243"><span class="lineNum">    1243 </span>            :   // shutdown. We should force a shutdown now by cancelling all inflight calls</a>
+<a name="1244"><span class="lineNum">    1244 </span><span class="lineCov">      18302 :   if (status == grpc::CompletionQueue::NextStatus::TIMEOUT) {</span></a>
+<a name="1245"><span class="lineNum">    1245 </span><span class="lineCov">       4094 :     grpc_server_cancel_all_calls(server_);</span></a>
+<a name="1246"><span class="lineNum">    1246 </span>            :   }</a>
+<a name="1247"><span class="lineNum">    1247 </span>            :   // Else in case of SHUTDOWN or GOT_EVENT, it means that the server has</a>
+<a name="1248"><span class="lineNum">    1248 </span>            :   // successfully shutdown</a>
+<a name="1249"><span class="lineNum">    1249 </span>            : </a>
+<a name="1250"><span class="lineNum">    1250 </span>            :   // Drop the shutdown ref and wait for all other refs to drop as well.</a>
+<a name="1251"><span class="lineNum">    1251 </span><span class="lineCov">      18302 :   UnrefAndWaitLocked();</span></a>
+<a name="1252"><span class="lineNum">    1252 </span>            : </a>
+<a name="1253"><span class="lineNum">    1253 </span>            :   // Shutdown all ThreadManagers. This will try to gracefully stop all the</a>
+<a name="1254"><span class="lineNum">    1254 </span>            :   // threads in the ThreadManagers (once they process any inflight requests)</a>
+<a name="1255"><span class="lineNum">    1255 </span><span class="lineCov">      37467 :   for (const auto&amp; value : sync_req_mgrs_) {</span></a>
+<a name="1256"><span class="lineNum">    1256 </span><span class="lineCov">      19165 :     value-&gt;Shutdown();  // ThreadManager's Shutdown()</span></a>
+<a name="1257"><span class="lineNum">    1257 </span>            :   }</a>
+<a name="1258"><span class="lineNum">    1258 </span>            : </a>
+<a name="1259"><span class="lineNum">    1259 </span>            :   // Wait for threads in all ThreadManagers to terminate</a>
+<a name="1260"><span class="lineNum">    1260 </span><span class="lineCov">      37467 :   for (const auto&amp; value : sync_req_mgrs_) {</span></a>
+<a name="1261"><span class="lineNum">    1261 </span><span class="lineCov">      19165 :     value-&gt;Wait();</span></a>
+<a name="1262"><span class="lineNum">    1262 </span>            :   }</a>
+<a name="1263"><span class="lineNum">    1263 </span>            : </a>
+<a name="1264"><span class="lineNum">    1264 </span>            :   // Shutdown the callback CQ. The CQ is owned by its own shutdown tag, so it</a>
+<a name="1265"><span class="lineNum">    1265 </span>            :   // will delete itself at true shutdown.</a>
+<a name="1266"><span class="lineNum">    1266 </span><span class="lineCov">      18302 :   CompletionQueue* callback_cq = callback_cq_.load(std::memory_order_relaxed);</span></a>
+<a name="1267"><span class="lineNum">    1267 </span><span class="lineCov">      18302 :   if (callback_cq != nullptr) {</span></a>
+<a name="1268"><span class="lineNum">    1268 </span><span class="lineCov">       1875 :     if (grpc_iomgr_run_in_background()) {</span></a>
+<a name="1269"><span class="lineNum">    1269 </span>            :       // gRPC-core provides the backing needed for the preferred CQ type</a>
+<a name="1270"><span class="lineNum">    1270 </span><span class="lineNoCov">          0 :       callback_cq-&gt;Shutdown();</span></a>
+<a name="1271"><span class="lineNum">    1271 </span>            :     } else {</a>
+<a name="1272"><span class="lineNum">    1272 </span><span class="lineCov">       1875 :       CompletionQueue::ReleaseCallbackAlternativeCQ(callback_cq);</span></a>
+<a name="1273"><span class="lineNum">    1273 </span>            :     }</a>
+<a name="1274"><span class="lineNum">    1274 </span><span class="lineCov">       1875 :     callback_cq_.store(nullptr, std::memory_order_release);</span></a>
+<a name="1275"><span class="lineNum">    1275 </span>            :   }</a>
+<a name="1276"><span class="lineNum">    1276 </span>            : </a>
+<a name="1277"><span class="lineNum">    1277 </span>            :   // Drain the shutdown queue (if the previous call to AsyncNext() timed out</a>
+<a name="1278"><span class="lineNum">    1278 </span>            :   // and we didn't remove the tag from the queue yet)</a>
+<a name="1279"><span class="lineNum">    1279 </span><span class="lineCov">      18302 :   while (shutdown_cq.Next(&amp;tag, &amp;ok)) {</span></a>
+<a name="1280"><span class="lineNum">    1280 </span>            :     // Nothing to be done here. Just ignore ok and tag values</a>
+<a name="1281"><span class="lineNum">    1281 </span>            :   }</a>
+<a name="1282"><span class="lineNum">    1282 </span>            : </a>
+<a name="1283"><span class="lineNum">    1283 </span><span class="lineCov">      18302 :   shutdown_notified_ = true;</span></a>
+<a name="1284"><span class="lineNum">    1284 </span><span class="lineCov">      18302 :   shutdown_cv_.SignalAll();</span></a>
+<a name="1285"><span class="lineNum">    1285 </span>            : </a>
+<a name="1286"><span class="lineNum">    1286 </span>            : #ifndef NDEBUG</a>
+<a name="1287"><span class="lineNum">    1287 </span>            :   // Unregister this server with the CQs passed into it by the user so that</a>
+<a name="1288"><span class="lineNum">    1288 </span>            :   // those can be checked for properly-ordered shutdown.</a>
+<a name="1289"><span class="lineNum">    1289 </span><span class="lineCov">      24798 :   for (auto* cq : cq_list_) {</span></a>
+<a name="1290"><span class="lineNum">    1290 </span><span class="lineCov">       6496 :     cq-&gt;UnregisterServer(this);</span></a>
+<a name="1291"><span class="lineNum">    1291 </span>            :   }</a>
+<a name="1292"><span class="lineNum">    1292 </span><span class="lineCov">      18302 :   cq_list_.clear();</span></a>
+<a name="1293"><span class="lineNum">    1293 </span>            : #endif</a>
+<a name="1294"><span class="lineNum">    1294 </span><span class="lineCov">      18392 : }</span></a>
+<a name="1295"><span class="lineNum">    1295 </span>            : </a>
+<a name="1296"><span class="lineNum">    1296 </span><span class="lineCov">        141 : void Server::Wait() {</span></a>
+<a name="1297"><span class="lineNum">    1297 </span><span class="lineCov">        141 :   grpc::internal::MutexLock lock(&amp;mu_);</span></a>
+<a name="1298"><span class="lineNum">    1298 </span><span class="lineCov">        263 :   while (started_ &amp;&amp; !shutdown_notified_) {</span></a>
+<a name="1299"><span class="lineNum">    1299 </span><span class="lineCov">        122 :     shutdown_cv_.Wait(&amp;mu_);</span></a>
+<a name="1300"><span class="lineNum">    1300 </span>            :   }</a>
+<a name="1301"><span class="lineNum">    1301 </span><span class="lineCov">        141 : }</span></a>
+<a name="1302"><span class="lineNum">    1302 </span>            : </a>
+<a name="1303"><span class="lineNum">    1303 </span><span class="lineCov">   15997960 : void Server::PerformOpsOnCall(grpc::internal::CallOpSetInterface* ops,</span></a>
+<a name="1304"><span class="lineNum">    1304 </span>            :                               grpc::internal::Call* call) {</a>
+<a name="1305"><span class="lineNum">    1305 </span><span class="lineCov">   15997960 :   ops-&gt;FillOps(call);</span></a>
+<a name="1306"><span class="lineNum">    1306 </span><span class="lineCov">   15986270 : }</span></a>
+<a name="1307"><span class="lineNum">    1307 </span>            : </a>
+<a name="1308"><span class="lineNum">    1308 </span><span class="lineCov">       5776 : bool Server::UnimplementedAsyncRequest::FinalizeResult(void** tag,</span></a>
+<a name="1309"><span class="lineNum">    1309 </span>            :                                                        bool* status) {</a>
+<a name="1310"><span class="lineNum">    1310 </span><span class="lineCov">       5776 :   if (GenericAsyncRequest::FinalizeResult(tag, status)) {</span></a>
+<a name="1311"><span class="lineNum">    1311 </span>            :     // We either had no interceptors run or we are done intercepting</a>
+<a name="1312"><span class="lineNum">    1312 </span><span class="lineCov">       5773 :     if (*status) {</span></a>
+<a name="1313"><span class="lineNum">    1313 </span>            :       // Create a new request/response pair using the server and CQ values</a>
+<a name="1314"><span class="lineNum">    1314 </span>            :       // stored in this object's base class.</a>
+<a name="1315"><span class="lineNum">    1315 </span><span class="lineCov">         48 :       new UnimplementedAsyncRequest(server_, notification_cq_);</span></a>
+<a name="1316"><span class="lineNum">    1316 </span><span class="lineCov">         48 :       new UnimplementedAsyncResponse(this);</span></a>
+<a name="1317"><span class="lineNum">    1317 </span>            :     } else {</a>
+<a name="1318"><span class="lineNum">    1318 </span><span class="lineCov">       5725 :       delete this;</span></a>
+<a name="1319"><span class="lineNum">    1319 </span>            :     }</a>
+<a name="1320"><span class="lineNum">    1320 </span>            :   } else {</a>
+<a name="1321"><span class="lineNum">    1321 </span>            :     // The tag was swallowed due to interception. We will see it again.</a>
+<a name="1322"><span class="lineNum">    1322 </span>            :   }</a>
+<a name="1323"><span class="lineNum">    1323 </span><span class="lineCov">       5776 :   return false;</span></a>
+<a name="1324"><span class="lineNum">    1324 </span>            : }</a>
+<a name="1325"><span class="lineNum">    1325 </span>            : </a>
+<a name="1326"><span class="lineNum">    1326 </span><span class="lineCov">         48 : Server::UnimplementedAsyncResponse::UnimplementedAsyncResponse(</span></a>
+<a name="1327"><span class="lineNum">    1327 </span><span class="lineCov">         48 :     UnimplementedAsyncRequest* request)</span></a>
+<a name="1328"><span class="lineNum">    1328 </span><span class="lineCov">         48 :     : request_(request) {</span></a>
+<a name="1329"><span class="lineNum">    1329 </span><span class="lineCov">         96 :   grpc::Status status(grpc::StatusCode::UNIMPLEMENTED, kUnknownRpcMethod);</span></a>
+<a name="1330"><span class="lineNum">    1330 </span><span class="lineCov">         48 :   grpc::internal::UnknownMethodHandler::FillOps(request_-&gt;context(),</span></a>
+<a name="1331"><span class="lineNum">    1331 </span>            :                                                 kUnknownRpcMethod, this);</a>
+<a name="1332"><span class="lineNum">    1332 </span><span class="lineCov">         48 :   request_-&gt;stream()-&gt;call_.PerformOps(this);</span></a>
+<a name="1333"><span class="lineNum">    1333 </span><span class="lineCov">         48 : }</span></a>
+<a name="1334"><span class="lineNum">    1334 </span>            : </a>
+<a name="1335"><span class="lineNum">    1335 </span><span class="lineCov">      18311 : grpc::ServerInitializer* Server::initializer() {</span></a>
+<a name="1336"><span class="lineNum">    1336 </span><span class="lineCov">      18311 :   return server_initializer_.get();</span></a>
+<a name="1337"><span class="lineNum">    1337 </span>            : }</a>
+<a name="1338"><span class="lineNum">    1338 </span>            : </a>
+<a name="1339"><span class="lineNum">    1339 </span><span class="lineCov">      24279 : grpc::CompletionQueue* Server::CallbackCQ() {</span></a>
+<a name="1340"><span class="lineNum">    1340 </span>            :   // TODO(vjpai): Consider using a single global CQ for the default CQ</a>
+<a name="1341"><span class="lineNum">    1341 </span>            :   // if there is no explicit per-server CQ registered</a>
+<a name="1342"><span class="lineNum">    1342 </span><span class="lineCov">      24279 :   CompletionQueue* callback_cq = callback_cq_.load(std::memory_order_acquire);</span></a>
+<a name="1343"><span class="lineNum">    1343 </span><span class="lineCov">      24279 :   if (callback_cq != nullptr) {</span></a>
+<a name="1344"><span class="lineNum">    1344 </span><span class="lineCov">      22404 :     return callback_cq;</span></a>
+<a name="1345"><span class="lineNum">    1345 </span>            :   }</a>
+<a name="1346"><span class="lineNum">    1346 </span>            :   // The callback_cq_ wasn't already set, so grab a lock and set it up exactly</a>
+<a name="1347"><span class="lineNum">    1347 </span>            :   // once for this server.</a>
+<a name="1348"><span class="lineNum">    1348 </span><span class="lineCov">       1875 :   grpc::internal::MutexLock l(&amp;mu_);</span></a>
+<a name="1349"><span class="lineNum">    1349 </span><span class="lineCov">       1875 :   callback_cq = callback_cq_.load(std::memory_order_relaxed);</span></a>
+<a name="1350"><span class="lineNum">    1350 </span><span class="lineCov">       1875 :   if (callback_cq != nullptr) {</span></a>
+<a name="1351"><span class="lineNum">    1351 </span><span class="lineNoCov">          0 :     return callback_cq;</span></a>
+<a name="1352"><span class="lineNum">    1352 </span>            :   }</a>
+<a name="1353"><span class="lineNum">    1353 </span><span class="lineCov">       1875 :   if (grpc_iomgr_run_in_background()) {</span></a>
+<a name="1354"><span class="lineNum">    1354 </span>            :     // gRPC-core provides the backing needed for the preferred CQ type</a>
+<a name="1355"><span class="lineNum">    1355 </span><span class="lineNoCov">          0 :     auto* shutdown_callback = new grpc::ShutdownCallback;</span></a>
+<a name="1356"><span class="lineNum">    1356 </span><span class="lineNoCov">          0 :     callback_cq = new grpc::CompletionQueue(grpc_completion_queue_attributes{</span></a>
+<a name="1357"><span class="lineNum">    1357 </span>            :         GRPC_CQ_CURRENT_VERSION, GRPC_CQ_CALLBACK, GRPC_CQ_DEFAULT_POLLING,</a>
+<a name="1358"><span class="lineNum">    1358 </span><span class="lineNoCov">          0 :         shutdown_callback});</span></a>
+<a name="1359"><span class="lineNum">    1359 </span>            : </a>
+<a name="1360"><span class="lineNum">    1360 </span>            :     // Transfer ownership of the new cq to its own shutdown callback</a>
+<a name="1361"><span class="lineNum">    1361 </span><span class="lineNoCov">          0 :     shutdown_callback-&gt;TakeCQ(callback_cq);</span></a>
+<a name="1362"><span class="lineNum">    1362 </span>            :   } else {</a>
+<a name="1363"><span class="lineNum">    1363 </span>            :     // Otherwise we need to use the alternative CQ variant</a>
+<a name="1364"><span class="lineNum">    1364 </span><span class="lineCov">       1875 :     callback_cq = CompletionQueue::CallbackAlternativeCQ();</span></a>
+<a name="1365"><span class="lineNum">    1365 </span>            :   }</a>
+<a name="1366"><span class="lineNum">    1366 </span>            : </a>
+<a name="1367"><span class="lineNum">    1367 </span><span class="lineCov">       1875 :   callback_cq_.store(callback_cq, std::memory_order_release);</span></a>
+<a name="1368"><span class="lineNum">    1368 </span><span class="lineCov">       1875 :   return callback_cq;</span></a>
+<a name="1369"><span class="lineNum">    1369 </span><span class="lineCov">       1875 : }</span></a>
+<a name="1370"><span class="lineNum">    1370 </span>            : </a>
+<a name="1371"><span class="lineNum">    1371 </span>            : }  // namespace grpc</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

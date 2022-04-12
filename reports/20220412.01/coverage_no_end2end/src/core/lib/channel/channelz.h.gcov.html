@@ -1,0 +1,433 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/core/lib/channel/channelz.h</title>
+  <link rel="stylesheet" type="text/css" href="../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../index.html">top level</a> - <a href="index.html">src/core/lib/channel</a> - channelz.h<span style="font-size: 80%;"> (source / <a href="channelz.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">27</td>
+            <td class="headerCovTableEntry">34</td>
+            <td class="headerCovTableEntryMed">79.4 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-11 16:17:17</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">19</td>
+            <td class="headerCovTableEntry">21</td>
+            <td class="headerCovTableEntryHi">90.5 %</td>
+          </tr>
+          <tr><td><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<a name="2"><span class="lineNum">       2 </span>            :  *</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * Copyright 2018 gRPC authors.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * you may not use this file except in compliance with the License.</a>
+<a name="7"><span class="lineNum">       7 </span>            :  * You may obtain a copy of the License at</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *</a>
+<a name="9"><span class="lineNum">       9 </span>            :  *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="10"><span class="lineNum">      10 </span>            :  *</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * Unless required by applicable law or agreed to in writing, software</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * See the License for the specific language governing permissions and</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * limitations under the License.</a>
+<a name="16"><span class="lineNum">      16 </span>            :  *</a>
+<a name="17"><span class="lineNum">      17 </span>            :  */</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #ifndef GRPC_CORE_LIB_CHANNEL_CHANNELZ_H</a>
+<a name="20"><span class="lineNum">      20 </span>            : #define GRPC_CORE_LIB_CHANNEL_CHANNELZ_H</a>
+<a name="21"><span class="lineNum">      21 </span>            : </a>
+<a name="22"><span class="lineNum">      22 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="23"><span class="lineNum">      23 </span>            : </a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &lt;atomic&gt;</a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &lt;set&gt;</a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &lt;string&gt;</a>
+<a name="27"><span class="lineNum">      27 </span>            : </a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &quot;absl/container/inlined_vector.h&quot;</a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &quot;absl/types/optional.h&quot;</a>
+<a name="30"><span class="lineNum">      30 </span>            : </a>
+<a name="31"><span class="lineNum">      31 </span>            : #include &lt;grpc/grpc.h&gt;</a>
+<a name="32"><span class="lineNum">      32 </span>            : </a>
+<a name="33"><span class="lineNum">      33 </span>            : #include &quot;src/core/lib/channel/channel_trace.h&quot;</a>
+<a name="34"><span class="lineNum">      34 </span>            : #include &quot;src/core/lib/gpr/time_precise.h&quot;</a>
+<a name="35"><span class="lineNum">      35 </span>            : #include &quot;src/core/lib/gprpp/manual_constructor.h&quot;</a>
+<a name="36"><span class="lineNum">      36 </span>            : #include &quot;src/core/lib/gprpp/ref_counted.h&quot;</a>
+<a name="37"><span class="lineNum">      37 </span>            : #include &quot;src/core/lib/gprpp/ref_counted_ptr.h&quot;</a>
+<a name="38"><span class="lineNum">      38 </span>            : #include &quot;src/core/lib/gprpp/sync.h&quot;</a>
+<a name="39"><span class="lineNum">      39 </span>            : #include &quot;src/core/lib/iomgr/error.h&quot;</a>
+<a name="40"><span class="lineNum">      40 </span>            : #include &quot;src/core/lib/iomgr/exec_ctx.h&quot;</a>
+<a name="41"><span class="lineNum">      41 </span>            : #include &quot;src/core/lib/json/json.h&quot;</a>
+<a name="42"><span class="lineNum">      42 </span>            : </a>
+<a name="43"><span class="lineNum">      43 </span>            : // Channel arg key for channelz node.</a>
+<a name="44"><span class="lineNum">      44 </span>            : #define GRPC_ARG_CHANNELZ_CHANNEL_NODE &quot;grpc.internal.channelz_channel_node&quot;</a>
+<a name="45"><span class="lineNum">      45 </span>            : </a>
+<a name="46"><span class="lineNum">      46 </span>            : // Channel arg key for indicating an internal channel.</a>
+<a name="47"><span class="lineNum">      47 </span>            : #define GRPC_ARG_CHANNELZ_IS_INTERNAL_CHANNEL \</a>
+<a name="48"><span class="lineNum">      48 </span>            :   &quot;grpc.channelz_is_internal_channel&quot;</a>
+<a name="49"><span class="lineNum">      49 </span>            : </a>
+<a name="50"><span class="lineNum">      50 </span>            : /** This is the default value for whether or not to enable channelz. If</a>
+<a name="51"><span class="lineNum">      51 </span>            :  * GRPC_ARG_ENABLE_CHANNELZ is set, it will override this default value. */</a>
+<a name="52"><span class="lineNum">      52 </span>            : #define GRPC_ENABLE_CHANNELZ_DEFAULT true</a>
+<a name="53"><span class="lineNum">      53 </span>            : </a>
+<a name="54"><span class="lineNum">      54 </span>            : /** This is the default value for the maximum amount of memory used by trace</a>
+<a name="55"><span class="lineNum">      55 </span>            :  * events per channel trace node. If</a>
+<a name="56"><span class="lineNum">      56 </span>            :  * GRPC_ARG_MAX_CHANNEL_TRACE_EVENT_MEMORY_PER_NODE is set, it will override</a>
+<a name="57"><span class="lineNum">      57 </span>            :  * this default value. */</a>
+<a name="58"><span class="lineNum">      58 </span>            : #define GRPC_MAX_CHANNEL_TRACE_EVENT_MEMORY_PER_NODE_DEFAULT (1024 * 4)</a>
+<a name="59"><span class="lineNum">      59 </span>            : </a>
+<a name="60"><span class="lineNum">      60 </span>            : namespace grpc_core {</a>
+<a name="61"><span class="lineNum">      61 </span>            : </a>
+<a name="62"><span class="lineNum">      62 </span>            : namespace channelz {</a>
+<a name="63"><span class="lineNum">      63 </span>            : </a>
+<a name="64"><span class="lineNum">      64 </span>            : class SocketNode;</a>
+<a name="65"><span class="lineNum">      65 </span>            : class ListenSocketNode;</a>
+<a name="66"><span class="lineNum">      66 </span>            : </a>
+<a name="67"><span class="lineNum">      67 </span>            : namespace testing {</a>
+<a name="68"><span class="lineNum">      68 </span>            : class CallCountingHelperPeer;</a>
+<a name="69"><span class="lineNum">      69 </span>            : class ChannelNodePeer;</a>
+<a name="70"><span class="lineNum">      70 </span>            : }  // namespace testing</a>
+<a name="71"><span class="lineNum">      71 </span>            : </a>
+<a name="72"><span class="lineNum">      72 </span>            : // base class for all channelz entities</a>
+<a name="73"><span class="lineNum">      73 </span>            : class BaseNode : public RefCounted&lt;BaseNode&gt; {</a>
+<a name="74"><span class="lineNum">      74 </span>            :  public:</a>
+<a name="75"><span class="lineNum">      75 </span>            :   // There are only four high level channelz entities. However, to support</a>
+<a name="76"><span class="lineNum">      76 </span>            :   // GetTopChannelsRequest, we split the Channel entity into two different</a>
+<a name="77"><span class="lineNum">      77 </span>            :   // types. All children of BaseNode must be one of these types.</a>
+<a name="78"><span class="lineNum">      78 </span>            :   enum class EntityType {</a>
+<a name="79"><span class="lineNum">      79 </span>            :     kTopLevelChannel,</a>
+<a name="80"><span class="lineNum">      80 </span>            :     kInternalChannel,</a>
+<a name="81"><span class="lineNum">      81 </span>            :     kSubchannel,</a>
+<a name="82"><span class="lineNum">      82 </span>            :     kServer,</a>
+<a name="83"><span class="lineNum">      83 </span>            :     kSocket,</a>
+<a name="84"><span class="lineNum">      84 </span>            :   };</a>
+<a name="85"><span class="lineNum">      85 </span>            : </a>
+<a name="86"><span class="lineNum">      86 </span>            :  protected:</a>
+<a name="87"><span class="lineNum">      87 </span>            :   BaseNode(EntityType type, std::string name);</a>
+<a name="88"><span class="lineNum">      88 </span>            : </a>
+<a name="89"><span class="lineNum">      89 </span>            :  public:</a>
+<a name="90"><span class="lineNum">      90 </span>            :   ~BaseNode() override;</a>
+<a name="91"><span class="lineNum">      91 </span>            : </a>
+<a name="92"><span class="lineNum">      92 </span>            :   // All children must implement this function.</a>
+<a name="93"><span class="lineNum">      93 </span>            :   virtual Json RenderJson() = 0;</a>
+<a name="94"><span class="lineNum">      94 </span>            : </a>
+<a name="95"><span class="lineNum">      95 </span>            :   // Renders the json and returns allocated string that must be freed by the</a>
+<a name="96"><span class="lineNum">      96 </span>            :   // caller.</a>
+<a name="97"><span class="lineNum">      97 </span>            :   std::string RenderJsonString();</a>
+<a name="98"><span class="lineNum">      98 </span>            : </a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineCov">       1125 :   EntityType type() const { return type_; }</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineCov">      67396 :   intptr_t uuid() const { return uuid_; }</span></a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineNoCov">          0 :   const std::string&amp; name() const { return name_; }</span></a>
+<a name="102"><span class="lineNum">     102 </span>            : </a>
+<a name="103"><span class="lineNum">     103 </span>            :  private:</a>
+<a name="104"><span class="lineNum">     104 </span>            :   // to allow the ChannelzRegistry to set uuid_ under its lock.</a>
+<a name="105"><span class="lineNum">     105 </span>            :   friend class ChannelzRegistry;</a>
+<a name="106"><span class="lineNum">     106 </span>            :   const EntityType type_;</a>
+<a name="107"><span class="lineNum">     107 </span>            :   intptr_t uuid_;</a>
+<a name="108"><span class="lineNum">     108 </span>            :   std::string name_;</a>
+<a name="109"><span class="lineNum">     109 </span>            : };</a>
+<a name="110"><span class="lineNum">     110 </span>            : </a>
+<a name="111"><span class="lineNum">     111 </span>            : // This class is a helper class for channelz entities that deal with Channels,</a>
+<a name="112"><span class="lineNum">     112 </span>            : // Subchannels, and Servers, since those have similar proto definitions.</a>
+<a name="113"><span class="lineNum">     113 </span>            : // This class has the ability to:</a>
+<a name="114"><span class="lineNum">     114 </span>            : //   - track calls_{started,succeeded,failed}</a>
+<a name="115"><span class="lineNum">     115 </span>            : //   - track last_call_started_timestamp</a>
+<a name="116"><span class="lineNum">     116 </span>            : //   - perform rendering of the above items</a>
+<a name="117"><span class="lineNum">     117 </span>            : class CallCountingHelper {</a>
+<a name="118"><span class="lineNum">     118 </span>            :  public:</a>
+<a name="119"><span class="lineNum">     119 </span>            :   CallCountingHelper();</a>
+<a name="120"><span class="lineNum">     120 </span>            : </a>
+<a name="121"><span class="lineNum">     121 </span>            :   void RecordCallStarted();</a>
+<a name="122"><span class="lineNum">     122 </span>            :   void RecordCallFailed();</a>
+<a name="123"><span class="lineNum">     123 </span>            :   void RecordCallSucceeded();</a>
+<a name="124"><span class="lineNum">     124 </span>            : </a>
+<a name="125"><span class="lineNum">     125 </span>            :   // Common rendering of the call count data and last_call_started_timestamp.</a>
+<a name="126"><span class="lineNum">     126 </span>            :   void PopulateCallCounts(Json::Object* json);</a>
+<a name="127"><span class="lineNum">     127 </span>            : </a>
+<a name="128"><span class="lineNum">     128 </span>            :  private:</a>
+<a name="129"><span class="lineNum">     129 </span>            :   // testing peer friend.</a>
+<a name="130"><span class="lineNum">     130 </span>            :   friend class testing::CallCountingHelperPeer;</a>
+<a name="131"><span class="lineNum">     131 </span>            : </a>
+<a name="132"><span class="lineNum">     132 </span>            :   // TODO(soheil): add a proper PerCPU helper and use it here.</a>
+<a name="133"><span class="lineNum">     133 </span>            :   struct AtomicCounterData {</a>
+<a name="134"><span class="lineNum">     134 </span>            :     // Define the ctors so that we can use this structure in InlinedVector.</a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">     424930 :     AtomicCounterData() = default;</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineNoCov">          0 :     AtomicCounterData(const AtomicCounterData&amp; that)</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineNoCov">          0 :         : calls_started(that.calls_started.load(std::memory_order_relaxed)),</span></a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineNoCov">          0 :           calls_succeeded(that.calls_succeeded.load(std::memory_order_relaxed)),</span></a>
+<a name="139"><span class="lineNum">     139 </span><span class="lineNoCov">          0 :           calls_failed(that.calls_failed.load(std::memory_order_relaxed)),</span></a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineNoCov">          0 :           last_call_started_cycle(</span></a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineNoCov">          0 :               that.last_call_started_cycle.load(std::memory_order_relaxed)) {}</span></a>
+<a name="142"><span class="lineNum">     142 </span>            : </a>
+<a name="143"><span class="lineNum">     143 </span>            :     std::atomic&lt;int64_t&gt; calls_started{0};</a>
+<a name="144"><span class="lineNum">     144 </span>            :     std::atomic&lt;int64_t&gt; calls_succeeded{0};</a>
+<a name="145"><span class="lineNum">     145 </span>            :     std::atomic&lt;int64_t&gt; calls_failed{0};</a>
+<a name="146"><span class="lineNum">     146 </span>            :     std::atomic&lt;gpr_cycle_counter&gt; last_call_started_cycle{0};</a>
+<a name="147"><span class="lineNum">     147 </span>            :     // Make sure the size is exactly one cache line.</a>
+<a name="148"><span class="lineNum">     148 </span>            :     uint8_t padding[GPR_CACHELINE_SIZE - 3 * sizeof(std::atomic&lt;intptr_t&gt;) -</a>
+<a name="149"><span class="lineNum">     149 </span>            :                     sizeof(std::atomic&lt;gpr_cycle_counter&gt;)];</a>
+<a name="150"><span class="lineNum">     150 </span>            :   };</a>
+<a name="151"><span class="lineNum">     151 </span>            :   // TODO(soheilhy,veblush): Revist this after abseil integration.</a>
+<a name="152"><span class="lineNum">     152 </span>            :   // This has a problem when using abseil inlined_vector because it</a>
+<a name="153"><span class="lineNum">     153 </span>            :   // carries an alignment attribute properly but our allocator doesn't</a>
+<a name="154"><span class="lineNum">     154 </span>            :   // respect this. To avoid UBSAN errors, this should be removed with</a>
+<a name="155"><span class="lineNum">     155 </span>            :   // abseil inlined_vector.</a>
+<a name="156"><span class="lineNum">     156 </span>            :   // GPR_ALIGN_STRUCT(GPR_CACHELINE_SIZE);</a>
+<a name="157"><span class="lineNum">     157 </span>            : </a>
+<a name="158"><span class="lineNum">     158 </span>            :   struct CounterData {</a>
+<a name="159"><span class="lineNum">     159 </span>            :     int64_t calls_started = 0;</a>
+<a name="160"><span class="lineNum">     160 </span>            :     int64_t calls_succeeded = 0;</a>
+<a name="161"><span class="lineNum">     161 </span>            :     int64_t calls_failed = 0;</a>
+<a name="162"><span class="lineNum">     162 </span>            :     gpr_cycle_counter last_call_started_cycle = 0;</a>
+<a name="163"><span class="lineNum">     163 </span>            :   };</a>
+<a name="164"><span class="lineNum">     164 </span>            : </a>
+<a name="165"><span class="lineNum">     165 </span>            :   // collects the sharded data into one CounterData struct.</a>
+<a name="166"><span class="lineNum">     166 </span>            :   void CollectData(CounterData* out);</a>
+<a name="167"><span class="lineNum">     167 </span>            : </a>
+<a name="168"><span class="lineNum">     168 </span>            :   // Really zero-sized, but 0-sized arrays are illegal on MSVC.</a>
+<a name="169"><span class="lineNum">     169 </span>            :   absl::InlinedVector&lt;AtomicCounterData, 1&gt; per_cpu_counter_data_storage_;</a>
+<a name="170"><span class="lineNum">     170 </span>            :   size_t num_cores_ = 0;</a>
+<a name="171"><span class="lineNum">     171 </span>            : };</a>
+<a name="172"><span class="lineNum">     172 </span>            : </a>
+<a name="173"><span class="lineNum">     173 </span>            : // Handles channelz bookkeeping for channels</a>
+<a name="174"><span class="lineNum">     174 </span>            : class ChannelNode : public BaseNode {</a>
+<a name="175"><span class="lineNum">     175 </span>            :  public:</a>
+<a name="176"><span class="lineNum">     176 </span>            :   ChannelNode(std::string target, size_t channel_tracer_max_nodes,</a>
+<a name="177"><span class="lineNum">     177 </span>            :               bool is_internal_channel);</a>
+<a name="178"><span class="lineNum">     178 </span>            : </a>
+<a name="179"><span class="lineNum">     179 </span>            :   // Returns the string description of the given connectivity state.</a>
+<a name="180"><span class="lineNum">     180 </span>            :   static const char* GetChannelConnectivityStateChangeString(</a>
+<a name="181"><span class="lineNum">     181 </span>            :       grpc_connectivity_state state);</a>
+<a name="182"><span class="lineNum">     182 </span>            : </a>
+<a name="183"><span class="lineNum">     183 </span>            :   Json RenderJson() override;</a>
+<a name="184"><span class="lineNum">     184 </span>            : </a>
+<a name="185"><span class="lineNum">     185 </span>            :   // proxy methods to composed classes.</a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">     139436 :   void AddTraceEvent(ChannelTrace::Severity severity, const grpc_slice&amp; data) {</span></a>
+<a name="187"><span class="lineNum">     187 </span><span class="lineCov">     139436 :     trace_.AddTraceEvent(severity, data);</span></a>
+<a name="188"><span class="lineNum">     188 </span><span class="lineCov">     139407 :   }</span></a>
+<a name="189"><span class="lineNum">     189 </span>            :   void AddTraceEventWithReference(ChannelTrace::Severity severity,</a>
+<a name="190"><span class="lineNum">     190 </span>            :                                   const grpc_slice&amp; data,</a>
+<a name="191"><span class="lineNum">     191 </span>            :                                   RefCountedPtr&lt;BaseNode&gt; referenced_channel) {</a>
+<a name="192"><span class="lineNum">     192 </span>            :     trace_.AddTraceEventWithReference(severity, data,</a>
+<a name="193"><span class="lineNum">     193 </span>            :                                       std::move(referenced_channel));</a>
+<a name="194"><span class="lineNum">     194 </span>            :   }</a>
+<a name="195"><span class="lineNum">     195 </span><span class="lineCov">     447614 :   void RecordCallStarted() { call_counter_.RecordCallStarted(); }</span></a>
+<a name="196"><span class="lineNum">     196 </span><span class="lineCov">     444049 :   void RecordCallFailed() { call_counter_.RecordCallFailed(); }</span></a>
+<a name="197"><span class="lineNum">     197 </span><span class="lineCov">       3551 :   void RecordCallSucceeded() { call_counter_.RecordCallSucceeded(); }</span></a>
+<a name="198"><span class="lineNum">     198 </span>            : </a>
+<a name="199"><span class="lineNum">     199 </span>            :   void SetConnectivityState(grpc_connectivity_state state);</a>
+<a name="200"><span class="lineNum">     200 </span>            : </a>
+<a name="201"><span class="lineNum">     201 </span>            :   // TODO(roth): take in a RefCountedPtr to the child channel so we can retrieve</a>
+<a name="202"><span class="lineNum">     202 </span>            :   // the human-readable name.</a>
+<a name="203"><span class="lineNum">     203 </span>            :   void AddChildChannel(intptr_t child_uuid);</a>
+<a name="204"><span class="lineNum">     204 </span>            :   void RemoveChildChannel(intptr_t child_uuid);</a>
+<a name="205"><span class="lineNum">     205 </span>            : </a>
+<a name="206"><span class="lineNum">     206 </span>            :   // TODO(roth): take in a RefCountedPtr to the child subchannel so we can</a>
+<a name="207"><span class="lineNum">     207 </span>            :   // retrieve the human-readable name.</a>
+<a name="208"><span class="lineNum">     208 </span>            :   void AddChildSubchannel(intptr_t child_uuid);</a>
+<a name="209"><span class="lineNum">     209 </span>            :   void RemoveChildSubchannel(intptr_t child_uuid);</a>
+<a name="210"><span class="lineNum">     210 </span>            : </a>
+<a name="211"><span class="lineNum">     211 </span>            :  private:</a>
+<a name="212"><span class="lineNum">     212 </span>            :   // Allows the channel trace test to access trace_.</a>
+<a name="213"><span class="lineNum">     213 </span>            :   friend class testing::ChannelNodePeer;</a>
+<a name="214"><span class="lineNum">     214 </span>            : </a>
+<a name="215"><span class="lineNum">     215 </span>            :   void PopulateChildRefs(Json::Object* json);</a>
+<a name="216"><span class="lineNum">     216 </span>            : </a>
+<a name="217"><span class="lineNum">     217 </span>            :   std::string target_;</a>
+<a name="218"><span class="lineNum">     218 </span>            :   CallCountingHelper call_counter_;</a>
+<a name="219"><span class="lineNum">     219 </span>            :   ChannelTrace trace_;</a>
+<a name="220"><span class="lineNum">     220 </span>            : </a>
+<a name="221"><span class="lineNum">     221 </span>            :   // Least significant bit indicates whether the value is set.  Remaining</a>
+<a name="222"><span class="lineNum">     222 </span>            :   // bits are a grpc_connectivity_state value.</a>
+<a name="223"><span class="lineNum">     223 </span>            :   std::atomic&lt;int&gt; connectivity_state_{0};</a>
+<a name="224"><span class="lineNum">     224 </span>            : </a>
+<a name="225"><span class="lineNum">     225 </span>            :   Mutex child_mu_;  // Guards sets below.</a>
+<a name="226"><span class="lineNum">     226 </span>            :   std::set&lt;intptr_t&gt; child_channels_;</a>
+<a name="227"><span class="lineNum">     227 </span>            :   std::set&lt;intptr_t&gt; child_subchannels_;</a>
+<a name="228"><span class="lineNum">     228 </span>            : };</a>
+<a name="229"><span class="lineNum">     229 </span>            : </a>
+<a name="230"><span class="lineNum">     230 </span>            : // Handles channelz bookkeeping for servers</a>
+<a name="231"><span class="lineNum">     231 </span>            : class ServerNode : public BaseNode {</a>
+<a name="232"><span class="lineNum">     232 </span>            :  public:</a>
+<a name="233"><span class="lineNum">     233 </span>            :   explicit ServerNode(size_t channel_tracer_max_nodes);</a>
+<a name="234"><span class="lineNum">     234 </span>            : </a>
+<a name="235"><span class="lineNum">     235 </span>            :   ~ServerNode() override;</a>
+<a name="236"><span class="lineNum">     236 </span>            : </a>
+<a name="237"><span class="lineNum">     237 </span>            :   Json RenderJson() override;</a>
+<a name="238"><span class="lineNum">     238 </span>            : </a>
+<a name="239"><span class="lineNum">     239 </span>            :   std::string RenderServerSockets(intptr_t start_socket_id,</a>
+<a name="240"><span class="lineNum">     240 </span>            :                                   intptr_t max_results);</a>
+<a name="241"><span class="lineNum">     241 </span>            : </a>
+<a name="242"><span class="lineNum">     242 </span>            :   void AddChildSocket(RefCountedPtr&lt;SocketNode&gt; node);</a>
+<a name="243"><span class="lineNum">     243 </span>            : </a>
+<a name="244"><span class="lineNum">     244 </span>            :   void RemoveChildSocket(intptr_t child_uuid);</a>
+<a name="245"><span class="lineNum">     245 </span>            : </a>
+<a name="246"><span class="lineNum">     246 </span>            :   void AddChildListenSocket(RefCountedPtr&lt;ListenSocketNode&gt; node);</a>
+<a name="247"><span class="lineNum">     247 </span>            : </a>
+<a name="248"><span class="lineNum">     248 </span>            :   void RemoveChildListenSocket(intptr_t child_uuid);</a>
+<a name="249"><span class="lineNum">     249 </span>            : </a>
+<a name="250"><span class="lineNum">     250 </span>            :   // proxy methods to composed classes.</a>
+<a name="251"><span class="lineNum">     251 </span><span class="lineCov">       2063 :   void AddTraceEvent(ChannelTrace::Severity severity, const grpc_slice&amp; data) {</span></a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineCov">       2063 :     trace_.AddTraceEvent(severity, data);</span></a>
+<a name="253"><span class="lineNum">     253 </span><span class="lineCov">       2063 :   }</span></a>
+<a name="254"><span class="lineNum">     254 </span>            :   void AddTraceEventWithReference(ChannelTrace::Severity severity,</a>
+<a name="255"><span class="lineNum">     255 </span>            :                                   const grpc_slice&amp; data,</a>
+<a name="256"><span class="lineNum">     256 </span>            :                                   RefCountedPtr&lt;BaseNode&gt; referenced_channel) {</a>
+<a name="257"><span class="lineNum">     257 </span>            :     trace_.AddTraceEventWithReference(severity, data,</a>
+<a name="258"><span class="lineNum">     258 </span>            :                                       std::move(referenced_channel));</a>
+<a name="259"><span class="lineNum">     259 </span>            :   }</a>
+<a name="260"><span class="lineNum">     260 </span><span class="lineCov">     304409 :   void RecordCallStarted() { call_counter_.RecordCallStarted(); }</span></a>
+<a name="261"><span class="lineNum">     261 </span><span class="lineCov">       2270 :   void RecordCallFailed() { call_counter_.RecordCallFailed(); }</span></a>
+<a name="262"><span class="lineNum">     262 </span><span class="lineCov">       1572 :   void RecordCallSucceeded() { call_counter_.RecordCallSucceeded(); }</span></a>
+<a name="263"><span class="lineNum">     263 </span>            : </a>
+<a name="264"><span class="lineNum">     264 </span>            :  private:</a>
+<a name="265"><span class="lineNum">     265 </span>            :   CallCountingHelper call_counter_;</a>
+<a name="266"><span class="lineNum">     266 </span>            :   ChannelTrace trace_;</a>
+<a name="267"><span class="lineNum">     267 </span>            :   Mutex child_mu_;  // Guards child maps below.</a>
+<a name="268"><span class="lineNum">     268 </span>            :   std::map&lt;intptr_t, RefCountedPtr&lt;SocketNode&gt;&gt; child_sockets_;</a>
+<a name="269"><span class="lineNum">     269 </span>            :   std::map&lt;intptr_t, RefCountedPtr&lt;ListenSocketNode&gt;&gt; child_listen_sockets_;</a>
+<a name="270"><span class="lineNum">     270 </span>            : };</a>
+<a name="271"><span class="lineNum">     271 </span>            : </a>
+<a name="272"><span class="lineNum">     272 </span>            : #define GRPC_ARG_CHANNELZ_SECURITY &quot;grpc.internal.channelz_security&quot;</a>
+<a name="273"><span class="lineNum">     273 </span>            : </a>
+<a name="274"><span class="lineNum">     274 </span>            : // Handles channelz bookkeeping for sockets</a>
+<a name="275"><span class="lineNum">     275 </span>            : class SocketNode : public BaseNode {</a>
+<a name="276"><span class="lineNum">     276 </span>            :  public:</a>
+<a name="277"><span class="lineNum">     277 </span>            :   struct Security : public RefCounted&lt;Security&gt; {</a>
+<a name="278"><span class="lineNum">     278 </span>            :     struct Tls {</a>
+<a name="279"><span class="lineNum">     279 </span>            :       // This is a workaround for https://bugs.llvm.org/show_bug.cgi?id=50346</a>
+<a name="280"><span class="lineNum">     280 </span><span class="lineCov">       2190 :       Tls() {}</span></a>
+<a name="281"><span class="lineNum">     281 </span>            : </a>
+<a name="282"><span class="lineNum">     282 </span>            :       enum class NameType { kUnset = 0, kStandardName = 1, kOtherName = 2 };</a>
+<a name="283"><span class="lineNum">     283 </span>            :       NameType type = NameType::kUnset;</a>
+<a name="284"><span class="lineNum">     284 </span>            :       // Holds the value of standard_name or other_names if type is not kUnset.</a>
+<a name="285"><span class="lineNum">     285 </span>            :       std::string name;</a>
+<a name="286"><span class="lineNum">     286 </span>            :       std::string local_certificate;</a>
+<a name="287"><span class="lineNum">     287 </span>            :       std::string remote_certificate;</a>
+<a name="288"><span class="lineNum">     288 </span>            : </a>
+<a name="289"><span class="lineNum">     289 </span>            :       Json RenderJson();</a>
+<a name="290"><span class="lineNum">     290 </span>            :     };</a>
+<a name="291"><span class="lineNum">     291 </span>            :     enum class ModelType { kUnset = 0, kTls = 1, kOther = 2 };</a>
+<a name="292"><span class="lineNum">     292 </span>            :     ModelType type = ModelType::kUnset;</a>
+<a name="293"><span class="lineNum">     293 </span>            :     absl::optional&lt;Tls&gt; tls;</a>
+<a name="294"><span class="lineNum">     294 </span>            :     absl::optional&lt;Json&gt; other;</a>
+<a name="295"><span class="lineNum">     295 </span>            : </a>
+<a name="296"><span class="lineNum">     296 </span>            :     Json RenderJson();</a>
+<a name="297"><span class="lineNum">     297 </span>            : </a>
+<a name="298"><span class="lineNum">     298 </span>            :     grpc_arg MakeChannelArg() const;</a>
+<a name="299"><span class="lineNum">     299 </span>            : </a>
+<a name="300"><span class="lineNum">     300 </span>            :     static RefCountedPtr&lt;Security&gt; GetFromChannelArgs(</a>
+<a name="301"><span class="lineNum">     301 </span>            :         const grpc_channel_args* args);</a>
+<a name="302"><span class="lineNum">     302 </span>            :   };</a>
+<a name="303"><span class="lineNum">     303 </span>            : </a>
+<a name="304"><span class="lineNum">     304 </span>            :   SocketNode(std::string local, std::string remote, std::string name,</a>
+<a name="305"><span class="lineNum">     305 </span>            :              RefCountedPtr&lt;Security&gt; security);</a>
+<a name="306"><span class="lineNum">     306 </span><span class="lineCov">      10178 :   ~SocketNode() override {}</span></a>
+<a name="307"><span class="lineNum">     307 </span>            : </a>
+<a name="308"><span class="lineNum">     308 </span>            :   Json RenderJson() override;</a>
+<a name="309"><span class="lineNum">     309 </span>            : </a>
+<a name="310"><span class="lineNum">     310 </span>            :   void RecordStreamStartedFromLocal();</a>
+<a name="311"><span class="lineNum">     311 </span>            :   void RecordStreamStartedFromRemote();</a>
+<a name="312"><span class="lineNum">     312 </span><span class="lineCov">     305309 :   void RecordStreamSucceeded() {</span></a>
+<a name="313"><span class="lineNum">     313 </span><span class="lineCov">     305309 :     streams_succeeded_.fetch_add(1, std::memory_order_relaxed);</span></a>
+<a name="314"><span class="lineNum">     314 </span><span class="lineCov">     305309 :   }</span></a>
+<a name="315"><span class="lineNum">     315 </span><span class="lineCov">     303286 :   void RecordStreamFailed() {</span></a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineCov">     303286 :     streams_failed_.fetch_add(1, std::memory_order_relaxed);</span></a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineCov">     303286 :   }</span></a>
+<a name="318"><span class="lineNum">     318 </span>            :   void RecordMessagesSent(uint32_t num_sent);</a>
+<a name="319"><span class="lineNum">     319 </span>            :   void RecordMessageReceived();</a>
+<a name="320"><span class="lineNum">     320 </span><span class="lineCov">         93 :   void RecordKeepaliveSent() {</span></a>
+<a name="321"><span class="lineNum">     321 </span><span class="lineCov">         93 :     keepalives_sent_.fetch_add(1, std::memory_order_relaxed);</span></a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineCov">         93 :   }</span></a>
+<a name="323"><span class="lineNum">     323 </span>            : </a>
+<a name="324"><span class="lineNum">     324 </span>            :   const std::string&amp; remote() { return remote_; }</a>
+<a name="325"><span class="lineNum">     325 </span>            : </a>
+<a name="326"><span class="lineNum">     326 </span>            :  private:</a>
+<a name="327"><span class="lineNum">     327 </span>            :   std::atomic&lt;int64_t&gt; streams_started_{0};</a>
+<a name="328"><span class="lineNum">     328 </span>            :   std::atomic&lt;int64_t&gt; streams_succeeded_{0};</a>
+<a name="329"><span class="lineNum">     329 </span>            :   std::atomic&lt;int64_t&gt; streams_failed_{0};</a>
+<a name="330"><span class="lineNum">     330 </span>            :   std::atomic&lt;int64_t&gt; messages_sent_{0};</a>
+<a name="331"><span class="lineNum">     331 </span>            :   std::atomic&lt;int64_t&gt; messages_received_{0};</a>
+<a name="332"><span class="lineNum">     332 </span>            :   std::atomic&lt;int64_t&gt; keepalives_sent_{0};</a>
+<a name="333"><span class="lineNum">     333 </span>            :   std::atomic&lt;gpr_cycle_counter&gt; last_local_stream_created_cycle_{0};</a>
+<a name="334"><span class="lineNum">     334 </span>            :   std::atomic&lt;gpr_cycle_counter&gt; last_remote_stream_created_cycle_{0};</a>
+<a name="335"><span class="lineNum">     335 </span>            :   std::atomic&lt;gpr_cycle_counter&gt; last_message_sent_cycle_{0};</a>
+<a name="336"><span class="lineNum">     336 </span>            :   std::atomic&lt;gpr_cycle_counter&gt; last_message_received_cycle_{0};</a>
+<a name="337"><span class="lineNum">     337 </span>            :   std::string local_;</a>
+<a name="338"><span class="lineNum">     338 </span>            :   std::string remote_;</a>
+<a name="339"><span class="lineNum">     339 </span>            :   RefCountedPtr&lt;Security&gt; const security_;</a>
+<a name="340"><span class="lineNum">     340 </span>            : };</a>
+<a name="341"><span class="lineNum">     341 </span>            : </a>
+<a name="342"><span class="lineNum">     342 </span>            : // Handles channelz bookkeeping for listen sockets</a>
+<a name="343"><span class="lineNum">     343 </span>            : class ListenSocketNode : public BaseNode {</a>
+<a name="344"><span class="lineNum">     344 </span>            :  public:</a>
+<a name="345"><span class="lineNum">     345 </span>            :   ListenSocketNode(std::string local_addr, std::string name);</a>
+<a name="346"><span class="lineNum">     346 </span><span class="lineCov">       1650 :   ~ListenSocketNode() override {}</span></a>
+<a name="347"><span class="lineNum">     347 </span>            : </a>
+<a name="348"><span class="lineNum">     348 </span>            :   Json RenderJson() override;</a>
+<a name="349"><span class="lineNum">     349 </span>            : </a>
+<a name="350"><span class="lineNum">     350 </span>            :  private:</a>
+<a name="351"><span class="lineNum">     351 </span>            :   std::string local_addr_;</a>
+<a name="352"><span class="lineNum">     352 </span>            : };</a>
+<a name="353"><span class="lineNum">     353 </span>            : </a>
+<a name="354"><span class="lineNum">     354 </span>            : }  // namespace channelz</a>
+<a name="355"><span class="lineNum">     355 </span>            : }  // namespace grpc_core</a>
+<a name="356"><span class="lineNum">     356 </span>            : </a>
+<a name="357"><span class="lineNum">     357 </span>            : #endif /* GRPC_CORE_LIB_CHANNEL_CHANNELZ_H */</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

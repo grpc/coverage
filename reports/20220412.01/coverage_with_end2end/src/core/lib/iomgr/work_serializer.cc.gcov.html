@@ -1,0 +1,307 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/core/lib/iomgr/work_serializer.cc</title>
+  <link rel="stylesheet" type="text/css" href="../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../index.html">top level</a> - <a href="index.html">src/core/lib/iomgr</a> - work_serializer.cc<span style="font-size: 80%;"> (source / <a href="work_serializer.cc.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">81</td>
+            <td class="headerCovTableEntry">89</td>
+            <td class="headerCovTableEntryHi">91.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-12 14:35:39</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">15</td>
+            <td class="headerCovTableEntry">15</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<a name="2"><span class="lineNum">       2 </span>            :  *</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * Copyright 2019 gRPC authors.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * you may not use this file except in compliance with the License.</a>
+<a name="7"><span class="lineNum">       7 </span>            :  * You may obtain a copy of the License at</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *</a>
+<a name="9"><span class="lineNum">       9 </span>            :  *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="10"><span class="lineNum">      10 </span>            :  *</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * Unless required by applicable law or agreed to in writing, software</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * See the License for the specific language governing permissions and</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * limitations under the License.</a>
+<a name="16"><span class="lineNum">      16 </span>            :  *</a>
+<a name="17"><span class="lineNum">      17 </span>            :  */</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="20"><span class="lineNum">      20 </span>            : </a>
+<a name="21"><span class="lineNum">      21 </span>            : #include &quot;src/core/lib/iomgr/work_serializer.h&quot;</a>
+<a name="22"><span class="lineNum">      22 </span>            : </a>
+<a name="23"><span class="lineNum">      23 </span>            : namespace grpc_core {</a>
+<a name="24"><span class="lineNum">      24 </span>            : </a>
+<a name="25"><span class="lineNum">      25 </span>            : DebugOnlyTraceFlag grpc_work_serializer_trace(false, &quot;work_serializer&quot;);</a>
+<a name="26"><span class="lineNum">      26 </span>            : </a>
+<a name="27"><span class="lineNum">      27 </span>            : class WorkSerializer::WorkSerializerImpl : public Orphanable {</a>
+<a name="28"><span class="lineNum">      28 </span>            :  public:</a>
+<a name="29"><span class="lineNum">      29 </span>            :   void Run(std::function&lt;void()&gt; callback, const DebugLocation&amp; location);</a>
+<a name="30"><span class="lineNum">      30 </span>            :   void Schedule(std::function&lt;void()&gt; callback, const DebugLocation&amp; location);</a>
+<a name="31"><span class="lineNum">      31 </span>            :   void DrainQueue();</a>
+<a name="32"><span class="lineNum">      32 </span>            :   void Orphan() override;</a>
+<a name="33"><span class="lineNum">      33 </span>            : </a>
+<a name="34"><span class="lineNum">      34 </span>            :  private:</a>
+<a name="35"><span class="lineNum">      35 </span>            :   struct CallbackWrapper {</a>
+<a name="36"><span class="lineNum">      36 </span><span class="lineCov">   63947773 :     CallbackWrapper(std::function&lt;void()&gt; cb, const DebugLocation&amp; loc)</span></a>
+<a name="37"><span class="lineNum">      37 </span><span class="lineCov">   63947773 :         : callback(std::move(cb)), location(loc) {}</span></a>
+<a name="38"><span class="lineNum">      38 </span>            : </a>
+<a name="39"><span class="lineNum">      39 </span>            :     MultiProducerSingleConsumerQueue::Node mpscq_node;</a>
+<a name="40"><span class="lineNum">      40 </span>            :     const std::function&lt;void()&gt; callback;</a>
+<a name="41"><span class="lineNum">      41 </span>            :     const DebugLocation location;</a>
+<a name="42"><span class="lineNum">      42 </span>            :   };</a>
+<a name="43"><span class="lineNum">      43 </span>            : </a>
+<a name="44"><span class="lineNum">      44 </span>            :   // Callers of DrainQueueOwned should make sure to grab the lock on the</a>
+<a name="45"><span class="lineNum">      45 </span>            :   // workserializer with</a>
+<a name="46"><span class="lineNum">      46 </span>            :   //</a>
+<a name="47"><span class="lineNum">      47 </span>            :   //   prev_ref_pair =</a>
+<a name="48"><span class="lineNum">      48 </span>            :   //     refs_.fetch_add(MakeRefPair(1, 1), std::memory_order_acq_rel);</a>
+<a name="49"><span class="lineNum">      49 </span>            :   //</a>
+<a name="50"><span class="lineNum">      50 </span>            :   // and only invoke DrainQueueOwned() if there was previously no owner. Note</a>
+<a name="51"><span class="lineNum">      51 </span>            :   // that the queue size is also incremented as part of the fetch_add to allow</a>
+<a name="52"><span class="lineNum">      52 </span>            :   // the callers to add a callback to the queue if another thread already holds</a>
+<a name="53"><span class="lineNum">      53 </span>            :   // the lock to the work serializer.</a>
+<a name="54"><span class="lineNum">      54 </span>            :   void DrainQueueOwned();</a>
+<a name="55"><span class="lineNum">      55 </span>            : </a>
+<a name="56"><span class="lineNum">      56 </span>            :   // First 16 bits indicate ownership of the WorkSerializer, next 48 bits are</a>
+<a name="57"><span class="lineNum">      57 </span>            :   // queue size (i.e., refs).</a>
+<a name="58"><span class="lineNum">      58 </span><span class="lineCov">  169637990 :   static uint64_t MakeRefPair(uint16_t owners, uint64_t size) {</span></a>
+<a name="59"><span class="lineNum">      59 </span><span class="lineCov">  169637990 :     GPR_ASSERT(size &gt;&gt; 48 == 0);</span></a>
+<a name="60"><span class="lineNum">      60 </span><span class="lineCov">  169637990 :     return (static_cast&lt;uint64_t&gt;(owners) &lt;&lt; 48) + static_cast&lt;int64_t&gt;(size);</span></a>
+<a name="61"><span class="lineNum">      61 </span>            :   }</a>
+<a name="62"><span class="lineNum">      62 </span><span class="lineCov">   43808784 :   static uint32_t GetOwners(uint64_t ref_pair) {</span></a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">   43808784 :     return static_cast&lt;uint32_t&gt;(ref_pair &gt;&gt; 48);</span></a>
+<a name="64"><span class="lineNum">      64 </span>            :   }</a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">  220331551 :   static uint64_t GetSize(uint64_t ref_pair) {</span></a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">  220331551 :     return static_cast&lt;uint64_t&gt;(ref_pair &amp; 0xffffffffffffu);</span></a>
+<a name="67"><span class="lineNum">      67 </span>            :   }</a>
+<a name="68"><span class="lineNum">      68 </span>            : </a>
+<a name="69"><span class="lineNum">      69 </span>            :   // An initial size of 1 keeps track of whether the work serializer has been</a>
+<a name="70"><span class="lineNum">      70 </span>            :   // orphaned.</a>
+<a name="71"><span class="lineNum">      71 </span>            :   std::atomic&lt;uint64_t&gt; refs_{MakeRefPair(0, 1)};</a>
+<a name="72"><span class="lineNum">      72 </span>            :   MultiProducerSingleConsumerQueue queue_;</a>
+<a name="73"><span class="lineNum">      73 </span>            : };</a>
+<a name="74"><span class="lineNum">      74 </span>            : </a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">   32149576 : void WorkSerializer::WorkSerializerImpl::Run(std::function&lt;void()&gt; callback,</span></a>
+<a name="76"><span class="lineNum">      76 </span>            :                                              const DebugLocation&amp; location) {</a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">   32149576 :   if (GRPC_TRACE_FLAG_ENABLED(grpc_work_serializer_trace)) {</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">        166 :     gpr_log(GPR_INFO, &quot;WorkSerializer::Run() %p Scheduling callback [%s:%d]&quot;,</span></a>
+<a name="79"><span class="lineNum">      79 </span>            :             this, location.file(), location.line());</a>
+<a name="80"><span class="lineNum">      80 </span>            :   }</a>
+<a name="81"><span class="lineNum">      81 </span>            :   // Increment queue size for the new callback and owner count to attempt to</a>
+<a name="82"><span class="lineNum">      82 </span>            :   // take ownership of the WorkSerializer.</a>
+<a name="83"><span class="lineNum">      83 </span>            :   const uint64_t prev_ref_pair =</a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">   33889247 :       refs_.fetch_add(MakeRefPair(1, 1), std::memory_order_acq_rel);</span></a>
+<a name="85"><span class="lineNum">      85 </span>            :   // The work serializer should not have been orphaned.</a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineCov">   33823953 :   GPR_DEBUG_ASSERT(GetSize(prev_ref_pair) &gt; 0);</span></a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineCov">   43935415 :   if (GetOwners(prev_ref_pair) == 0) {</span></a>
+<a name="88"><span class="lineNum">      88 </span>            :     // We took ownership of the WorkSerializer. Invoke callback and drain queue.</a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">    1850181 :     if (GRPC_TRACE_FLAG_ENABLED(grpc_work_serializer_trace)) {</span></a>
+<a name="90"><span class="lineNum">      90 </span><span class="lineCov">        139 :       gpr_log(GPR_INFO, &quot;  Executing immediately&quot;);</span></a>
+<a name="91"><span class="lineNum">      91 </span>            :     }</a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">    1850145 :     callback();</span></a>
+<a name="93"><span class="lineNum">      93 </span><span class="lineCov">    1849762 :     DrainQueueOwned();</span></a>
+<a name="94"><span class="lineNum">      94 </span>            :   } else {</a>
+<a name="95"><span class="lineNum">      95 </span>            :     // Another thread is holding the WorkSerializer, so decrement the ownership</a>
+<a name="96"><span class="lineNum">      96 </span>            :     // count we just added and queue the callback.</a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineCov">   40857692 :     refs_.fetch_sub(MakeRefPair(1, 0), std::memory_order_acq_rel);</span></a>
+<a name="98"><span class="lineNum">      98 </span>            :     CallbackWrapper* cb_wrapper =</a>
+<a name="99"><span class="lineNum">      99 </span><span class="lineCov">   41055296 :         new CallbackWrapper(std::move(callback), location);</span></a>
+<a name="100"><span class="lineNum">     100 </span><span class="lineCov">   34002754 :     if (GRPC_TRACE_FLAG_ENABLED(grpc_work_serializer_trace)) {</span></a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineCov">         27 :       gpr_log(GPR_INFO, &quot;  Scheduling on queue : item %p&quot;, cb_wrapper);</span></a>
+<a name="102"><span class="lineNum">     102 </span>            :     }</a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">   33888207 :     queue_.Push(&amp;cb_wrapper-&gt;mpscq_node);</span></a>
+<a name="104"><span class="lineNum">     104 </span>            :   }</a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">   42798871 : }</span></a>
+<a name="106"><span class="lineNum">     106 </span>            : </a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineCov">   24815723 : void WorkSerializer::WorkSerializerImpl::Schedule(</span></a>
+<a name="108"><span class="lineNum">     108 </span>            :     std::function&lt;void()&gt; callback, const DebugLocation&amp; location) {</a>
+<a name="109"><span class="lineNum">     109 </span>            :   CallbackWrapper* cb_wrapper =</a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">   24815723 :       new CallbackWrapper(std::move(callback), location);</span></a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineCov">   28410914 :   if (GRPC_TRACE_FLAG_ENABLED(grpc_work_serializer_trace)) {</span></a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineNoCov">          0 :     gpr_log(GPR_INFO,</span></a>
+<a name="113"><span class="lineNum">     113 </span>            :             &quot;WorkSerializer::Schedule() %p Scheduling callback %p [%s:%d]&quot;,</a>
+<a name="114"><span class="lineNum">     114 </span>            :             this, cb_wrapper, location.file(), location.line());</a>
+<a name="115"><span class="lineNum">     115 </span>            :   }</a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">   30200615 :   refs_.fetch_add(MakeRefPair(0, 1), std::memory_order_acq_rel);</span></a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineCov">   26296800 :   queue_.Push(&amp;cb_wrapper-&gt;mpscq_node);</span></a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">   41189465 : }</span></a>
+<a name="119"><span class="lineNum">     119 </span>            : </a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineCov">      67520 : void WorkSerializer::WorkSerializerImpl::Orphan() {</span></a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineCov">      67520 :   if (GRPC_TRACE_FLAG_ENABLED(grpc_work_serializer_trace)) {</span></a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineCov">         13 :     gpr_log(GPR_INFO, &quot;WorkSerializer::Orphan() %p&quot;, this);</span></a>
+<a name="123"><span class="lineNum">     123 </span>            :   }</a>
+<a name="124"><span class="lineNum">     124 </span>            :   const uint64_t prev_ref_pair =</a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineCov">      67520 :       refs_.fetch_sub(MakeRefPair(0, 1), std::memory_order_acq_rel);</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">      67520 :   if (GetOwners(prev_ref_pair) == 0 &amp;&amp; GetSize(prev_ref_pair) == 1) {</span></a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineCov">      67345 :     if (GRPC_TRACE_FLAG_ENABLED(grpc_work_serializer_trace)) {</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">         13 :       gpr_log(GPR_INFO, &quot;  Destroying&quot;);</span></a>
+<a name="129"><span class="lineNum">     129 </span>            :     }</a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">      67345 :     delete this;</span></a>
+<a name="131"><span class="lineNum">     131 </span>            :   }</a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineCov">      67521 : }</span></a>
+<a name="133"><span class="lineNum">     133 </span>            : </a>
+<a name="134"><span class="lineNum">     134 </span>            : // The thread that calls this loans itself to the work serializer so as to</a>
+<a name="135"><span class="lineNum">     135 </span>            : // execute all the scheduled callbacks.</a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">      45428 : void WorkSerializer::WorkSerializerImpl::DrainQueue() {</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">      45428 :   if (GRPC_TRACE_FLAG_ENABLED(grpc_work_serializer_trace)) {</span></a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineNoCov">          0 :     gpr_log(GPR_INFO, &quot;WorkSerializer::DrainQueue() %p&quot;, this);</span></a>
+<a name="139"><span class="lineNum">     139 </span>            :   }</a>
+<a name="140"><span class="lineNum">     140 </span>            :   // Attempt to take ownership of the WorkSerializer. Also increment the queue</a>
+<a name="141"><span class="lineNum">     141 </span>            :   // size as required by `DrainQueueOwned()`.</a>
+<a name="142"><span class="lineNum">     142 </span>            :   const uint64_t prev_ref_pair =</a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineCov">      45428 :       refs_.fetch_add(MakeRefPair(1, 1), std::memory_order_acq_rel);</span></a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineCov">      45428 :   if (GetOwners(prev_ref_pair) == 0) {</span></a>
+<a name="145"><span class="lineNum">     145 </span>            :     // We took ownership of the WorkSerializer. Drain the queue.</a>
+<a name="146"><span class="lineNum">     146 </span><span class="lineCov">      36186 :     DrainQueueOwned();</span></a>
+<a name="147"><span class="lineNum">     147 </span>            :   } else {</a>
+<a name="148"><span class="lineNum">     148 </span>            :     // Another thread is holding the WorkSerializer, so decrement the ownership</a>
+<a name="149"><span class="lineNum">     149 </span>            :     // count we just added and queue a no-op callback.</a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineCov">       9242 :     refs_.fetch_sub(MakeRefPair(1, 0), std::memory_order_acq_rel);</span></a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineCov">       9242 :     CallbackWrapper* cb_wrapper = new CallbackWrapper([]() {}, DEBUG_LOCATION);</span></a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">       9242 :     queue_.Push(&amp;cb_wrapper-&gt;mpscq_node);</span></a>
+<a name="153"><span class="lineNum">     153 </span>            :   }</a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineCov">      45428 : }</span></a>
+<a name="155"><span class="lineNum">     155 </span>            : </a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineCov">    1885893 : void WorkSerializer::WorkSerializerImpl::DrainQueueOwned() {</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">    1885893 :   if (GRPC_TRACE_FLAG_ENABLED(grpc_work_serializer_trace)) {</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineCov">        139 :     gpr_log(GPR_INFO, &quot;WorkSerializer::DrainQueueOwned() %p&quot;, this);</span></a>
+<a name="159"><span class="lineNum">     159 </span>            :   }</a>
+<a name="160"><span class="lineNum">     160 </span>            :   while (true) {</a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">   91423614 :     auto prev_ref_pair = refs_.fetch_sub(MakeRefPair(0, 1));</span></a>
+<a name="162"><span class="lineNum">     162 </span>            :     // It is possible that while draining the queue, the last callback ended</a>
+<a name="163"><span class="lineNum">     163 </span>            :     // up orphaning the work serializer. In that case, delete the object.</a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">   91423509 :     if (GetSize(prev_ref_pair) == 1) {</span></a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineCov">        176 :       if (GRPC_TRACE_FLAG_ENABLED(grpc_work_serializer_trace)) {</span></a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineNoCov">          0 :         gpr_log(GPR_INFO, &quot;  Queue Drained. Destroying&quot;);</span></a>
+<a name="167"><span class="lineNum">     167 </span>            :       }</a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">        176 :       delete this;</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">    1885944 :       return;</span></a>
+<a name="170"><span class="lineNum">     170 </span>            :     }</a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">   91423957 :     if (GetSize(prev_ref_pair) == 2) {</span></a>
+<a name="172"><span class="lineNum">     172 </span>            :       // Queue drained. Give up ownership but only if queue remains empty.</a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">    1886285 :       uint64_t expected = MakeRefPair(1, 1);</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">    3772202 :       if (refs_.compare_exchange_strong(expected, MakeRefPair(0, 1),</span></a>
+<a name="175"><span class="lineNum">     175 </span>            :                                         std::memory_order_acq_rel)) {</a>
+<a name="176"><span class="lineNum">     176 </span>            :         // Queue is drained.</a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineCov">    1885768 :         return;</span></a>
+<a name="178"><span class="lineNum">     178 </span>            :       }</a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">        147 :       if (GetSize(expected) == 0) {</span></a>
+<a name="180"><span class="lineNum">     180 </span>            :         // WorkSerializer got orphaned while this was running</a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineNoCov">          0 :         if (GRPC_TRACE_FLAG_ENABLED(grpc_work_serializer_trace)) {</span></a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineNoCov">          0 :           gpr_log(GPR_INFO, &quot;  Queue Drained. Destroying&quot;);</span></a>
+<a name="183"><span class="lineNum">     183 </span>            :         }</a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineNoCov">          0 :         delete this;</span></a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineNoCov">          0 :         return;</span></a>
+<a name="186"><span class="lineNum">     186 </span>            :       }</a>
+<a name="187"><span class="lineNum">     187 </span>            :     }</a>
+<a name="188"><span class="lineNum">     188 </span>            :     // There is at least one callback on the queue. Pop the callback from the</a>
+<a name="189"><span class="lineNum">     189 </span>            :     // queue and execute it.</a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineCov">   89537719 :     CallbackWrapper* cb_wrapper = nullptr;</span></a>
+<a name="191"><span class="lineNum">     191 </span>            :     bool empty_unused;</a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">   89537719 :     while ((cb_wrapper = reinterpret_cast&lt;CallbackWrapper*&gt;(</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">   90536186 :                 queue_.PopAndCheckEnd(&amp;empty_unused))) == nullptr) {</span></a>
+<a name="194"><span class="lineNum">     194 </span>            :       // This can happen due to a race condition within the mpscq</a>
+<a name="195"><span class="lineNum">     195 </span>            :       // implementation or because of a race with Run()/Schedule().</a>
+<a name="196"><span class="lineNum">     196 </span><span class="lineCov">     998467 :       if (GRPC_TRACE_FLAG_ENABLED(grpc_work_serializer_trace)) {</span></a>
+<a name="197"><span class="lineNum">     197 </span><span class="lineNoCov">          0 :         gpr_log(GPR_INFO, &quot;  Queue returned nullptr, trying again&quot;);</span></a>
+<a name="198"><span class="lineNum">     198 </span>            :       }</a>
+<a name="199"><span class="lineNum">     199 </span>            :     }</a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineCov">   89537718 :     if (GRPC_TRACE_FLAG_ENABLED(grpc_work_serializer_trace)) {</span></a>
+<a name="201"><span class="lineNum">     201 </span><span class="lineCov">         27 :       gpr_log(GPR_INFO, &quot;  Running item %p : callback scheduled at [%s:%d]&quot;,</span></a>
+<a name="202"><span class="lineNum">     202 </span>            :               cb_wrapper, cb_wrapper-&gt;location.file(),</a>
+<a name="203"><span class="lineNum">     203 </span>            :               cb_wrapper-&gt;location.line());</a>
+<a name="204"><span class="lineNum">     204 </span>            :     }</a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineCov">   89537718 :     cb_wrapper-&gt;callback();</span></a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineCov">   89537717 :     delete cb_wrapper;</span></a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineCov">   89537715 :   }</span></a>
+<a name="208"><span class="lineNum">     208 </span>            : }</a>
+<a name="209"><span class="lineNum">     209 </span>            : </a>
+<a name="210"><span class="lineNum">     210 </span>            : //</a>
+<a name="211"><span class="lineNum">     211 </span>            : // WorkSerializer</a>
+<a name="212"><span class="lineNum">     212 </span>            : //</a>
+<a name="213"><span class="lineNum">     213 </span>            : </a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineCov">      67954 : WorkSerializer::WorkSerializer()</span></a>
+<a name="215"><span class="lineNum">     215 </span><span class="lineCov">      67954 :     : impl_(MakeOrphanable&lt;WorkSerializerImpl&gt;()) {}</span></a>
+<a name="216"><span class="lineNum">     216 </span>            : </a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineCov">      67520 : WorkSerializer::~WorkSerializer() {}</span></a>
+<a name="218"><span class="lineNum">     218 </span>            : </a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineCov">   35032474 : void WorkSerializer::Run(std::function&lt;void()&gt; callback,</span></a>
+<a name="220"><span class="lineNum">     220 </span>            :                          const DebugLocation&amp; location) {</a>
+<a name="221"><span class="lineNum">     221 </span><span class="lineCov">   35032474 :   impl_-&gt;Run(std::move(callback), location);</span></a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineCov">   42009962 : }</span></a>
+<a name="223"><span class="lineNum">     223 </span>            : </a>
+<a name="224"><span class="lineNum">     224 </span><span class="lineCov">   28512557 : void WorkSerializer::Schedule(std::function&lt;void()&gt; callback,</span></a>
+<a name="225"><span class="lineNum">     225 </span>            :                               const DebugLocation&amp; location) {</a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineCov">   28512557 :   impl_-&gt;Schedule(std::move(callback), location);</span></a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">   38777900 : }</span></a>
+<a name="228"><span class="lineNum">     228 </span>            : </a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineCov">      45428 : void WorkSerializer::DrainQueue() { impl_-&gt;DrainQueue(); }</span></a>
+<a name="230"><span class="lineNum">     230 </span>            : </a>
+<a name="231"><span class="lineNum">     231 </span>            : }  // namespace grpc_core</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

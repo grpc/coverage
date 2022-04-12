@@ -1,0 +1,271 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/cpp/server/load_reporter/load_reporter_async_service_impl.h</title>
+  <link rel="stylesheet" type="text/css" href="../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../index.html">top level</a> - <a href="index.html">src/cpp/server/load_reporter</a> - load_reporter_async_service_impl.h<span style="font-size: 80%;"> (source / <a href="load_reporter_async_service_impl.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntry">8</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-12 14:35:39</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntry">3</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<a name="2"><span class="lineNum">       2 </span>            :  *</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * Copyright 2018 gRPC authors.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * you may not use this file except in compliance with the License.</a>
+<a name="7"><span class="lineNum">       7 </span>            :  * You may obtain a copy of the License at</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *</a>
+<a name="9"><span class="lineNum">       9 </span>            :  *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="10"><span class="lineNum">      10 </span>            :  *</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * Unless required by applicable law or agreed to in writing, software</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * See the License for the specific language governing permissions and</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * limitations under the License.</a>
+<a name="16"><span class="lineNum">      16 </span>            :  *</a>
+<a name="17"><span class="lineNum">      17 </span>            :  */</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #ifndef GRPC_SRC_CPP_SERVER_LOAD_REPORTER_ASYNC_SERVICE_IMPL_H</a>
+<a name="20"><span class="lineNum">      20 </span>            : #define GRPC_SRC_CPP_SERVER_LOAD_REPORTER_ASYNC_SERVICE_IMPL_H</a>
+<a name="21"><span class="lineNum">      21 </span>            : </a>
+<a name="22"><span class="lineNum">      22 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="23"><span class="lineNum">      23 </span>            : </a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &lt;grpc/support/log.h&gt;</a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &lt;grpcpp/alarm.h&gt;</a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &lt;grpcpp/grpcpp.h&gt;</a>
+<a name="27"><span class="lineNum">      27 </span>            : </a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &quot;src/core/lib/gprpp/sync.h&quot;</a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &quot;src/core/lib/gprpp/thd.h&quot;</a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &quot;src/cpp/server/load_reporter/load_reporter.h&quot;</a>
+<a name="31"><span class="lineNum">      31 </span>            : </a>
+<a name="32"><span class="lineNum">      32 </span>            : namespace grpc {</a>
+<a name="33"><span class="lineNum">      33 </span>            : namespace load_reporter {</a>
+<a name="34"><span class="lineNum">      34 </span>            : </a>
+<a name="35"><span class="lineNum">      35 </span>            : // Async load reporting service. It's mainly responsible for controlling the</a>
+<a name="36"><span class="lineNum">      36 </span>            : // procedure of incoming requests. The real business logic is handed off to the</a>
+<a name="37"><span class="lineNum">      37 </span>            : // LoadReporter. There should be at most one instance of this service on a</a>
+<a name="38"><span class="lineNum">      38 </span>            : // server to avoid spreading the load data into multiple places.</a>
+<a name="39"><span class="lineNum">      39 </span>            : class LoadReporterAsyncServiceImpl</a>
+<a name="40"><span class="lineNum">      40 </span>            :     : public grpc::lb::v1::LoadReporter::AsyncService {</a>
+<a name="41"><span class="lineNum">      41 </span>            :  public:</a>
+<a name="42"><span class="lineNum">      42 </span>            :   explicit LoadReporterAsyncServiceImpl(</a>
+<a name="43"><span class="lineNum">      43 </span>            :       std::unique_ptr&lt;ServerCompletionQueue&gt; cq);</a>
+<a name="44"><span class="lineNum">      44 </span>            :   ~LoadReporterAsyncServiceImpl() override;</a>
+<a name="45"><span class="lineNum">      45 </span>            : </a>
+<a name="46"><span class="lineNum">      46 </span>            :   // Starts the working thread.</a>
+<a name="47"><span class="lineNum">      47 </span>            :   void StartThread();</a>
+<a name="48"><span class="lineNum">      48 </span>            : </a>
+<a name="49"><span class="lineNum">      49 </span>            :   // Not copyable nor movable.</a>
+<a name="50"><span class="lineNum">      50 </span>            :   LoadReporterAsyncServiceImpl(const LoadReporterAsyncServiceImpl&amp;) = delete;</a>
+<a name="51"><span class="lineNum">      51 </span>            :   LoadReporterAsyncServiceImpl&amp; operator=(const LoadReporterAsyncServiceImpl&amp;) =</a>
+<a name="52"><span class="lineNum">      52 </span>            :       delete;</a>
+<a name="53"><span class="lineNum">      53 </span>            : </a>
+<a name="54"><span class="lineNum">      54 </span>            :  private:</a>
+<a name="55"><span class="lineNum">      55 </span>            :   class ReportLoadHandler;</a>
+<a name="56"><span class="lineNum">      56 </span>            : </a>
+<a name="57"><span class="lineNum">      57 </span>            :   // A tag that can be called with a bool argument. It's tailored for</a>
+<a name="58"><span class="lineNum">      58 </span>            :   // ReportLoadHandler's use. Before being used, it should be constructed with a</a>
+<a name="59"><span class="lineNum">      59 </span>            :   // method of ReportLoadHandler and a shared pointer to the handler. The</a>
+<a name="60"><span class="lineNum">      60 </span>            :   // shared pointer will be moved to the invoked function and the function can</a>
+<a name="61"><span class="lineNum">      61 </span>            :   // only be invoked once. That makes ref counting of the handler easier,</a>
+<a name="62"><span class="lineNum">      62 </span>            :   // because the shared pointer is not bound to the function and can be gone</a>
+<a name="63"><span class="lineNum">      63 </span>            :   // once the invoked function returns (if not used any more).</a>
+<a name="64"><span class="lineNum">      64 </span>            :   class CallableTag {</a>
+<a name="65"><span class="lineNum">      65 </span>            :    public:</a>
+<a name="66"><span class="lineNum">      66 </span>            :     using HandlerFunction =</a>
+<a name="67"><span class="lineNum">      67 </span>            :         std::function&lt;void(std::shared_ptr&lt;ReportLoadHandler&gt;, bool)&gt;;</a>
+<a name="68"><span class="lineNum">      68 </span>            : </a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineCov">         36 :     CallableTag() {}</span></a>
+<a name="70"><span class="lineNum">      70 </span>            : </a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">         33 :     CallableTag(HandlerFunction func,</span></a>
+<a name="72"><span class="lineNum">      72 </span>            :                 std::shared_ptr&lt;ReportLoadHandler&gt; handler)</a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">         33 :         : handler_function_(std::move(func)), handler_(std::move(handler)) {</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">         33 :       GPR_ASSERT(handler_function_ != nullptr);</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">         33 :       GPR_ASSERT(handler_ != nullptr);</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineCov">         33 :     }</span></a>
+<a name="77"><span class="lineNum">      77 </span>            : </a>
+<a name="78"><span class="lineNum">      78 </span>            :     // Runs the tag. This should be called only once. The handler is no longer</a>
+<a name="79"><span class="lineNum">      79 </span>            :     // owned by this tag after this method is invoked.</a>
+<a name="80"><span class="lineNum">      80 </span>            :     void Run(bool ok);</a>
+<a name="81"><span class="lineNum">      81 </span>            : </a>
+<a name="82"><span class="lineNum">      82 </span>            :     // Releases and returns the shared pointer to the handler.</a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineCov">          3 :     std::shared_ptr&lt;ReportLoadHandler&gt; ReleaseHandler() {</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">          3 :       return std::move(handler_);</span></a>
+<a name="85"><span class="lineNum">      85 </span>            :     }</a>
+<a name="86"><span class="lineNum">      86 </span>            : </a>
+<a name="87"><span class="lineNum">      87 </span>            :    private:</a>
+<a name="88"><span class="lineNum">      88 </span>            :     HandlerFunction handler_function_ = nullptr;</a>
+<a name="89"><span class="lineNum">      89 </span>            :     std::shared_ptr&lt;ReportLoadHandler&gt; handler_;</a>
+<a name="90"><span class="lineNum">      90 </span>            :   };</a>
+<a name="91"><span class="lineNum">      91 </span>            : </a>
+<a name="92"><span class="lineNum">      92 </span>            :   // Each handler takes care of one load reporting stream. It contains</a>
+<a name="93"><span class="lineNum">      93 </span>            :   // per-stream data and it will access the members of the parent class (i.e.,</a>
+<a name="94"><span class="lineNum">      94 </span>            :   // LoadReporterAsyncServiceImpl) for service-wide data (e.g., the load data).</a>
+<a name="95"><span class="lineNum">      95 </span>            :   class ReportLoadHandler {</a>
+<a name="96"><span class="lineNum">      96 </span>            :    public:</a>
+<a name="97"><span class="lineNum">      97 </span>            :     // Instantiates a ReportLoadHandler and requests the next load reporting</a>
+<a name="98"><span class="lineNum">      98 </span>            :     // call. The handler object will manage its own lifetime, so no action is</a>
+<a name="99"><span class="lineNum">      99 </span>            :     // needed from the caller any more regarding that object.</a>
+<a name="100"><span class="lineNum">     100 </span>            :     static void CreateAndStart(ServerCompletionQueue* cq,</a>
+<a name="101"><span class="lineNum">     101 </span>            :                                LoadReporterAsyncServiceImpl* service,</a>
+<a name="102"><span class="lineNum">     102 </span>            :                                LoadReporter* load_reporter);</a>
+<a name="103"><span class="lineNum">     103 </span>            : </a>
+<a name="104"><span class="lineNum">     104 </span>            :     // This ctor is public because we want to use std::make_shared&lt;&gt; in</a>
+<a name="105"><span class="lineNum">     105 </span>            :     // CreateAndStart(). This ctor shouldn't be used elsewhere.</a>
+<a name="106"><span class="lineNum">     106 </span>            :     ReportLoadHandler(ServerCompletionQueue* cq,</a>
+<a name="107"><span class="lineNum">     107 </span>            :                       LoadReporterAsyncServiceImpl* service,</a>
+<a name="108"><span class="lineNum">     108 </span>            :                       LoadReporter* load_reporter);</a>
+<a name="109"><span class="lineNum">     109 </span>            : </a>
+<a name="110"><span class="lineNum">     110 </span>            :    private:</a>
+<a name="111"><span class="lineNum">     111 </span>            :     // After the handler has a call request delivered, it starts reading the</a>
+<a name="112"><span class="lineNum">     112 </span>            :     // initial request. Also, a new handler is spawned so that we can keep</a>
+<a name="113"><span class="lineNum">     113 </span>            :     // servicing future calls.</a>
+<a name="114"><span class="lineNum">     114 </span>            :     void OnRequestDelivered(std::shared_ptr&lt;ReportLoadHandler&gt; self, bool ok);</a>
+<a name="115"><span class="lineNum">     115 </span>            : </a>
+<a name="116"><span class="lineNum">     116 </span>            :     // The first Read() is expected to succeed, after which the handler starts</a>
+<a name="117"><span class="lineNum">     117 </span>            :     // sending load reports back to the balancer. The second Read() is</a>
+<a name="118"><span class="lineNum">     118 </span>            :     // expected to fail, which happens when the balancer half-closes the</a>
+<a name="119"><span class="lineNum">     119 </span>            :     // stream to signal that it's no longer interested in the load reports. For</a>
+<a name="120"><span class="lineNum">     120 </span>            :     // the latter case, the handler will then close the stream.</a>
+<a name="121"><span class="lineNum">     121 </span>            :     void OnReadDone(std::shared_ptr&lt;ReportLoadHandler&gt; self, bool ok);</a>
+<a name="122"><span class="lineNum">     122 </span>            : </a>
+<a name="123"><span class="lineNum">     123 </span>            :     // The report sending operations are sequential as: send report -&gt; send</a>
+<a name="124"><span class="lineNum">     124 </span>            :     // done, schedule the next send -&gt; waiting for the alarm to fire -&gt; alarm</a>
+<a name="125"><span class="lineNum">     125 </span>            :     // fires, send report -&gt; ...</a>
+<a name="126"><span class="lineNum">     126 </span>            :     void SendReport(std::shared_ptr&lt;ReportLoadHandler&gt; self, bool ok);</a>
+<a name="127"><span class="lineNum">     127 </span>            :     void ScheduleNextReport(std::shared_ptr&lt;ReportLoadHandler&gt; self, bool ok);</a>
+<a name="128"><span class="lineNum">     128 </span>            : </a>
+<a name="129"><span class="lineNum">     129 </span>            :     // Called when Finish() is done.</a>
+<a name="130"><span class="lineNum">     130 </span>            :     void OnFinishDone(std::shared_ptr&lt;ReportLoadHandler&gt; self, bool ok);</a>
+<a name="131"><span class="lineNum">     131 </span>            : </a>
+<a name="132"><span class="lineNum">     132 </span>            :     // Called when AsyncNotifyWhenDone() notifies us.</a>
+<a name="133"><span class="lineNum">     133 </span>            :     void OnDoneNotified(std::shared_ptr&lt;ReportLoadHandler&gt; self, bool ok);</a>
+<a name="134"><span class="lineNum">     134 </span>            : </a>
+<a name="135"><span class="lineNum">     135 </span>            :     void Shutdown(std::shared_ptr&lt;ReportLoadHandler&gt; self, const char* reason);</a>
+<a name="136"><span class="lineNum">     136 </span>            : </a>
+<a name="137"><span class="lineNum">     137 </span>            :     // The key fields of the stream.</a>
+<a name="138"><span class="lineNum">     138 </span>            :     std::string lb_id_;</a>
+<a name="139"><span class="lineNum">     139 </span>            :     std::string load_balanced_hostname_;</a>
+<a name="140"><span class="lineNum">     140 </span>            :     std::string load_key_;</a>
+<a name="141"><span class="lineNum">     141 </span>            :     uint64_t load_report_interval_ms_;</a>
+<a name="142"><span class="lineNum">     142 </span>            : </a>
+<a name="143"><span class="lineNum">     143 </span>            :     // The data for RPC communication with the load reportee.</a>
+<a name="144"><span class="lineNum">     144 </span>            :     ServerContext ctx_;</a>
+<a name="145"><span class="lineNum">     145 </span>            :     grpc::lb::v1::LoadReportRequest request_;</a>
+<a name="146"><span class="lineNum">     146 </span>            : </a>
+<a name="147"><span class="lineNum">     147 </span>            :     // The members passed down from LoadReporterAsyncServiceImpl.</a>
+<a name="148"><span class="lineNum">     148 </span>            :     ServerCompletionQueue* cq_;</a>
+<a name="149"><span class="lineNum">     149 </span>            :     LoadReporterAsyncServiceImpl* service_;</a>
+<a name="150"><span class="lineNum">     150 </span>            :     LoadReporter* load_reporter_;</a>
+<a name="151"><span class="lineNum">     151 </span>            :     ServerAsyncReaderWriter&lt;grpc::lb::v1::LoadReportResponse,</a>
+<a name="152"><span class="lineNum">     152 </span>            :                             grpc::lb::v1::LoadReportRequest&gt;</a>
+<a name="153"><span class="lineNum">     153 </span>            :         stream_;</a>
+<a name="154"><span class="lineNum">     154 </span>            : </a>
+<a name="155"><span class="lineNum">     155 </span>            :     // The status of the RPC progress.</a>
+<a name="156"><span class="lineNum">     156 </span>            :     enum CallStatus {</a>
+<a name="157"><span class="lineNum">     157 </span>            :       WAITING_FOR_DELIVERY,</a>
+<a name="158"><span class="lineNum">     158 </span>            :       DELIVERED,</a>
+<a name="159"><span class="lineNum">     159 </span>            :       INITIAL_REQUEST_RECEIVED,</a>
+<a name="160"><span class="lineNum">     160 </span>            :       INITIAL_RESPONSE_SENT,</a>
+<a name="161"><span class="lineNum">     161 </span>            :       FINISH_CALLED</a>
+<a name="162"><span class="lineNum">     162 </span>            :     } call_status_;</a>
+<a name="163"><span class="lineNum">     163 </span>            :     bool shutdown_{false};</a>
+<a name="164"><span class="lineNum">     164 </span>            :     bool done_notified_{false};</a>
+<a name="165"><span class="lineNum">     165 </span>            :     bool is_cancelled_{false};</a>
+<a name="166"><span class="lineNum">     166 </span>            :     CallableTag on_done_notified_;</a>
+<a name="167"><span class="lineNum">     167 </span>            :     CallableTag on_finish_done_;</a>
+<a name="168"><span class="lineNum">     168 </span>            :     CallableTag next_inbound_;</a>
+<a name="169"><span class="lineNum">     169 </span>            :     CallableTag next_outbound_;</a>
+<a name="170"><span class="lineNum">     170 </span>            :     std::unique_ptr&lt;Alarm&gt; next_report_alarm_;</a>
+<a name="171"><span class="lineNum">     171 </span>            :   };</a>
+<a name="172"><span class="lineNum">     172 </span>            : </a>
+<a name="173"><span class="lineNum">     173 </span>            :   // Handles the incoming requests and drives the completion queue in a loop.</a>
+<a name="174"><span class="lineNum">     174 </span>            :   static void Work(void* arg);</a>
+<a name="175"><span class="lineNum">     175 </span>            : </a>
+<a name="176"><span class="lineNum">     176 </span>            :   // Schedules the next data fetching from Census and LB feedback sampling.</a>
+<a name="177"><span class="lineNum">     177 </span>            :   void ScheduleNextFetchAndSample();</a>
+<a name="178"><span class="lineNum">     178 </span>            : </a>
+<a name="179"><span class="lineNum">     179 </span>            :   // Fetches data from Census and samples LB feedback.</a>
+<a name="180"><span class="lineNum">     180 </span>            :   void FetchAndSample(bool ok);</a>
+<a name="181"><span class="lineNum">     181 </span>            : </a>
+<a name="182"><span class="lineNum">     182 </span>            :   std::unique_ptr&lt;ServerCompletionQueue&gt; cq_;</a>
+<a name="183"><span class="lineNum">     183 </span>            :   // To synchronize the operations related to shutdown state of cq_, so that we</a>
+<a name="184"><span class="lineNum">     184 </span>            :   // don't enqueue new tags into cq_ after it is already shut down.</a>
+<a name="185"><span class="lineNum">     185 </span>            :   grpc_core::Mutex cq_shutdown_mu_;</a>
+<a name="186"><span class="lineNum">     186 </span>            :   std::atomic_bool shutdown_{false};</a>
+<a name="187"><span class="lineNum">     187 </span>            :   std::unique_ptr&lt;grpc_core::Thread&gt; thread_;</a>
+<a name="188"><span class="lineNum">     188 </span>            :   std::unique_ptr&lt;LoadReporter&gt; load_reporter_;</a>
+<a name="189"><span class="lineNum">     189 </span>            :   std::unique_ptr&lt;Alarm&gt; next_fetch_and_sample_alarm_;</a>
+<a name="190"><span class="lineNum">     190 </span>            : };</a>
+<a name="191"><span class="lineNum">     191 </span>            : </a>
+<a name="192"><span class="lineNum">     192 </span>            : }  // namespace load_reporter</a>
+<a name="193"><span class="lineNum">     193 </span>            : }  // namespace grpc</a>
+<a name="194"><span class="lineNum">     194 </span>            : </a>
+<a name="195"><span class="lineNum">     195 </span>            : #endif  // GRPC_SRC_CPP_SERVER_LOAD_REPORTER_ASYNC_SERVICE_IMPL_H</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

@@ -1,0 +1,472 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/core/lib/http/httpcli.cc</title>
+  <link rel="stylesheet" type="text/css" href="../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../index.html">top level</a> - <a href="index.html">src/core/lib/http</a> - httpcli.cc<span style="font-size: 80%;"> (source / <a href="httpcli.cc.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">216</td>
+            <td class="headerCovTableEntry">224</td>
+            <td class="headerCovTableEntryHi">96.4 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-12 14:35:39</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">19</td>
+            <td class="headerCovTableEntry">19</td>
+            <td class="headerCovTableEntryHi">100.0 %</td>
+          </tr>
+          <tr><td><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<a name="2"><span class="lineNum">       2 </span>            :  *</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * Copyright 2015 gRPC authors.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * you may not use this file except in compliance with the License.</a>
+<a name="7"><span class="lineNum">       7 </span>            :  * You may obtain a copy of the License at</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *</a>
+<a name="9"><span class="lineNum">       9 </span>            :  *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="10"><span class="lineNum">      10 </span>            :  *</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * Unless required by applicable law or agreed to in writing, software</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * See the License for the specific language governing permissions and</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * limitations under the License.</a>
+<a name="16"><span class="lineNum">      16 </span>            :  *</a>
+<a name="17"><span class="lineNum">      17 </span>            :  */</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="20"><span class="lineNum">      20 </span>            : </a>
+<a name="21"><span class="lineNum">      21 </span>            : #include &quot;src/core/lib/http/httpcli.h&quot;</a>
+<a name="22"><span class="lineNum">      22 </span>            : </a>
+<a name="23"><span class="lineNum">      23 </span>            : #include &lt;string.h&gt;</a>
+<a name="24"><span class="lineNum">      24 </span>            : </a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &lt;string&gt;</a>
+<a name="26"><span class="lineNum">      26 </span>            : </a>
+<a name="27"><span class="lineNum">      27 </span>            : #include &quot;absl/functional/bind_front.h&quot;</a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &quot;absl/strings/str_format.h&quot;</a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &quot;absl/strings/string_view.h&quot;</a>
+<a name="30"><span class="lineNum">      30 </span>            : </a>
+<a name="31"><span class="lineNum">      31 </span>            : #include &lt;grpc/grpc.h&gt;</a>
+<a name="32"><span class="lineNum">      32 </span>            : #include &lt;grpc/support/alloc.h&gt;</a>
+<a name="33"><span class="lineNum">      33 </span>            : #include &lt;grpc/support/log.h&gt;</a>
+<a name="34"><span class="lineNum">      34 </span>            : #include &lt;grpc/support/string_util.h&gt;</a>
+<a name="35"><span class="lineNum">      35 </span>            : </a>
+<a name="36"><span class="lineNum">      36 </span>            : #include &quot;src/core/lib/address_utils/sockaddr_utils.h&quot;</a>
+<a name="37"><span class="lineNum">      37 </span>            : #include &quot;src/core/lib/channel/channel_args.h&quot;</a>
+<a name="38"><span class="lineNum">      38 </span>            : #include &quot;src/core/lib/gpr/string.h&quot;</a>
+<a name="39"><span class="lineNum">      39 </span>            : #include &quot;src/core/lib/gprpp/memory.h&quot;</a>
+<a name="40"><span class="lineNum">      40 </span>            : #include &quot;src/core/lib/http/format_request.h&quot;</a>
+<a name="41"><span class="lineNum">      41 </span>            : #include &quot;src/core/lib/http/parser.h&quot;</a>
+<a name="42"><span class="lineNum">      42 </span>            : #include &quot;src/core/lib/iomgr/endpoint.h&quot;</a>
+<a name="43"><span class="lineNum">      43 </span>            : #include &quot;src/core/lib/iomgr/iomgr_internal.h&quot;</a>
+<a name="44"><span class="lineNum">      44 </span>            : #include &quot;src/core/lib/iomgr/resolve_address.h&quot;</a>
+<a name="45"><span class="lineNum">      45 </span>            : #include &quot;src/core/lib/iomgr/tcp_client.h&quot;</a>
+<a name="46"><span class="lineNum">      46 </span>            : #include &quot;src/core/lib/resource_quota/api.h&quot;</a>
+<a name="47"><span class="lineNum">      47 </span>            : #include &quot;src/core/lib/slice/slice_internal.h&quot;</a>
+<a name="48"><span class="lineNum">      48 </span>            : #include &quot;src/core/lib/transport/error_utils.h&quot;</a>
+<a name="49"><span class="lineNum">      49 </span>            : </a>
+<a name="50"><span class="lineNum">      50 </span>            : namespace grpc_core {</a>
+<a name="51"><span class="lineNum">      51 </span>            : </a>
+<a name="52"><span class="lineNum">      52 </span>            : namespace {</a>
+<a name="53"><span class="lineNum">      53 </span>            : </a>
+<a name="54"><span class="lineNum">      54 </span>            : grpc_httpcli_get_override g_get_override;</a>
+<a name="55"><span class="lineNum">      55 </span>            : grpc_httpcli_post_override g_post_override;</a>
+<a name="56"><span class="lineNum">      56 </span>            : void (*g_test_only_on_handshake_done_intercept)(HttpRequest* req);</a>
+<a name="57"><span class="lineNum">      57 </span>            : </a>
+<a name="58"><span class="lineNum">      58 </span>            : }  // namespace</a>
+<a name="59"><span class="lineNum">      59 </span>            : </a>
+<a name="60"><span class="lineNum">      60 </span><span class="lineCov">      70055 : OrphanablePtr&lt;HttpRequest&gt; HttpRequest::Get(</span></a>
+<a name="61"><span class="lineNum">      61 </span>            :     URI uri, const grpc_channel_args* channel_args,</a>
+<a name="62"><span class="lineNum">      62 </span>            :     grpc_polling_entity* pollent, const grpc_http_request* request,</a>
+<a name="63"><span class="lineNum">      63 </span>            :     Timestamp deadline, grpc_closure* on_done, grpc_http_response* response,</a>
+<a name="64"><span class="lineNum">      64 </span>            :     RefCountedPtr&lt;grpc_channel_credentials&gt; channel_creds) {</a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">      70055 :   absl::optional&lt;std::function&lt;void()&gt;&gt; test_only_generate_response;</span></a>
+<a name="66"><span class="lineNum">      66 </span><span class="lineCov">      70055 :   if (g_get_override != nullptr) {</span></a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineCov">         98 :     test_only_generate_response = [request, uri, deadline, on_done,</span></a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">        196 :                                    response]() {</span></a>
+<a name="69"><span class="lineNum">      69 </span>            :       // Note that capturing request here assumes it will remain alive</a>
+<a name="70"><span class="lineNum">      70 </span>            :       // until after Start is called. This avoids making a copy as this</a>
+<a name="71"><span class="lineNum">      71 </span>            :       // code path is only used for test mocks.</a>
+<a name="72"><span class="lineNum">      72 </span><span class="lineCov">         98 :       g_get_override(request, uri.authority().c_str(), uri.path().c_str(),</span></a>
+<a name="73"><span class="lineNum">      73 </span>            :                      deadline, on_done, response);</a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">         98 :     };</span></a>
+<a name="75"><span class="lineNum">      75 </span>            :   }</a>
+<a name="76"><span class="lineNum">      76 </span>            :   std::string name =</a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineCov">      70055 :       absl::StrFormat(&quot;HTTP:GET:%s:%s&quot;, uri.authority(), uri.path());</span></a>
+<a name="78"><span class="lineNum">      78 </span><span class="lineCov">     140109 :   const grpc_slice request_text = grpc_httpcli_format_get_request(</span></a>
+<a name="79"><span class="lineNum">      79 </span><span class="lineCov">     140110 :       request, uri.authority().c_str(), uri.path().c_str());</span></a>
+<a name="80"><span class="lineNum">      80 </span>            :   return MakeOrphanable&lt;HttpRequest&gt;(</a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">      70056 :       std::move(uri), request_text, response, deadline, channel_args, on_done,</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">      70054 :       pollent, name.c_str(), std::move(test_only_generate_response),</span></a>
+<a name="83"><span class="lineNum">      83 </span><span class="lineCov">     210165 :       std::move(channel_creds));</span></a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">      70052 : }</span></a>
+<a name="85"><span class="lineNum">      85 </span>            : </a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineCov">         78 : OrphanablePtr&lt;HttpRequest&gt; HttpRequest::Post(</span></a>
+<a name="87"><span class="lineNum">      87 </span>            :     URI uri, const grpc_channel_args* channel_args,</a>
+<a name="88"><span class="lineNum">      88 </span>            :     grpc_polling_entity* pollent, const grpc_http_request* request,</a>
+<a name="89"><span class="lineNum">      89 </span>            :     Timestamp deadline, grpc_closure* on_done, grpc_http_response* response,</a>
+<a name="90"><span class="lineNum">      90 </span>            :     RefCountedPtr&lt;grpc_channel_credentials&gt; channel_creds) {</a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineCov">         78 :   absl::optional&lt;std::function&lt;void()&gt;&gt; test_only_generate_response;</span></a>
+<a name="92"><span class="lineNum">      92 </span><span class="lineCov">         78 :   if (g_post_override != nullptr) {</span></a>
+<a name="93"><span class="lineNum">      93 </span><span class="lineCov">         72 :     test_only_generate_response = [request, uri, deadline, on_done,</span></a>
+<a name="94"><span class="lineNum">      94 </span><span class="lineCov">        144 :                                    response]() {</span></a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineCov">         72 :       g_post_override(request, uri.authority().c_str(), uri.path().c_str(),</span></a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineCov">         72 :                       request-&gt;body, request-&gt;body_length, deadline, on_done,</span></a>
+<a name="97"><span class="lineNum">      97 </span>            :                       response);</a>
+<a name="98"><span class="lineNum">      98 </span><span class="lineCov">         72 :     };</span></a>
+<a name="99"><span class="lineNum">      99 </span>            :   }</a>
+<a name="100"><span class="lineNum">     100 </span>            :   std::string name =</a>
+<a name="101"><span class="lineNum">     101 </span><span class="lineCov">         78 :       absl::StrFormat(&quot;HTTP:POST:%s:%s&quot;, uri.authority(), uri.path());</span></a>
+<a name="102"><span class="lineNum">     102 </span><span class="lineCov">        156 :   const grpc_slice request_text = grpc_httpcli_format_post_request(</span></a>
+<a name="103"><span class="lineNum">     103 </span><span class="lineCov">        156 :       request, uri.authority().c_str(), uri.path().c_str());</span></a>
+<a name="104"><span class="lineNum">     104 </span>            :   return MakeOrphanable&lt;HttpRequest&gt;(</a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">         78 :       std::move(uri), request_text, response, deadline, channel_args, on_done,</span></a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineCov">         78 :       pollent, name.c_str(), std::move(test_only_generate_response),</span></a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineCov">        234 :       std::move(channel_creds));</span></a>
+<a name="108"><span class="lineNum">     108 </span><span class="lineCov">         78 : }</span></a>
+<a name="109"><span class="lineNum">     109 </span>            : </a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">        271 : void HttpRequest::SetOverride(grpc_httpcli_get_override get,</span></a>
+<a name="111"><span class="lineNum">     111 </span>            :                               grpc_httpcli_post_override post) {</a>
+<a name="112"><span class="lineNum">     112 </span><span class="lineCov">        271 :   g_get_override = get;</span></a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineCov">        271 :   g_post_override = post;</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">        271 : }</span></a>
+<a name="115"><span class="lineNum">     115 </span>            : </a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">          6 : void HttpRequest::TestOnlySetOnHandshakeDoneIntercept(</span></a>
+<a name="117"><span class="lineNum">     117 </span>            :     void (*intercept)(HttpRequest* req)) {</a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">          6 :   g_test_only_on_handshake_done_intercept = intercept;</span></a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineCov">          6 : }</span></a>
+<a name="120"><span class="lineNum">     120 </span>            : </a>
+<a name="121"><span class="lineNum">     121 </span><span class="lineCov">      70133 : HttpRequest::HttpRequest(</span></a>
+<a name="122"><span class="lineNum">     122 </span>            :     URI uri, const grpc_slice&amp; request_text, grpc_http_response* response,</a>
+<a name="123"><span class="lineNum">     123 </span>            :     Timestamp deadline, const grpc_channel_args* channel_args,</a>
+<a name="124"><span class="lineNum">     124 </span>            :     grpc_closure* on_done, grpc_polling_entity* pollent, const char* name,</a>
+<a name="125"><span class="lineNum">     125 </span>            :     absl::optional&lt;std::function&lt;void()&gt;&gt; test_only_generate_response,</a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">      70133 :     RefCountedPtr&lt;grpc_channel_credentials&gt; channel_creds)</span></a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineCov">      70131 :     : uri_(std::move(uri)),</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">      70133 :       request_text_(request_text),</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineCov">      70133 :       deadline_(deadline),</span></a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">      70133 :       channel_args_(CoreConfiguration::Get()</span></a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineCov">      70132 :                         .channel_args_preconditioning()</span></a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineCov">      70132 :                         .PreconditionChannelArgs(channel_args)),</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">      70133 :       channel_creds_(std::move(channel_creds)),</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineCov">      70133 :       on_done_(on_done),</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">      70133 :       resource_quota_(ResourceQuotaFromChannelArgs(channel_args_)),</span></a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">      70134 :       pollent_(pollent),</span></a>
+<a name="137"><span class="lineNum">     137 </span><span class="lineCov">      70134 :       pollset_set_(grpc_pollset_set_create()),</span></a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineCov">     210400 :       test_only_generate_response_(std::move(test_only_generate_response)) {</span></a>
+<a name="139"><span class="lineNum">     139 </span><span class="lineCov">      70132 :   grpc_http_parser_init(&amp;parser_, GRPC_HTTP_RESPONSE, response);</span></a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineCov">      70132 :   grpc_slice_buffer_init(&amp;incoming_);</span></a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineCov">      70133 :   grpc_slice_buffer_init(&amp;outgoing_);</span></a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineCov">      70131 :   grpc_iomgr_register_object(&amp;iomgr_obj_, name);</span></a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineCov">      70133 :   GRPC_CLOSURE_INIT(&amp;on_read_, OnRead, this, grpc_schedule_on_exec_ctx);</span></a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineCov">      70133 :   GRPC_CLOSURE_INIT(&amp;continue_on_read_after_schedule_on_exec_ctx_,</span></a>
+<a name="145"><span class="lineNum">     145 </span>            :                     ContinueOnReadAfterScheduleOnExecCtx, this,</a>
+<a name="146"><span class="lineNum">     146 </span>            :                     grpc_schedule_on_exec_ctx);</a>
+<a name="147"><span class="lineNum">     147 </span><span class="lineCov">      70133 :   GRPC_CLOSURE_INIT(&amp;done_write_, DoneWrite, this, grpc_schedule_on_exec_ctx);</span></a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineCov">      70132 :   GRPC_CLOSURE_INIT(&amp;continue_done_write_after_schedule_on_exec_ctx_,</span></a>
+<a name="149"><span class="lineNum">     149 </span>            :                     ContinueDoneWriteAfterScheduleOnExecCtx, this,</a>
+<a name="150"><span class="lineNum">     150 </span>            :                     grpc_schedule_on_exec_ctx);</a>
+<a name="151"><span class="lineNum">     151 </span><span class="lineCov">      70132 :   GPR_ASSERT(pollent);</span></a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">      70132 :   grpc_polling_entity_add_to_pollset_set(pollent, pollset_set_);</span></a>
+<a name="153"><span class="lineNum">     153 </span>            :   // Create the DNS resolver. We'll start resolving when Start is called.</a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineCov">     350656 :   dns_request_ = GetDNSResolver()-&gt;ResolveName(</span></a>
+<a name="155"><span class="lineNum">     155 </span><span class="lineCov">     140264 :       uri_.authority(), uri_.scheme(), pollset_set_,</span></a>
+<a name="156"><span class="lineNum">     156 </span><span class="lineCov">     140262 :       absl::bind_front(&amp;HttpRequest::OnResolved, this));</span></a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">      70127 : }</span></a>
+<a name="158"><span class="lineNum">     158 </span>            : </a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">     280536 : HttpRequest::~HttpRequest() {</span></a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineCov">      70134 :   grpc_channel_args_destroy(channel_args_);</span></a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">      70134 :   grpc_http_parser_destroy(&amp;parser_);</span></a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineCov">      70134 :   if (own_endpoint_ &amp;&amp; ep_ != nullptr) {</span></a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">      68185 :     grpc_endpoint_destroy(ep_);</span></a>
+<a name="164"><span class="lineNum">     164 </span>            :   }</a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineCov">      70134 :   grpc_slice_unref_internal(request_text_);</span></a>
+<a name="166"><span class="lineNum">     166 </span><span class="lineCov">      70133 :   grpc_iomgr_unregister_object(&amp;iomgr_obj_);</span></a>
+<a name="167"><span class="lineNum">     167 </span><span class="lineCov">      70134 :   grpc_slice_buffer_destroy_internal(&amp;incoming_);</span></a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">      70134 :   grpc_slice_buffer_destroy_internal(&amp;outgoing_);</span></a>
+<a name="169"><span class="lineNum">     169 </span><span class="lineCov">      70134 :   GRPC_ERROR_UNREF(overall_error_);</span></a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">      70134 :   grpc_pollset_set_destroy(pollset_set_);</span></a>
+<a name="171"><span class="lineNum">     171 </span><span class="lineCov">     140268 : }</span></a>
+<a name="172"><span class="lineNum">     172 </span>            : </a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">      70132 : void HttpRequest::Start() {</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">      70132 :   MutexLock lock(&amp;mu_);</span></a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">      70134 :   if (test_only_generate_response_.has_value()) {</span></a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineCov">        170 :     test_only_generate_response_.value()();</span></a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineCov">        170 :     return;</span></a>
+<a name="178"><span class="lineNum">     178 </span>            :   }</a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">      69964 :   Ref().release();  // ref held by pending DNS resolution</span></a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineCov">      69964 :   dns_request_-&gt;Start();</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">      70134 : }</span></a>
+<a name="182"><span class="lineNum">     182 </span>            : </a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineCov">      70133 : void HttpRequest::Orphan() {</span></a>
+<a name="184"><span class="lineNum">     184 </span>            :   {</a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineCov">      70133 :     MutexLock lock(&amp;mu_);</span></a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">      70134 :     GPR_ASSERT(!cancelled_);</span></a>
+<a name="187"><span class="lineNum">     187 </span><span class="lineCov">      70134 :     cancelled_ = true;</span></a>
+<a name="188"><span class="lineNum">     188 </span><span class="lineCov">      70134 :     dns_request_.reset();  // cancel potentially pending DNS resolution</span></a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineCov">      70134 :     if (connecting_) {</span></a>
+<a name="190"><span class="lineNum">     190 </span>            :       // gRPC's TCP connection establishment API doesn't currently have</a>
+<a name="191"><span class="lineNum">     191 </span>            :       // a mechanism for cancellation. So invoke the user callback now. The TCP</a>
+<a name="192"><span class="lineNum">     192 </span>            :       // connection will eventually complete (at least within its deadline), and</a>
+<a name="193"><span class="lineNum">     193 </span>            :       // we'll simply unref ourselves at that point.</a>
+<a name="194"><span class="lineNum">     194 </span>            :       // TODO(apolcyn): fix this to cancel the TCP connection attempt when</a>
+<a name="195"><span class="lineNum">     195 </span>            :       // an API to do so exists.</a>
+<a name="196"><span class="lineNum">     196 </span><span class="lineCov">        364 :       Finish(GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(</span></a>
+<a name="197"><span class="lineNum">     197 </span>            :           &quot;HTTP request cancelled during TCP connection establishment&quot;,</a>
+<a name="198"><span class="lineNum">     198 </span>            :           &amp;overall_error_, 1));</a>
+<a name="199"><span class="lineNum">     199 </span>            :     }</a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineCov">      70134 :     if (handshake_mgr_ != nullptr) {</span></a>
+<a name="201"><span class="lineNum">     201 </span><span class="lineCov">        945 :       handshake_mgr_-&gt;Shutdown(GRPC_ERROR_CREATE_FROM_STATIC_STRING(</span></a>
+<a name="202"><span class="lineNum">     202 </span>            :           &quot;HTTP request cancelled during security handshake&quot;));</a>
+<a name="203"><span class="lineNum">     203 </span>            :     }</a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineCov">      70134 :     if (own_endpoint_ &amp;&amp; ep_ != nullptr) {</span></a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineCov">      68182 :       grpc_endpoint_shutdown(</span></a>
+<a name="206"><span class="lineNum">     206 </span><span class="lineCov">     136364 :           ep_, GRPC_ERROR_CREATE_FROM_STATIC_STRING(&quot;HTTP request cancelled&quot;));</span></a>
+<a name="207"><span class="lineNum">     207 </span>            :     }</a>
+<a name="208"><span class="lineNum">     208 </span><span class="lineCov">      70134 :   }</span></a>
+<a name="209"><span class="lineNum">     209 </span><span class="lineCov">      70134 :   Unref();</span></a>
+<a name="210"><span class="lineNum">     210 </span><span class="lineCov">      70134 : }</span></a>
+<a name="211"><span class="lineNum">     211 </span>            : </a>
+<a name="212"><span class="lineNum">     212 </span><span class="lineCov">      68667 : void HttpRequest::AppendError(grpc_error_handle error) {</span></a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineCov">      68667 :   if (overall_error_ == GRPC_ERROR_NONE) {</span></a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineCov">      68664 :     overall_error_ =</span></a>
+<a name="215"><span class="lineNum">     215 </span><span class="lineCov">      68664 :         GRPC_ERROR_CREATE_FROM_STATIC_STRING(&quot;Failed HTTP/1 client request&quot;);</span></a>
+<a name="216"><span class="lineNum">     216 </span>            :   }</a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineCov">      68667 :   const grpc_resolved_address* addr = &amp;addresses_[next_address_ - 1];</span></a>
+<a name="218"><span class="lineNum">     218 </span><span class="lineCov">      68667 :   std::string addr_text = grpc_sockaddr_to_uri(addr);</span></a>
+<a name="219"><span class="lineNum">     219 </span><span class="lineCov">      68667 :   overall_error_ = grpc_error_add_child(</span></a>
+<a name="220"><span class="lineNum">     220 </span>            :       overall_error_,</a>
+<a name="221"><span class="lineNum">     221 </span>            :       grpc_error_set_str(error, GRPC_ERROR_STR_TARGET_ADDRESS, addr_text));</a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineCov">      68667 : }</span></a>
+<a name="223"><span class="lineNum">     223 </span>            : </a>
+<a name="224"><span class="lineNum">     224 </span><span class="lineCov">     158763 : void HttpRequest::OnReadInternal(grpc_error_handle error) {</span></a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineCov">     249341 :   for (size_t i = 0; i &lt; incoming_.count; i++) {</span></a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineCov">      90578 :     if (GRPC_SLICE_LENGTH(incoming_.slices[i])) {</span></a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">      90578 :       have_read_byte_ = 1;</span></a>
+<a name="228"><span class="lineNum">     228 </span>            :       grpc_error_handle err =</a>
+<a name="229"><span class="lineNum">     229 </span><span class="lineCov">      90578 :           grpc_http_parser_parse(&amp;parser_, incoming_.slices[i], nullptr);</span></a>
+<a name="230"><span class="lineNum">     230 </span><span class="lineCov">      90578 :       if (err != GRPC_ERROR_NONE) {</span></a>
+<a name="231"><span class="lineNum">     231 </span><span class="lineNoCov">          0 :         Finish(err);</span></a>
+<a name="232"><span class="lineNum">     232 </span><span class="lineNoCov">          0 :         return;</span></a>
+<a name="233"><span class="lineNum">     233 </span>            :       }</a>
+<a name="234"><span class="lineNum">     234 </span>            :     }</a>
+<a name="235"><span class="lineNum">     235 </span>            :   }</a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineCov">     158763 :   if (cancelled_) {</span></a>
+<a name="237"><span class="lineNum">     237 </span><span class="lineCov">        630 :     Finish(GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(</span></a>
+<a name="238"><span class="lineNum">     238 </span>            :         &quot;HTTP1 request cancelled during read&quot;, &amp;overall_error_, 1));</a>
+<a name="239"><span class="lineNum">     239 </span><span class="lineCov">     158133 :   } else if (error == GRPC_ERROR_NONE) {</span></a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineCov">      90581 :     DoRead();</span></a>
+<a name="241"><span class="lineNum">     241 </span><span class="lineCov">      67552 :   } else if (!have_read_byte_) {</span></a>
+<a name="242"><span class="lineNum">     242 </span><span class="lineNoCov">          0 :     NextAddress(GRPC_ERROR_REF(error));</span></a>
+<a name="243"><span class="lineNum">     243 </span>            :   } else {</a>
+<a name="244"><span class="lineNum">     244 </span><span class="lineCov">      67552 :     Finish(grpc_http_parser_eof(&amp;parser_));</span></a>
+<a name="245"><span class="lineNum">     245 </span>            :   }</a>
+<a name="246"><span class="lineNum">     246 </span>            : }</a>
+<a name="247"><span class="lineNum">     247 </span>            : </a>
+<a name="248"><span class="lineNum">     248 </span><span class="lineCov">      68182 : void HttpRequest::ContinueDoneWriteAfterScheduleOnExecCtx(</span></a>
+<a name="249"><span class="lineNum">     249 </span>            :     void* arg, grpc_error_handle error) {</a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineCov">      68182 :   RefCountedPtr&lt;HttpRequest&gt; req(static_cast&lt;HttpRequest*&gt;(arg));</span></a>
+<a name="251"><span class="lineNum">     251 </span><span class="lineCov">      68182 :   MutexLock lock(&amp;req-&gt;mu_);</span></a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineCov">      68182 :   if (error == GRPC_ERROR_NONE &amp;&amp; !req-&gt;cancelled_) {</span></a>
+<a name="253"><span class="lineNum">     253 </span><span class="lineCov">      68182 :     req-&gt;OnWritten();</span></a>
+<a name="254"><span class="lineNum">     254 </span>            :   } else {</a>
+<a name="255"><span class="lineNum">     255 </span><span class="lineNoCov">          0 :     req-&gt;NextAddress(GRPC_ERROR_REF(error));</span></a>
+<a name="256"><span class="lineNum">     256 </span>            :   }</a>
+<a name="257"><span class="lineNum">     257 </span><span class="lineCov">      68182 : }</span></a>
+<a name="258"><span class="lineNum">     258 </span>            : </a>
+<a name="259"><span class="lineNum">     259 </span><span class="lineCov">      68182 : void HttpRequest::StartWrite() {</span></a>
+<a name="260"><span class="lineNum">     260 </span><span class="lineCov">      68182 :   grpc_slice_ref_internal(request_text_);</span></a>
+<a name="261"><span class="lineNum">     261 </span><span class="lineCov">      68182 :   grpc_slice_buffer_add(&amp;outgoing_, request_text_);</span></a>
+<a name="262"><span class="lineNum">     262 </span><span class="lineCov">      68182 :   Ref().release();  // ref held by pending write</span></a>
+<a name="263"><span class="lineNum">     263 </span><span class="lineCov">      68182 :   grpc_endpoint_write(ep_, &amp;outgoing_, &amp;done_write_, nullptr);</span></a>
+<a name="264"><span class="lineNum">     264 </span><span class="lineCov">      68182 : }</span></a>
+<a name="265"><span class="lineNum">     265 </span>            : </a>
+<a name="266"><span class="lineNum">     266 </span><span class="lineCov">        945 : void HttpRequest::OnHandshakeDone(void* arg, grpc_error_handle error) {</span></a>
+<a name="267"><span class="lineNum">     267 </span><span class="lineCov">        945 :   auto* args = static_cast&lt;HandshakerArgs*&gt;(arg);</span></a>
+<a name="268"><span class="lineNum">     268 </span><span class="lineCov">        945 :   RefCountedPtr&lt;HttpRequest&gt; req(static_cast&lt;HttpRequest*&gt;(args-&gt;user_data));</span></a>
+<a name="269"><span class="lineNum">     269 </span><span class="lineCov">        945 :   if (g_test_only_on_handshake_done_intercept != nullptr) {</span></a>
+<a name="270"><span class="lineNum">     270 </span>            :     // Run this testing intercept before the lock so that it has a chance to</a>
+<a name="271"><span class="lineNum">     271 </span>            :     // do things like calling Orphan on the request</a>
+<a name="272"><span class="lineNum">     272 </span><span class="lineCov">          3 :     g_test_only_on_handshake_done_intercept(req.get());</span></a>
+<a name="273"><span class="lineNum">     273 </span>            :   }</a>
+<a name="274"><span class="lineNum">     274 </span><span class="lineCov">        945 :   MutexLock lock(&amp;req-&gt;mu_);</span></a>
+<a name="275"><span class="lineNum">     275 </span><span class="lineCov">        945 :   req-&gt;own_endpoint_ = true;</span></a>
+<a name="276"><span class="lineNum">     276 </span><span class="lineCov">        945 :   if (error != GRPC_ERROR_NONE) {</span></a>
+<a name="277"><span class="lineNum">     277 </span><span class="lineCov">        300 :     gpr_log(GPR_ERROR, &quot;Secure transport setup failed: %s&quot;,</span></a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineCov">        600 :             grpc_error_std_string(error).c_str());</span></a>
+<a name="279"><span class="lineNum">     279 </span><span class="lineCov">        300 :     req-&gt;NextAddress(GRPC_ERROR_REF(error));</span></a>
+<a name="280"><span class="lineNum">     280 </span><span class="lineCov">        300 :     return;</span></a>
+<a name="281"><span class="lineNum">     281 </span>            :   }</a>
+<a name="282"><span class="lineNum">     282 </span>            :   // Handshake completed, so we own fields in args</a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineCov">        645 :   grpc_channel_args_destroy(args-&gt;args);</span></a>
+<a name="284"><span class="lineNum">     284 </span><span class="lineCov">        645 :   grpc_slice_buffer_destroy_internal(args-&gt;read_buffer);</span></a>
+<a name="285"><span class="lineNum">     285 </span><span class="lineCov">        645 :   gpr_free(args-&gt;read_buffer);</span></a>
+<a name="286"><span class="lineNum">     286 </span><span class="lineCov">        645 :   req-&gt;ep_ = args-&gt;endpoint;</span></a>
+<a name="287"><span class="lineNum">     287 </span><span class="lineCov">        645 :   if (req-&gt;cancelled_) {</span></a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineCov">          3 :     req-&gt;NextAddress(GRPC_ERROR_CREATE_FROM_STATIC_STRING(</span></a>
+<a name="289"><span class="lineNum">     289 </span>            :         &quot;HTTP request cancelled during security handshake&quot;));</a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineCov">          3 :     return;</span></a>
+<a name="291"><span class="lineNum">     291 </span>            :   }</a>
+<a name="292"><span class="lineNum">     292 </span><span class="lineCov">        642 :   req-&gt;StartWrite();</span></a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineCov">       1248 : }</span></a>
+<a name="294"><span class="lineNum">     294 </span>            : </a>
+<a name="295"><span class="lineNum">     295 </span><span class="lineCov">     137213 : void HttpRequest::OnConnected(void* arg, grpc_error_handle error) {</span></a>
+<a name="296"><span class="lineNum">     296 </span><span class="lineCov">     137213 :   RefCountedPtr&lt;HttpRequest&gt; req(static_cast&lt;HttpRequest*&gt;(arg));</span></a>
+<a name="297"><span class="lineNum">     297 </span><span class="lineCov">     137213 :   MutexLock lock(&amp;req-&gt;mu_);</span></a>
+<a name="298"><span class="lineNum">     298 </span><span class="lineCov">     137213 :   req-&gt;connecting_ = false;</span></a>
+<a name="299"><span class="lineNum">     299 </span><span class="lineCov">     137213 :   req-&gt;own_endpoint_ = true;</span></a>
+<a name="300"><span class="lineNum">     300 </span><span class="lineCov">     137213 :   if (req-&gt;cancelled_) {</span></a>
+<a name="301"><span class="lineNum">     301 </span>            :     // since we were cancelled while connecting, Finish has already</a>
+<a name="302"><span class="lineNum">     302 </span>            :     // been called.</a>
+<a name="303"><span class="lineNum">     303 </span><span class="lineCov">        364 :     return;</span></a>
+<a name="304"><span class="lineNum">     304 </span>            :   }</a>
+<a name="305"><span class="lineNum">     305 </span><span class="lineCov">     136849 :   if (!req-&gt;ep_) {</span></a>
+<a name="306"><span class="lineNum">     306 </span><span class="lineCov">      68364 :     req-&gt;NextAddress(GRPC_ERROR_REF(error));</span></a>
+<a name="307"><span class="lineNum">     307 </span><span class="lineCov">      68364 :     return;</span></a>
+<a name="308"><span class="lineNum">     308 </span>            :   }</a>
+<a name="309"><span class="lineNum">     309 </span>            :   // TODO(yihuaz): treating nullptr channel_creds_ as insecure is</a>
+<a name="310"><span class="lineNum">     310 </span>            :   // a hack used to support the port server client (a test utility) in</a>
+<a name="311"><span class="lineNum">     311 </span>            :   // unsecure builds (when no definition of grpc_insecure_credentials_create</a>
+<a name="312"><span class="lineNum">     312 </span>            :   // exists). We can remove this hack and unconditionally assume a valid</a>
+<a name="313"><span class="lineNum">     313 </span>            :   // channel_creds_ object after unsecure builds are deleted, in</a>
+<a name="314"><span class="lineNum">     314 </span>            :   // https://github.com/grpc/grpc/pull/25586.</a>
+<a name="315"><span class="lineNum">     315 </span><span class="lineCov">      68485 :   if (req-&gt;channel_creds_ == nullptr) {</span></a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineCov">      67540 :     gpr_log(GPR_DEBUG,</span></a>
+<a name="317"><span class="lineNum">     317 </span>            :             &quot;HTTP request skipping handshake because creds are null&quot;);</a>
+<a name="318"><span class="lineNum">     318 </span><span class="lineCov">      67540 :     req-&gt;StartWrite();</span></a>
+<a name="319"><span class="lineNum">     319 </span><span class="lineCov">      67540 :     return;</span></a>
+<a name="320"><span class="lineNum">     320 </span>            :   }</a>
+<a name="321"><span class="lineNum">     321 </span>            :   // Create the security connector using the credentials and target name.</a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineCov">        945 :   grpc_channel_args* new_args_from_connector = nullptr;</span></a>
+<a name="323"><span class="lineNum">     323 </span>            :   RefCountedPtr&lt;grpc_channel_security_connector&gt; sc =</a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineCov">        945 :       req-&gt;channel_creds_-&gt;create_security_connector(</span></a>
+<a name="325"><span class="lineNum">     325 </span><span class="lineCov">        945 :           nullptr /*call_creds*/, req-&gt;uri_.authority().c_str(),</span></a>
+<a name="326"><span class="lineNum">     326 </span><span class="lineCov">       1890 :           req-&gt;channel_args_, &amp;new_args_from_connector);</span></a>
+<a name="327"><span class="lineNum">     327 </span><span class="lineCov">        945 :   if (sc == nullptr) {</span></a>
+<a name="328"><span class="lineNum">     328 </span><span class="lineNoCov">          0 :     req-&gt;Finish(GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(</span></a>
+<a name="329"><span class="lineNum">     329 </span>            :         &quot;failed to create security connector&quot;, &amp;req-&gt;overall_error_, 1));</a>
+<a name="330"><span class="lineNum">     330 </span><span class="lineNoCov">          0 :     return;</span></a>
+<a name="331"><span class="lineNum">     331 </span>            :   }</a>
+<a name="332"><span class="lineNum">     332 </span><span class="lineCov">        945 :   grpc_arg security_connector_arg = grpc_security_connector_to_arg(sc.get());</span></a>
+<a name="333"><span class="lineNum">     333 </span><span class="lineCov">        945 :   grpc_channel_args* new_args = grpc_channel_args_copy_and_add(</span></a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineCov">        945 :       new_args_from_connector != nullptr ? new_args_from_connector</span></a>
+<a name="335"><span class="lineNum">     335 </span><span class="lineCov">        945 :                                          : req-&gt;channel_args_,</span></a>
+<a name="336"><span class="lineNum">     336 </span>            :       &amp;security_connector_arg, 1);</a>
+<a name="337"><span class="lineNum">     337 </span><span class="lineCov">        945 :   grpc_channel_args_destroy(new_args_from_connector);</span></a>
+<a name="338"><span class="lineNum">     338 </span>            :   // Start the handshake</a>
+<a name="339"><span class="lineNum">     339 </span><span class="lineCov">        945 :   req-&gt;handshake_mgr_ = MakeRefCounted&lt;HandshakeManager&gt;();</span></a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineCov">       2835 :   CoreConfiguration::Get().handshaker_registry().AddHandshakers(</span></a>
+<a name="341"><span class="lineNum">     341 </span><span class="lineCov">        945 :       HANDSHAKER_CLIENT, new_args, req-&gt;pollset_set_,</span></a>
+<a name="342"><span class="lineNum">     342 </span><span class="lineCov">        945 :       req-&gt;handshake_mgr_.get());</span></a>
+<a name="343"><span class="lineNum">     343 </span><span class="lineCov">        945 :   req-&gt;Ref().release();  // ref held by pending handshake</span></a>
+<a name="344"><span class="lineNum">     344 </span><span class="lineCov">        945 :   grpc_endpoint* ep = req-&gt;ep_;</span></a>
+<a name="345"><span class="lineNum">     345 </span><span class="lineCov">        945 :   req-&gt;ep_ = nullptr;</span></a>
+<a name="346"><span class="lineNum">     346 </span><span class="lineCov">        945 :   req-&gt;own_endpoint_ = false;</span></a>
+<a name="347"><span class="lineNum">     347 </span><span class="lineCov">       1890 :   req-&gt;handshake_mgr_-&gt;DoHandshake(ep, new_args, req-&gt;deadline_,</span></a>
+<a name="348"><span class="lineNum">     348 </span>            :                                    /*acceptor=*/nullptr, OnHandshakeDone,</a>
+<a name="349"><span class="lineNum">     349 </span><span class="lineCov">        945 :                                    /*user_data=*/req.get());</span></a>
+<a name="350"><span class="lineNum">     350 </span><span class="lineCov">        945 :   sc.reset(DEBUG_LOCATION, &quot;httpcli&quot;);</span></a>
+<a name="351"><span class="lineNum">     351 </span><span class="lineCov">        945 :   grpc_channel_args_destroy(new_args);</span></a>
+<a name="352"><span class="lineNum">     352 </span><span class="lineCov">     273481 : }</span></a>
+<a name="353"><span class="lineNum">     353 </span>            : </a>
+<a name="354"><span class="lineNum">     354 </span><span class="lineCov">     138323 : void HttpRequest::NextAddress(grpc_error_handle error) {</span></a>
+<a name="355"><span class="lineNum">     355 </span><span class="lineCov">     138323 :   if (error != GRPC_ERROR_NONE) {</span></a>
+<a name="356"><span class="lineNum">     356 </span><span class="lineCov">      68667 :     AppendError(error);</span></a>
+<a name="357"><span class="lineNum">     357 </span>            :   }</a>
+<a name="358"><span class="lineNum">     358 </span><span class="lineCov">     138323 :   if (cancelled_) {</span></a>
+<a name="359"><span class="lineNum">     359 </span><span class="lineCov">        303 :     Finish(GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(</span></a>
+<a name="360"><span class="lineNum">     360 </span>            :         &quot;HTTP request was cancelled&quot;, &amp;overall_error_, 1));</a>
+<a name="361"><span class="lineNum">     361 </span><span class="lineCov">        303 :     return;</span></a>
+<a name="362"><span class="lineNum">     362 </span>            :   }</a>
+<a name="363"><span class="lineNum">     363 </span><span class="lineCov">     138020 :   if (next_address_ == addresses_.size()) {</span></a>
+<a name="364"><span class="lineNum">     364 </span><span class="lineCov">        809 :     Finish(GRPC_ERROR_CREATE_REFERENCING_FROM_STATIC_STRING(</span></a>
+<a name="365"><span class="lineNum">     365 </span>            :         &quot;Failed HTTP requests to all targets&quot;, &amp;overall_error_, 1));</a>
+<a name="366"><span class="lineNum">     366 </span><span class="lineCov">        809 :     return;</span></a>
+<a name="367"><span class="lineNum">     367 </span>            :   }</a>
+<a name="368"><span class="lineNum">     368 </span><span class="lineCov">     137211 :   const grpc_resolved_address* addr = &amp;addresses_[next_address_++];</span></a>
+<a name="369"><span class="lineNum">     369 </span><span class="lineCov">     137212 :   GRPC_CLOSURE_INIT(&amp;connected_, OnConnected, this, grpc_schedule_on_exec_ctx);</span></a>
+<a name="370"><span class="lineNum">     370 </span><span class="lineCov">     137212 :   connecting_ = true;</span></a>
+<a name="371"><span class="lineNum">     371 </span><span class="lineCov">     137212 :   own_endpoint_ = false;</span></a>
+<a name="372"><span class="lineNum">     372 </span><span class="lineCov">     137212 :   Ref().release();  // ref held by pending connect</span></a>
+<a name="373"><span class="lineNum">     373 </span><span class="lineCov">     137213 :   grpc_tcp_client_connect(&amp;connected_, &amp;ep_, pollset_set_, channel_args_, addr,</span></a>
+<a name="374"><span class="lineNum">     374 </span>            :                           deadline_);</a>
+<a name="375"><span class="lineNum">     375 </span>            : }</a>
+<a name="376"><span class="lineNum">     376 </span>            : </a>
+<a name="377"><span class="lineNum">     377 </span><span class="lineCov">      69962 : void HttpRequest::OnResolved(</span></a>
+<a name="378"><span class="lineNum">     378 </span>            :     absl::StatusOr&lt;std::vector&lt;grpc_resolved_address&gt;&gt; addresses_or) {</a>
+<a name="379"><span class="lineNum">     379 </span><span class="lineCov">      69962 :   RefCountedPtr&lt;HttpRequest&gt; unreffer(this);</span></a>
+<a name="380"><span class="lineNum">     380 </span><span class="lineCov">      69962 :   MutexLock lock(&amp;mu_);</span></a>
+<a name="381"><span class="lineNum">     381 </span><span class="lineCov">      69964 :   dns_request_.reset();</span></a>
+<a name="382"><span class="lineNum">     382 </span><span class="lineCov">      69964 :   if (!addresses_or.ok()) {</span></a>
+<a name="383"><span class="lineNum">     383 </span><span class="lineCov">        306 :     Finish(absl_status_to_grpc_error(addresses_or.status()));</span></a>
+<a name="384"><span class="lineNum">     384 </span><span class="lineCov">        306 :     return;</span></a>
+<a name="385"><span class="lineNum">     385 </span>            :   }</a>
+<a name="386"><span class="lineNum">     386 </span><span class="lineCov">      69658 :   if (cancelled_) {</span></a>
+<a name="387"><span class="lineNum">     387 </span><span class="lineNoCov">          0 :     Finish(GRPC_ERROR_CREATE_FROM_STATIC_STRING(</span></a>
+<a name="388"><span class="lineNum">     388 </span>            :         &quot;cancelled during DNS resolution&quot;));</a>
+<a name="389"><span class="lineNum">     389 </span><span class="lineNoCov">          0 :     return;</span></a>
+<a name="390"><span class="lineNum">     390 </span>            :   }</a>
+<a name="391"><span class="lineNum">     391 </span><span class="lineCov">      69658 :   addresses_ = std::move(*addresses_or);</span></a>
+<a name="392"><span class="lineNum">     392 </span><span class="lineCov">      69656 :   next_address_ = 0;</span></a>
+<a name="393"><span class="lineNum">     393 </span><span class="lineCov">      69656 :   NextAddress(GRPC_ERROR_NONE);</span></a>
+<a name="394"><span class="lineNum">     394 </span><span class="lineCov">      70270 : }</span></a>
+<a name="395"><span class="lineNum">     395 </span>            : </a>
+<a name="396"><span class="lineNum">     396 </span>            : }  // namespace grpc_core</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

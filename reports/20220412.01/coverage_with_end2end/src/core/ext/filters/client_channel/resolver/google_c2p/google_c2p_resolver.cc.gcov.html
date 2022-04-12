@@ -1,0 +1,476 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/core/ext/filters/client_channel/resolver/google_c2p/google_c2p_resolver.cc</title>
+  <link rel="stylesheet" type="text/css" href="../../../../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../../../../index.html">top level</a> - <a href="index.html">src/core/ext/filters/client_channel/resolver/google_c2p</a> - google_c2p_resolver.cc<span style="font-size: 80%;"> (source / <a href="google_c2p_resolver.cc.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">144</td>
+            <td class="headerCovTableEntry">177</td>
+            <td class="headerCovTableEntryMed">81.4 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-12 14:35:39</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">19</td>
+            <td class="headerCovTableEntry">22</td>
+            <td class="headerCovTableEntryMed">86.4 %</td>
+          </tr>
+          <tr><td><img src="../../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : //</a>
+<a name="2"><span class="lineNum">       2 </span>            : // Copyright 2021 gRPC authors.</a>
+<a name="3"><span class="lineNum">       3 </span>            : //</a>
+<a name="4"><span class="lineNum">       4 </span>            : // Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="5"><span class="lineNum">       5 </span>            : // you may not use this file except in compliance with the License.</a>
+<a name="6"><span class="lineNum">       6 </span>            : // You may obtain a copy of the License at</a>
+<a name="7"><span class="lineNum">       7 </span>            : //</a>
+<a name="8"><span class="lineNum">       8 </span>            : //     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="9"><span class="lineNum">       9 </span>            : //</a>
+<a name="10"><span class="lineNum">      10 </span>            : // Unless required by applicable law or agreed to in writing, software</a>
+<a name="11"><span class="lineNum">      11 </span>            : // distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="12"><span class="lineNum">      12 </span>            : // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="13"><span class="lineNum">      13 </span>            : // See the License for the specific language governing permissions and</a>
+<a name="14"><span class="lineNum">      14 </span>            : // limitations under the License.</a>
+<a name="15"><span class="lineNum">      15 </span>            : //</a>
+<a name="16"><span class="lineNum">      16 </span>            : </a>
+<a name="17"><span class="lineNum">      17 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #include &lt;random&gt;</a>
+<a name="20"><span class="lineNum">      20 </span>            : </a>
+<a name="21"><span class="lineNum">      21 </span>            : #include &quot;src/core/ext/xds/xds_client.h&quot;</a>
+<a name="22"><span class="lineNum">      22 </span>            : #include &quot;src/core/lib/gpr/env.h&quot;</a>
+<a name="23"><span class="lineNum">      23 </span>            : #include &quot;src/core/lib/gpr/string.h&quot;</a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &quot;src/core/lib/http/httpcli.h&quot;</a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &quot;src/core/lib/iomgr/polling_entity.h&quot;</a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &quot;src/core/lib/resolver/resolver_registry.h&quot;</a>
+<a name="27"><span class="lineNum">      27 </span>            : #include &quot;src/core/lib/resource_quota/api.h&quot;</a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &quot;src/core/lib/security/credentials/alts/check_gcp_environment.h&quot;</a>
+<a name="29"><span class="lineNum">      29 </span>            : </a>
+<a name="30"><span class="lineNum">      30 </span>            : namespace grpc_core {</a>
+<a name="31"><span class="lineNum">      31 </span>            : </a>
+<a name="32"><span class="lineNum">      32 </span>            : namespace {</a>
+<a name="33"><span class="lineNum">      33 </span>            : </a>
+<a name="34"><span class="lineNum">      34 </span>            : class GoogleCloud2ProdResolver : public Resolver {</a>
+<a name="35"><span class="lineNum">      35 </span>            :  public:</a>
+<a name="36"><span class="lineNum">      36 </span>            :   explicit GoogleCloud2ProdResolver(ResolverArgs args);</a>
+<a name="37"><span class="lineNum">      37 </span>            : </a>
+<a name="38"><span class="lineNum">      38 </span>            :   void StartLocked() override;</a>
+<a name="39"><span class="lineNum">      39 </span>            :   void RequestReresolutionLocked() override;</a>
+<a name="40"><span class="lineNum">      40 </span>            :   void ResetBackoffLocked() override;</a>
+<a name="41"><span class="lineNum">      41 </span>            :   void ShutdownLocked() override;</a>
+<a name="42"><span class="lineNum">      42 </span>            : </a>
+<a name="43"><span class="lineNum">      43 </span>            :  private:</a>
+<a name="44"><span class="lineNum">      44 </span>            :   // Represents an HTTP request to the metadata server.</a>
+<a name="45"><span class="lineNum">      45 </span>            :   class MetadataQuery : public InternallyRefCounted&lt;MetadataQuery&gt; {</a>
+<a name="46"><span class="lineNum">      46 </span>            :    public:</a>
+<a name="47"><span class="lineNum">      47 </span>            :     MetadataQuery(RefCountedPtr&lt;GoogleCloud2ProdResolver&gt; resolver,</a>
+<a name="48"><span class="lineNum">      48 </span>            :                   const char* path, grpc_polling_entity* pollent);</a>
+<a name="49"><span class="lineNum">      49 </span>            :     ~MetadataQuery() override;</a>
+<a name="50"><span class="lineNum">      50 </span>            : </a>
+<a name="51"><span class="lineNum">      51 </span>            :     void Orphan() override;</a>
+<a name="52"><span class="lineNum">      52 </span>            : </a>
+<a name="53"><span class="lineNum">      53 </span>            :    private:</a>
+<a name="54"><span class="lineNum">      54 </span>            :     static void OnHttpRequestDone(void* arg, grpc_error_handle error);</a>
+<a name="55"><span class="lineNum">      55 </span>            : </a>
+<a name="56"><span class="lineNum">      56 </span>            :     // If error is not GRPC_ERROR_NONE, then it's not safe to look at response.</a>
+<a name="57"><span class="lineNum">      57 </span>            :     virtual void OnDone(GoogleCloud2ProdResolver* resolver,</a>
+<a name="58"><span class="lineNum">      58 </span>            :                         const grpc_http_response* response,</a>
+<a name="59"><span class="lineNum">      59 </span>            :                         grpc_error_handle error) = 0;</a>
+<a name="60"><span class="lineNum">      60 </span>            : </a>
+<a name="61"><span class="lineNum">      61 </span>            :     RefCountedPtr&lt;GoogleCloud2ProdResolver&gt; resolver_;</a>
+<a name="62"><span class="lineNum">      62 </span>            :     OrphanablePtr&lt;HttpRequest&gt; http_request_;</a>
+<a name="63"><span class="lineNum">      63 </span>            :     grpc_http_response response_;</a>
+<a name="64"><span class="lineNum">      64 </span>            :     grpc_closure on_done_;</a>
+<a name="65"><span class="lineNum">      65 </span>            :   };</a>
+<a name="66"><span class="lineNum">      66 </span>            : </a>
+<a name="67"><span class="lineNum">      67 </span>            :   // A metadata server query to get the zone.</a>
+<a name="68"><span class="lineNum">      68 </span>            :   class ZoneQuery : public MetadataQuery {</a>
+<a name="69"><span class="lineNum">      69 </span>            :    public:</a>
+<a name="70"><span class="lineNum">      70 </span>            :     ZoneQuery(RefCountedPtr&lt;GoogleCloud2ProdResolver&gt; resolver,</a>
+<a name="71"><span class="lineNum">      71 </span>            :               grpc_polling_entity* pollent);</a>
+<a name="72"><span class="lineNum">      72 </span>            : </a>
+<a name="73"><span class="lineNum">      73 </span>            :    private:</a>
+<a name="74"><span class="lineNum">      74 </span>            :     void OnDone(GoogleCloud2ProdResolver* resolver,</a>
+<a name="75"><span class="lineNum">      75 </span>            :                 const grpc_http_response* response,</a>
+<a name="76"><span class="lineNum">      76 </span>            :                 grpc_error_handle error) override;</a>
+<a name="77"><span class="lineNum">      77 </span>            :   };</a>
+<a name="78"><span class="lineNum">      78 </span>            : </a>
+<a name="79"><span class="lineNum">      79 </span>            :   // A metadata server query to get the IPv6 address.</a>
+<a name="80"><span class="lineNum">      80 </span>            :   class IPv6Query : public MetadataQuery {</a>
+<a name="81"><span class="lineNum">      81 </span>            :    public:</a>
+<a name="82"><span class="lineNum">      82 </span>            :     IPv6Query(RefCountedPtr&lt;GoogleCloud2ProdResolver&gt; resolver,</a>
+<a name="83"><span class="lineNum">      83 </span>            :               grpc_polling_entity* pollent);</a>
+<a name="84"><span class="lineNum">      84 </span>            : </a>
+<a name="85"><span class="lineNum">      85 </span>            :    private:</a>
+<a name="86"><span class="lineNum">      86 </span>            :     void OnDone(GoogleCloud2ProdResolver* resolver,</a>
+<a name="87"><span class="lineNum">      87 </span>            :                 const grpc_http_response* response,</a>
+<a name="88"><span class="lineNum">      88 </span>            :                 grpc_error_handle error) override;</a>
+<a name="89"><span class="lineNum">      89 </span>            :   };</a>
+<a name="90"><span class="lineNum">      90 </span>            : </a>
+<a name="91"><span class="lineNum">      91 </span>            :   void ZoneQueryDone(std::string zone);</a>
+<a name="92"><span class="lineNum">      92 </span>            :   void IPv6QueryDone(bool ipv6_supported);</a>
+<a name="93"><span class="lineNum">      93 </span>            :   void StartXdsResolver();</a>
+<a name="94"><span class="lineNum">      94 </span>            : </a>
+<a name="95"><span class="lineNum">      95 </span>            :   ResourceQuotaRefPtr resource_quota_;</a>
+<a name="96"><span class="lineNum">      96 </span>            :   std::shared_ptr&lt;WorkSerializer&gt; work_serializer_;</a>
+<a name="97"><span class="lineNum">      97 </span>            :   grpc_polling_entity pollent_;</a>
+<a name="98"><span class="lineNum">      98 </span>            :   bool using_dns_ = false;</a>
+<a name="99"><span class="lineNum">      99 </span>            :   OrphanablePtr&lt;Resolver&gt; child_resolver_;</a>
+<a name="100"><span class="lineNum">     100 </span>            :   std::string metadata_server_name_ = &quot;metadata.google.internal.&quot;;</a>
+<a name="101"><span class="lineNum">     101 </span>            :   bool shutdown_ = false;</a>
+<a name="102"><span class="lineNum">     102 </span>            : </a>
+<a name="103"><span class="lineNum">     103 </span>            :   OrphanablePtr&lt;ZoneQuery&gt; zone_query_;</a>
+<a name="104"><span class="lineNum">     104 </span>            :   absl::optional&lt;std::string&gt; zone_;</a>
+<a name="105"><span class="lineNum">     105 </span>            : </a>
+<a name="106"><span class="lineNum">     106 </span>            :   OrphanablePtr&lt;IPv6Query&gt; ipv6_query_;</a>
+<a name="107"><span class="lineNum">     107 </span>            :   absl::optional&lt;bool&gt; supports_ipv6_;</a>
+<a name="108"><span class="lineNum">     108 </span>            : };</a>
+<a name="109"><span class="lineNum">     109 </span>            : </a>
+<a name="110"><span class="lineNum">     110 </span>            : //</a>
+<a name="111"><span class="lineNum">     111 </span>            : // GoogleCloud2ProdResolver::MetadataQuery</a>
+<a name="112"><span class="lineNum">     112 </span>            : //</a>
+<a name="113"><span class="lineNum">     113 </span>            : </a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">       1200 : GoogleCloud2ProdResolver::MetadataQuery::MetadataQuery(</span></a>
+<a name="115"><span class="lineNum">     115 </span>            :     RefCountedPtr&lt;GoogleCloud2ProdResolver&gt; resolver, const char* path,</a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">       1200 :     grpc_polling_entity* pollent)</span></a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineCov">       1200 :     : resolver_(std::move(resolver)) {</span></a>
+<a name="118"><span class="lineNum">     118 </span>            :   // Start HTTP request.</a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineCov">       1200 :   GRPC_CLOSURE_INIT(&amp;on_done_, OnHttpRequestDone, this, nullptr);</span></a>
+<a name="120"><span class="lineNum">     120 </span><span class="lineCov">       1200 :   Ref().release();  // Ref held by callback.</span></a>
+<a name="121"><span class="lineNum">     121 </span>            :   grpc_http_request request;</a>
+<a name="122"><span class="lineNum">     122 </span><span class="lineCov">       1200 :   memset(&amp;request, 0, sizeof(grpc_http_request));</span></a>
+<a name="123"><span class="lineNum">     123 </span><span class="lineCov">       1200 :   grpc_http_header header = {const_cast&lt;char*&gt;(&quot;Metadata-Flavor&quot;),</span></a>
+<a name="124"><span class="lineNum">     124 </span>            :                              const_cast&lt;char*&gt;(&quot;Google&quot;)};</a>
+<a name="125"><span class="lineNum">     125 </span><span class="lineCov">       1200 :   request.hdr_count = 1;</span></a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">       1200 :   request.hdrs = &amp;header;</span></a>
+<a name="127"><span class="lineNum">     127 </span><span class="lineCov">       1200 :   auto uri = URI::Create(&quot;http&quot;, resolver_-&gt;metadata_server_name_, path,</span></a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">       3597 :                          {} /* query params */, &quot;&quot; /* fragment */);</span></a>
+<a name="129"><span class="lineNum">     129 </span><span class="lineCov">       1198 :   GPR_ASSERT(uri.ok());  // params are hardcoded</span></a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">       2398 :   grpc_arg resource_quota_arg = grpc_channel_arg_pointer_create(</span></a>
+<a name="131"><span class="lineNum">     131 </span>            :       const_cast&lt;char*&gt;(GRPC_ARG_RESOURCE_QUOTA),</a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineCov">       1200 :       resolver_-&gt;resource_quota_.get(), grpc_resource_quota_arg_vtable());</span></a>
+<a name="133"><span class="lineNum">     133 </span><span class="lineCov">       1200 :   grpc_channel_args args = {1, &amp;resource_quota_arg};</span></a>
+<a name="134"><span class="lineNum">     134 </span><span class="lineCov">       3592 :   http_request_ = HttpRequest::Get(</span></a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">       1195 :       std::move(*uri), &amp;args, pollent, &amp;request,</span></a>
+<a name="136"><span class="lineNum">     136 </span>            :       ExecCtx::Get()-&gt;Now() + Duration::Seconds(10),  // 10s timeout</a>
+<a name="137"><span class="lineNum">     137 </span>            :       &amp;on_done_, &amp;response_,</a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineCov">       2400 :       RefCountedPtr&lt;grpc_channel_credentials&gt;(</span></a>
+<a name="139"><span class="lineNum">     139 </span><span class="lineCov">       1200 :           grpc_insecure_credentials_create()));</span></a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineCov">       1200 :   http_request_-&gt;Start();</span></a>
+<a name="141"><span class="lineNum">     141 </span><span class="lineCov">       1200 : }</span></a>
+<a name="142"><span class="lineNum">     142 </span>            : </a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineCov">       1200 : GoogleCloud2ProdResolver::MetadataQuery::~MetadataQuery() {</span></a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineCov">       1200 :   grpc_http_response_destroy(&amp;response_);</span></a>
+<a name="145"><span class="lineNum">     145 </span><span class="lineCov">       1200 : }</span></a>
+<a name="146"><span class="lineNum">     146 </span>            : </a>
+<a name="147"><span class="lineNum">     147 </span><span class="lineCov">       1199 : void GoogleCloud2ProdResolver::MetadataQuery::Orphan() {</span></a>
+<a name="148"><span class="lineNum">     148 </span><span class="lineCov">       1199 :   http_request_.reset();</span></a>
+<a name="149"><span class="lineNum">     149 </span><span class="lineCov">       1200 :   Unref();</span></a>
+<a name="150"><span class="lineNum">     150 </span><span class="lineCov">       1200 : }</span></a>
+<a name="151"><span class="lineNum">     151 </span>            : </a>
+<a name="152"><span class="lineNum">     152 </span><span class="lineCov">       1200 : void GoogleCloud2ProdResolver::MetadataQuery::OnHttpRequestDone(</span></a>
+<a name="153"><span class="lineNum">     153 </span>            :     void* arg, grpc_error_handle error) {</a>
+<a name="154"><span class="lineNum">     154 </span><span class="lineCov">       1200 :   auto* self = static_cast&lt;MetadataQuery*&gt;(arg);</span></a>
+<a name="155"><span class="lineNum">     155 </span>            :   // Hop back into WorkSerializer to call OnDone().</a>
+<a name="156"><span class="lineNum">     156 </span>            :   // Note: We implicitly pass our ref to the callback here.</a>
+<a name="157"><span class="lineNum">     157 </span><span class="lineCov">       1200 :   (void)GRPC_ERROR_REF(error);</span></a>
+<a name="158"><span class="lineNum">     158 </span><span class="lineCov">       2400 :   self-&gt;resolver_-&gt;work_serializer_-&gt;Run(</span></a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">       2397 :       [self, error]() {</span></a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineCov">       1197 :         self-&gt;OnDone(self-&gt;resolver_.get(), &amp;self-&gt;response_, error);</span></a>
+<a name="161"><span class="lineNum">     161 </span><span class="lineCov">       1200 :         self-&gt;Unref();</span></a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineCov">       1200 :       },</span></a>
+<a name="163"><span class="lineNum">     163 </span><span class="lineCov">       1200 :       DEBUG_LOCATION);</span></a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">       1200 : }</span></a>
+<a name="165"><span class="lineNum">     165 </span>            : </a>
+<a name="166"><span class="lineNum">     166 </span>            : //</a>
+<a name="167"><span class="lineNum">     167 </span>            : // GoogleCloud2ProdResolver::ZoneQuery</a>
+<a name="168"><span class="lineNum">     168 </span>            : //</a>
+<a name="169"><span class="lineNum">     169 </span>            : </a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">        600 : GoogleCloud2ProdResolver::ZoneQuery::ZoneQuery(</span></a>
+<a name="171"><span class="lineNum">     171 </span>            :     RefCountedPtr&lt;GoogleCloud2ProdResolver&gt; resolver,</a>
+<a name="172"><span class="lineNum">     172 </span><span class="lineCov">        600 :     grpc_polling_entity* pollent)</span></a>
+<a name="173"><span class="lineNum">     173 </span><span class="lineCov">        600 :     : MetadataQuery(std::move(resolver), &quot;/computeMetadata/v1/instance/zone&quot;,</span></a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">        600 :                     pollent) {}</span></a>
+<a name="175"><span class="lineNum">     175 </span>            : </a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineCov">        599 : void GoogleCloud2ProdResolver::ZoneQuery::OnDone(</span></a>
+<a name="177"><span class="lineNum">     177 </span>            :     GoogleCloud2ProdResolver* resolver, const grpc_http_response* response,</a>
+<a name="178"><span class="lineNum">     178 </span>            :     grpc_error_handle error) {</a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">        599 :   absl::StatusOr&lt;std::string&gt; zone;</span></a>
+<a name="180"><span class="lineNum">     180 </span><span class="lineCov">        600 :   if (error != GRPC_ERROR_NONE) {</span></a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">       1197 :     zone = absl::UnknownError(</span></a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineCov">       1199 :         absl::StrCat(&quot;error fetching zone from metadata server: &quot;,</span></a>
+<a name="183"><span class="lineNum">     183 </span><span class="lineCov">       1798 :                      grpc_error_std_string(error)));</span></a>
+<a name="184"><span class="lineNum">     184 </span><span class="lineNoCov">          0 :   } else if (response-&gt;status != 200) {</span></a>
+<a name="185"><span class="lineNum">     185 </span><span class="lineNoCov">          0 :     zone = absl::UnknownError(absl::StrFormat(</span></a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineNoCov">          0 :         &quot;zone query received non-200 status: %d&quot;, response-&gt;status));</span></a>
+<a name="187"><span class="lineNum">     187 </span>            :   } else {</a>
+<a name="188"><span class="lineNum">     188 </span><span class="lineNoCov">          0 :     absl::string_view body(response-&gt;body, response-&gt;body_length);</span></a>
+<a name="189"><span class="lineNum">     189 </span><span class="lineNoCov">          0 :     size_t i = body.find_last_of('/');</span></a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineNoCov">          0 :     if (i == body.npos) {</span></a>
+<a name="191"><span class="lineNum">     191 </span><span class="lineNoCov">          0 :       zone = absl::UnknownError(</span></a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineNoCov">          0 :           absl::StrCat(&quot;could not parse zone from metadata server: &quot;, body));</span></a>
+<a name="193"><span class="lineNum">     193 </span>            :     } else {</a>
+<a name="194"><span class="lineNum">     194 </span><span class="lineNoCov">          0 :       zone = std::string(body.substr(i + 1));</span></a>
+<a name="195"><span class="lineNum">     195 </span>            :     }</a>
+<a name="196"><span class="lineNum">     196 </span>            :   }</a>
+<a name="197"><span class="lineNum">     197 </span><span class="lineCov">        600 :   if (!zone.ok()) {</span></a>
+<a name="198"><span class="lineNum">     198 </span><span class="lineCov">        599 :     gpr_log(GPR_ERROR, &quot;zone query failed: %s&quot;,</span></a>
+<a name="199"><span class="lineNum">     199 </span><span class="lineCov">       1199 :             zone.status().ToString().c_str());</span></a>
+<a name="200"><span class="lineNum">     200 </span><span class="lineCov">        600 :     resolver-&gt;ZoneQueryDone(&quot;&quot;);</span></a>
+<a name="201"><span class="lineNum">     201 </span>            :   } else {</a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineNoCov">          0 :     resolver-&gt;ZoneQueryDone(std::move(*zone));</span></a>
+<a name="203"><span class="lineNum">     203 </span>            :   }</a>
+<a name="204"><span class="lineNum">     204 </span><span class="lineCov">        600 :   GRPC_ERROR_UNREF(error);</span></a>
+<a name="205"><span class="lineNum">     205 </span><span class="lineCov">        600 : }</span></a>
+<a name="206"><span class="lineNum">     206 </span>            : </a>
+<a name="207"><span class="lineNum">     207 </span>            : //</a>
+<a name="208"><span class="lineNum">     208 </span>            : // GoogleCloud2ProdResolver::IPv6Query</a>
+<a name="209"><span class="lineNum">     209 </span>            : //</a>
+<a name="210"><span class="lineNum">     210 </span>            : </a>
+<a name="211"><span class="lineNum">     211 </span><span class="lineCov">        600 : GoogleCloud2ProdResolver::IPv6Query::IPv6Query(</span></a>
+<a name="212"><span class="lineNum">     212 </span>            :     RefCountedPtr&lt;GoogleCloud2ProdResolver&gt; resolver,</a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineCov">        600 :     grpc_polling_entity* pollent)</span></a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineCov">        600 :     : MetadataQuery(std::move(resolver),</span></a>
+<a name="215"><span class="lineNum">     215 </span>            :                     &quot;/computeMetadata/v1/instance/network-interfaces/0/ipv6s&quot;,</a>
+<a name="216"><span class="lineNum">     216 </span><span class="lineCov">        600 :                     pollent) {}</span></a>
+<a name="217"><span class="lineNum">     217 </span>            : </a>
+<a name="218"><span class="lineNum">     218 </span><span class="lineCov">        600 : void GoogleCloud2ProdResolver::IPv6Query::OnDone(</span></a>
+<a name="219"><span class="lineNum">     219 </span>            :     GoogleCloud2ProdResolver* resolver, const grpc_http_response* response,</a>
+<a name="220"><span class="lineNum">     220 </span>            :     grpc_error_handle error) {</a>
+<a name="221"><span class="lineNum">     221 </span><span class="lineCov">        600 :   if (error != GRPC_ERROR_NONE) {</span></a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineCov">        600 :     gpr_log(GPR_ERROR, &quot;error fetching IPv6 address from metadata server: %s&quot;,</span></a>
+<a name="223"><span class="lineNum">     223 </span><span class="lineCov">       1200 :             grpc_error_std_string(error).c_str());</span></a>
+<a name="224"><span class="lineNum">     224 </span>            :   }</a>
+<a name="225"><span class="lineNum">     225 </span><span class="lineCov">        600 :   resolver-&gt;IPv6QueryDone(error == GRPC_ERROR_NONE &amp;&amp; response-&gt;status == 200);</span></a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineCov">        600 :   GRPC_ERROR_UNREF(error);</span></a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">        600 : }</span></a>
+<a name="228"><span class="lineNum">     228 </span>            : </a>
+<a name="229"><span class="lineNum">     229 </span>            : //</a>
+<a name="230"><span class="lineNum">     230 </span>            : // GoogleCloud2ProdResolver</a>
+<a name="231"><span class="lineNum">     231 </span>            : //</a>
+<a name="232"><span class="lineNum">     232 </span>            : </a>
+<a name="233"><span class="lineNum">     233 </span><span class="lineCov">        599 : GoogleCloud2ProdResolver::GoogleCloud2ProdResolver(ResolverArgs args)</span></a>
+<a name="234"><span class="lineNum">     234 </span><span class="lineCov">        599 :     : resource_quota_(ResourceQuotaFromChannelArgs(args.args)),</span></a>
+<a name="235"><span class="lineNum">     235 </span><span class="lineCov">        600 :       work_serializer_(std::move(args.work_serializer)),</span></a>
+<a name="236"><span class="lineNum">     236 </span><span class="lineCov">       1197 :       pollent_(grpc_polling_entity_create_from_pollset_set(args.pollset_set)) {</span></a>
+<a name="237"><span class="lineNum">     237 </span><span class="lineCov">        597 :   absl::string_view name_to_resolve = absl::StripPrefix(args.uri.path(), &quot;/&quot;);</span></a>
+<a name="238"><span class="lineNum">     238 </span>            :   // If we're not running on GCP, we can't use DirectPath, so delegate</a>
+<a name="239"><span class="lineNum">     239 </span>            :   // to the DNS resolver.</a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineCov">        594 :   bool test_only_pretend_running_on_gcp = grpc_channel_args_find_bool(</span></a>
+<a name="241"><span class="lineNum">     241 </span>            :       args.args, &quot;grpc.testing.google_c2p_resolver_pretend_running_on_gcp&quot;,</a>
+<a name="242"><span class="lineNum">     242 </span>            :       false);</a>
+<a name="243"><span class="lineNum">     243 </span>            :   bool running_on_gcp =</a>
+<a name="244"><span class="lineNum">     244 </span><span class="lineCov">        599 :       test_only_pretend_running_on_gcp || grpc_alts_is_running_on_gcp();</span></a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineCov">        600 :   if (!running_on_gcp ||</span></a>
+<a name="246"><span class="lineNum">     246 </span>            :       // If the client is already using xDS, we can't use it here, because</a>
+<a name="247"><span class="lineNum">     247 </span>            :       // they may be talking to a completely different xDS server than we</a>
+<a name="248"><span class="lineNum">     248 </span>            :       // want to.</a>
+<a name="249"><span class="lineNum">     249 </span>            :       // TODO(roth): When we implement xDS federation, remove this constraint.</a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineCov">       1795 :       UniquePtr&lt;char&gt;(gpr_getenv(&quot;GRPC_XDS_BOOTSTRAP&quot;)) != nullptr ||</span></a>
+<a name="251"><span class="lineNum">     251 </span><span class="lineCov">       1198 :       UniquePtr&lt;char&gt;(gpr_getenv(&quot;GRPC_XDS_BOOTSTRAP_CONFIG&quot;)) != nullptr) {</span></a>
+<a name="252"><span class="lineNum">     252 </span><span class="lineNoCov">          0 :     using_dns_ = true;</span></a>
+<a name="253"><span class="lineNum">     253 </span>            :     child_resolver_ =</a>
+<a name="254"><span class="lineNum">     254 </span><span class="lineNoCov">          0 :         CoreConfiguration::Get().resolver_registry().CreateResolver(</span></a>
+<a name="255"><span class="lineNum">     255 </span><span class="lineNoCov">          0 :             absl::StrCat(&quot;dns:&quot;, name_to_resolve).c_str(), args.args,</span></a>
+<a name="256"><span class="lineNum">     256 </span><span class="lineNoCov">          0 :             args.pollset_set, work_serializer_, std::move(args.result_handler));</span></a>
+<a name="257"><span class="lineNum">     257 </span><span class="lineNoCov">          0 :     GPR_ASSERT(child_resolver_ != nullptr);</span></a>
+<a name="258"><span class="lineNum">     258 </span><span class="lineNoCov">          0 :     return;</span></a>
+<a name="259"><span class="lineNum">     259 </span>            :   }</a>
+<a name="260"><span class="lineNum">     260 </span>            :   // Maybe override metadata server name for testing</a>
+<a name="261"><span class="lineNum">     261 </span>            :   const char* test_only_metadata_server_override =</a>
+<a name="262"><span class="lineNum">     262 </span><span class="lineCov">        596 :       grpc_channel_args_find_string(</span></a>
+<a name="263"><span class="lineNum">     263 </span>            :           args.args,</a>
+<a name="264"><span class="lineNum">     264 </span>            :           &quot;grpc.testing.google_c2p_resolver_metadata_server_override&quot;);</a>
+<a name="265"><span class="lineNum">     265 </span><span class="lineCov">        598 :   if (test_only_metadata_server_override != nullptr &amp;&amp;</span></a>
+<a name="266"><span class="lineNum">     266 </span><span class="lineCov">        598 :       strlen(test_only_metadata_server_override) &gt; 0) {</span></a>
+<a name="267"><span class="lineNum">     267 </span><span class="lineCov">        598 :     metadata_server_name_ = std::string(test_only_metadata_server_override);</span></a>
+<a name="268"><span class="lineNum">     268 </span>            :   }</a>
+<a name="269"><span class="lineNum">     269 </span>            :   // Create xds resolver.</a>
+<a name="270"><span class="lineNum">     270 </span><span class="lineCov">       2996 :   child_resolver_ = CoreConfiguration::Get().resolver_registry().CreateResolver(</span></a>
+<a name="271"><span class="lineNum">     271 </span><span class="lineCov">       1200 :       absl::StrCat(&quot;xds:&quot;, name_to_resolve).c_str(), args.args,</span></a>
+<a name="272"><span class="lineNum">     272 </span><span class="lineCov">       1796 :       args.pollset_set, work_serializer_, std::move(args.result_handler));</span></a>
+<a name="273"><span class="lineNum">     273 </span><span class="lineCov">        600 :   GPR_ASSERT(child_resolver_ != nullptr);</span></a>
+<a name="274"><span class="lineNum">     274 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="275"><span class="lineNum">     275 </span>            : </a>
+<a name="276"><span class="lineNum">     276 </span><span class="lineCov">        600 : void GoogleCloud2ProdResolver::StartLocked() {</span></a>
+<a name="277"><span class="lineNum">     277 </span><span class="lineCov">        600 :   if (using_dns_) {</span></a>
+<a name="278"><span class="lineNum">     278 </span><span class="lineNoCov">          0 :     child_resolver_-&gt;StartLocked();</span></a>
+<a name="279"><span class="lineNum">     279 </span><span class="lineNoCov">          0 :     return;</span></a>
+<a name="280"><span class="lineNum">     280 </span>            :   }</a>
+<a name="281"><span class="lineNum">     281 </span>            :   // Using xDS.  Start metadata server queries.</a>
+<a name="282"><span class="lineNum">     282 </span><span class="lineCov">        600 :   zone_query_ = MakeOrphanable&lt;ZoneQuery&gt;(Ref(), &amp;pollent_);</span></a>
+<a name="283"><span class="lineNum">     283 </span><span class="lineCov">        600 :   ipv6_query_ = MakeOrphanable&lt;IPv6Query&gt;(Ref(), &amp;pollent_);</span></a>
+<a name="284"><span class="lineNum">     284 </span>            : }</a>
+<a name="285"><span class="lineNum">     285 </span>            : </a>
+<a name="286"><span class="lineNum">     286 </span><span class="lineNoCov">          0 : void GoogleCloud2ProdResolver::RequestReresolutionLocked() {</span></a>
+<a name="287"><span class="lineNum">     287 </span><span class="lineNoCov">          0 :   if (child_resolver_ != nullptr) {</span></a>
+<a name="288"><span class="lineNum">     288 </span><span class="lineNoCov">          0 :     child_resolver_-&gt;RequestReresolutionLocked();</span></a>
+<a name="289"><span class="lineNum">     289 </span>            :   }</a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="291"><span class="lineNum">     291 </span>            : </a>
+<a name="292"><span class="lineNum">     292 </span><span class="lineNoCov">          0 : void GoogleCloud2ProdResolver::ResetBackoffLocked() {</span></a>
+<a name="293"><span class="lineNum">     293 </span><span class="lineNoCov">          0 :   if (child_resolver_ != nullptr) {</span></a>
+<a name="294"><span class="lineNum">     294 </span><span class="lineNoCov">          0 :     child_resolver_-&gt;ResetBackoffLocked();</span></a>
+<a name="295"><span class="lineNum">     295 </span>            :   }</a>
+<a name="296"><span class="lineNum">     296 </span><span class="lineNoCov">          0 : }</span></a>
+<a name="297"><span class="lineNum">     297 </span>            : </a>
+<a name="298"><span class="lineNum">     298 </span><span class="lineCov">        598 : void GoogleCloud2ProdResolver::ShutdownLocked() {</span></a>
+<a name="299"><span class="lineNum">     299 </span><span class="lineCov">        598 :   shutdown_ = true;</span></a>
+<a name="300"><span class="lineNum">     300 </span><span class="lineCov">        598 :   zone_query_.reset();</span></a>
+<a name="301"><span class="lineNum">     301 </span><span class="lineCov">        595 :   ipv6_query_.reset();</span></a>
+<a name="302"><span class="lineNum">     302 </span><span class="lineCov">        594 :   child_resolver_.reset();</span></a>
+<a name="303"><span class="lineNum">     303 </span><span class="lineCov">        599 : }</span></a>
+<a name="304"><span class="lineNum">     304 </span>            : </a>
+<a name="305"><span class="lineNum">     305 </span><span class="lineCov">        600 : void GoogleCloud2ProdResolver::ZoneQueryDone(std::string zone) {</span></a>
+<a name="306"><span class="lineNum">     306 </span><span class="lineCov">        600 :   zone_query_.reset();</span></a>
+<a name="307"><span class="lineNum">     307 </span><span class="lineCov">        600 :   zone_ = std::move(zone);</span></a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineCov">        600 :   if (supports_ipv6_.has_value()) StartXdsResolver();</span></a>
+<a name="309"><span class="lineNum">     309 </span><span class="lineCov">        600 : }</span></a>
+<a name="310"><span class="lineNum">     310 </span>            : </a>
+<a name="311"><span class="lineNum">     311 </span><span class="lineCov">        600 : void GoogleCloud2ProdResolver::IPv6QueryDone(bool ipv6_supported) {</span></a>
+<a name="312"><span class="lineNum">     312 </span><span class="lineCov">        600 :   ipv6_query_.reset();</span></a>
+<a name="313"><span class="lineNum">     313 </span><span class="lineCov">        600 :   supports_ipv6_ = ipv6_supported;</span></a>
+<a name="314"><span class="lineNum">     314 </span><span class="lineCov">        600 :   if (zone_.has_value()) StartXdsResolver();</span></a>
+<a name="315"><span class="lineNum">     315 </span><span class="lineCov">        600 : }</span></a>
+<a name="316"><span class="lineNum">     316 </span>            : </a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineCov">        600 : void GoogleCloud2ProdResolver::StartXdsResolver() {</span></a>
+<a name="318"><span class="lineNum">     318 </span><span class="lineCov">        600 :   if (shutdown_) {</span></a>
+<a name="319"><span class="lineNum">     319 </span><span class="lineCov">        300 :     return;</span></a>
+<a name="320"><span class="lineNum">     320 </span>            :   }</a>
+<a name="321"><span class="lineNum">     321 </span>            :   // Construct bootstrap JSON.</a>
+<a name="322"><span class="lineNum">     322 </span><span class="lineCov">        300 :   std::random_device rd;</span></a>
+<a name="323"><span class="lineNum">     323 </span><span class="lineCov">        300 :   std::mt19937 mt(rd());</span></a>
+<a name="324"><span class="lineNum">     324 </span><span class="lineCov">        300 :   std::uniform_int_distribution&lt;uint64_t&gt; dist(1, UINT64_MAX);</span></a>
+<a name="325"><span class="lineNum">     325 </span>            :   Json::Object node = {</a>
+<a name="326"><span class="lineNum">     326 </span><span class="lineCov">        300 :       {&quot;id&quot;, absl::StrCat(&quot;C2P-&quot;, dist(mt))},</span></a>
+<a name="327"><span class="lineNum">     327 </span><span class="lineCov">       1200 :   };</span></a>
+<a name="328"><span class="lineNum">     328 </span><span class="lineCov">        300 :   if (!zone_-&gt;empty()) {</span></a>
+<a name="329"><span class="lineNum">     329 </span><span class="lineNoCov">          0 :     node[&quot;locality&quot;] = Json::Object{</span></a>
+<a name="330"><span class="lineNum">     330 </span>            :         {&quot;zone&quot;, *zone_},</a>
+<a name="331"><span class="lineNum">     331 </span><span class="lineNoCov">          0 :     };</span></a>
+<a name="332"><span class="lineNum">     332 </span>            :   };</a>
+<a name="333"><span class="lineNum">     333 </span><span class="lineCov">        300 :   if (*supports_ipv6_) {</span></a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineNoCov">          0 :     node[&quot;metadata&quot;] = Json::Object{</span></a>
+<a name="335"><span class="lineNum">     335 </span>            :         {&quot;TRAFFICDIRECTOR_DIRECTPATH_C2P_IPV6_CAPABLE&quot;, true},</a>
+<a name="336"><span class="lineNum">     336 </span><span class="lineNoCov">          0 :     };</span></a>
+<a name="337"><span class="lineNum">     337 </span>            :   }</a>
+<a name="338"><span class="lineNum">     338 </span>            :   // Allow the TD server uri to be overridden for testing purposes.</a>
+<a name="339"><span class="lineNum">     339 </span>            :   UniquePtr&lt;char&gt; override_server(</a>
+<a name="340"><span class="lineNum">     340 </span><span class="lineCov">        300 :       gpr_getenv(&quot;GRPC_TEST_ONLY_GOOGLE_C2P_RESOLVER_TRAFFIC_DIRECTOR_URI&quot;));</span></a>
+<a name="341"><span class="lineNum">     341 </span>            :   const char* server_uri =</a>
+<a name="342"><span class="lineNum">     342 </span><span class="lineCov">        300 :       override_server != nullptr &amp;&amp; strlen(override_server.get()) &gt; 0</span></a>
+<a name="343"><span class="lineNum">     343 </span><span class="lineCov">        300 :           ? override_server.get()</span></a>
+<a name="344"><span class="lineNum">     344 </span><span class="lineCov">        300 :           : &quot;directpath-pa.googleapis.com&quot;;</span></a>
+<a name="345"><span class="lineNum">     345 </span><span class="lineCov">       1200 :   Json bootstrap = Json::Object{</span></a>
+<a name="346"><span class="lineNum">     346 </span>            :       {&quot;xds_servers&quot;,</a>
+<a name="347"><span class="lineNum">     347 </span><span class="lineCov">        900 :        Json::Array{</span></a>
+<a name="348"><span class="lineNum">     348 </span><span class="lineCov">       1500 :            Json::Object{</span></a>
+<a name="349"><span class="lineNum">     349 </span>            :                {&quot;server_uri&quot;, server_uri},</a>
+<a name="350"><span class="lineNum">     350 </span>            :                {&quot;channel_creds&quot;,</a>
+<a name="351"><span class="lineNum">     351 </span><span class="lineCov">        900 :                 Json::Array{</span></a>
+<a name="352"><span class="lineNum">     352 </span><span class="lineCov">        600 :                     Json::Object{</span></a>
+<a name="353"><span class="lineNum">     353 </span>            :                         {&quot;type&quot;, &quot;google_default&quot;},</a>
+<a name="354"><span class="lineNum">     354 </span><span class="lineCov">        600 :                     },</span></a>
+<a name="355"><span class="lineNum">     355 </span><span class="lineCov">        600 :                 }},</span></a>
+<a name="356"><span class="lineNum">     356 </span><span class="lineCov">       1200 :                {&quot;server_features&quot;, Json::Array{&quot;xds_v3&quot;}},</span></a>
+<a name="357"><span class="lineNum">     357 </span><span class="lineCov">       1200 :            },</span></a>
+<a name="358"><span class="lineNum">     358 </span><span class="lineCov">        600 :        }},</span></a>
+<a name="359"><span class="lineNum">     359 </span><span class="lineCov">        300 :       {&quot;node&quot;, std::move(node)},</span></a>
+<a name="360"><span class="lineNum">     360 </span><span class="lineCov">       1200 :   };</span></a>
+<a name="361"><span class="lineNum">     361 </span>            :   // Inject bootstrap JSON as fallback config.</a>
+<a name="362"><span class="lineNum">     362 </span><span class="lineCov">        300 :   internal::SetXdsFallbackBootstrapConfig(bootstrap.Dump().c_str());</span></a>
+<a name="363"><span class="lineNum">     363 </span>            :   // Now start xDS resolver.</a>
+<a name="364"><span class="lineNum">     364 </span><span class="lineCov">        300 :   child_resolver_-&gt;StartLocked();</span></a>
+<a name="365"><span class="lineNum">     365 </span><span class="lineCov">        300 : }</span></a>
+<a name="366"><span class="lineNum">     366 </span>            : </a>
+<a name="367"><span class="lineNum">     367 </span>            : //</a>
+<a name="368"><span class="lineNum">     368 </span>            : // Factory</a>
+<a name="369"><span class="lineNum">     369 </span>            : //</a>
+<a name="370"><span class="lineNum">     370 </span>            : </a>
+<a name="371"><span class="lineNum">     371 </span>            : class GoogleCloud2ProdResolverFactory : public ResolverFactory {</a>
+<a name="372"><span class="lineNum">     372 </span>            :  public:</a>
+<a name="373"><span class="lineNum">     373 </span>            :   // TODO(roth): Remove experimental suffix once this code is proven stable,</a>
+<a name="374"><span class="lineNum">     374 </span>            :   // and update the scheme in google_c2p_resolver_test.cc when doing so.</a>
+<a name="375"><span class="lineNum">     375 </span><span class="lineCov">       7630 :   absl::string_view scheme() const override {</span></a>
+<a name="376"><span class="lineNum">     376 </span><span class="lineCov">       7630 :     return &quot;google-c2p-experimental&quot;;</span></a>
+<a name="377"><span class="lineNum">     377 </span>            :   }</a>
+<a name="378"><span class="lineNum">     378 </span>            : </a>
+<a name="379"><span class="lineNum">     379 </span><span class="lineCov">       1197 :   bool IsValidUri(const URI&amp; uri) const override {</span></a>
+<a name="380"><span class="lineNum">     380 </span><span class="lineCov">       1197 :     if (GPR_UNLIKELY(!uri.authority().empty())) {</span></a>
+<a name="381"><span class="lineNum">     381 </span><span class="lineNoCov">          0 :       gpr_log(GPR_ERROR, &quot;google-c2p URI scheme does not support authorities&quot;);</span></a>
+<a name="382"><span class="lineNum">     382 </span><span class="lineNoCov">          0 :       return false;</span></a>
+<a name="383"><span class="lineNum">     383 </span>            :     }</a>
+<a name="384"><span class="lineNum">     384 </span><span class="lineCov">       1197 :     return true;</span></a>
+<a name="385"><span class="lineNum">     385 </span>            :   }</a>
+<a name="386"><span class="lineNum">     386 </span>            : </a>
+<a name="387"><span class="lineNum">     387 </span><span class="lineCov">        597 :   OrphanablePtr&lt;Resolver&gt; CreateResolver(ResolverArgs args) const override {</span></a>
+<a name="388"><span class="lineNum">     388 </span><span class="lineCov">        597 :     if (!IsValidUri(args.uri)) return nullptr;</span></a>
+<a name="389"><span class="lineNum">     389 </span><span class="lineCov">        597 :     return MakeOrphanable&lt;GoogleCloud2ProdResolver&gt;(std::move(args));</span></a>
+<a name="390"><span class="lineNum">     390 </span>            :   }</a>
+<a name="391"><span class="lineNum">     391 </span>            : };</a>
+<a name="392"><span class="lineNum">     392 </span>            : </a>
+<a name="393"><span class="lineNum">     393 </span>            : }  // namespace</a>
+<a name="394"><span class="lineNum">     394 </span>            : </a>
+<a name="395"><span class="lineNum">     395 </span><span class="lineCov">       7632 : void RegisterCloud2ProdResolver(CoreConfiguration::Builder* builder) {</span></a>
+<a name="396"><span class="lineNum">     396 </span><span class="lineCov">      15263 :   builder-&gt;resolver_registry()-&gt;RegisterResolverFactory(</span></a>
+<a name="397"><span class="lineNum">     397 </span><span class="lineCov">      15264 :       absl::make_unique&lt;GoogleCloud2ProdResolverFactory&gt;());</span></a>
+<a name="398"><span class="lineNum">     398 </span><span class="lineCov">       7632 : }</span></a>
+<a name="399"><span class="lineNum">     399 </span>            : </a>
+<a name="400"><span class="lineNum">     400 </span>            : }  // namespace grpc_core</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

@@ -1,0 +1,427 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/core/lib/gprpp/ref_counted.h</title>
+  <link rel="stylesheet" type="text/css" href="../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../index.html">top level</a> - <a href="index.html">src/core/lib/gprpp</a> - ref_counted.h<span style="font-size: 80%;"> (source / <a href="ref_counted.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">66</td>
+            <td class="headerCovTableEntry">69</td>
+            <td class="headerCovTableEntryHi">95.7 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-12 14:35:39</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">422</td>
+            <td class="headerCovTableEntry">484</td>
+            <td class="headerCovTableEntryMed">87.2 %</td>
+          </tr>
+          <tr><td><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<a name="2"><span class="lineNum">       2 </span>            :  *</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * Copyright 2017 gRPC authors.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * you may not use this file except in compliance with the License.</a>
+<a name="7"><span class="lineNum">       7 </span>            :  * You may obtain a copy of the License at</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *</a>
+<a name="9"><span class="lineNum">       9 </span>            :  *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="10"><span class="lineNum">      10 </span>            :  *</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * Unless required by applicable law or agreed to in writing, software</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * See the License for the specific language governing permissions and</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * limitations under the License.</a>
+<a name="16"><span class="lineNum">      16 </span>            :  *</a>
+<a name="17"><span class="lineNum">      17 </span>            :  */</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #ifndef GRPC_CORE_LIB_GPRPP_REF_COUNTED_H</a>
+<a name="20"><span class="lineNum">      20 </span>            : #define GRPC_CORE_LIB_GPRPP_REF_COUNTED_H</a>
+<a name="21"><span class="lineNum">      21 </span>            : </a>
+<a name="22"><span class="lineNum">      22 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="23"><span class="lineNum">      23 </span>            : </a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &lt;atomic&gt;</a>
+<a name="25"><span class="lineNum">      25 </span>            : #include &lt;cassert&gt;</a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &lt;cinttypes&gt;</a>
+<a name="27"><span class="lineNum">      27 </span>            : </a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &lt;grpc/support/atm.h&gt;</a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &lt;grpc/support/log.h&gt;</a>
+<a name="30"><span class="lineNum">      30 </span>            : #include &lt;grpc/support/sync.h&gt;</a>
+<a name="31"><span class="lineNum">      31 </span>            : </a>
+<a name="32"><span class="lineNum">      32 </span>            : #include &quot;src/core/lib/gprpp/atomic_utils.h&quot;</a>
+<a name="33"><span class="lineNum">      33 </span>            : #include &quot;src/core/lib/gprpp/debug_location.h&quot;</a>
+<a name="34"><span class="lineNum">      34 </span>            : #include &quot;src/core/lib/gprpp/memory.h&quot;</a>
+<a name="35"><span class="lineNum">      35 </span>            : #include &quot;src/core/lib/gprpp/ref_counted_ptr.h&quot;</a>
+<a name="36"><span class="lineNum">      36 </span>            : </a>
+<a name="37"><span class="lineNum">      37 </span>            : namespace grpc_core {</a>
+<a name="38"><span class="lineNum">      38 </span>            : </a>
+<a name="39"><span class="lineNum">      39 </span>            : // RefCount is a simple atomic ref-count.</a>
+<a name="40"><span class="lineNum">      40 </span>            : //</a>
+<a name="41"><span class="lineNum">      41 </span>            : // This is a C++ implementation of gpr_refcount, with inline functions. Due to</a>
+<a name="42"><span class="lineNum">      42 </span>            : // inline functions, this class is significantly more efficient than</a>
+<a name="43"><span class="lineNum">      43 </span>            : // gpr_refcount and should be preferred over gpr_refcount whenever possible.</a>
+<a name="44"><span class="lineNum">      44 </span>            : //</a>
+<a name="45"><span class="lineNum">      45 </span>            : // TODO(soheil): Remove gpr_refcount after submitting the GRFC and the paragraph</a>
+<a name="46"><span class="lineNum">      46 </span>            : //               above.</a>
+<a name="47"><span class="lineNum">      47 </span>            : class RefCount {</a>
+<a name="48"><span class="lineNum">      48 </span>            :  public:</a>
+<a name="49"><span class="lineNum">      49 </span>            :   using Value = intptr_t;</a>
+<a name="50"><span class="lineNum">      50 </span>            : </a>
+<a name="51"><span class="lineNum">      51 </span>            :   // `init` is the initial refcount stored in this object.</a>
+<a name="52"><span class="lineNum">      52 </span>            :   //</a>
+<a name="53"><span class="lineNum">      53 </span>            :   // `trace` is a string to be logged with trace events; if null, no</a>
+<a name="54"><span class="lineNum">      54 </span>            :   // trace logging will be done.  Tracing is a no-op in non-debug builds.</a>
+<a name="55"><span class="lineNum">      55 </span><span class="lineCov">   89506398 :   explicit RefCount(</span></a>
+<a name="56"><span class="lineNum">      56 </span>            :       Value init = 1,</a>
+<a name="57"><span class="lineNum">      57 </span>            :       const char*</a>
+<a name="58"><span class="lineNum">      58 </span>            : #ifndef NDEBUG</a>
+<a name="59"><span class="lineNum">      59 </span>            :           // Leave unnamed if NDEBUG to avoid unused parameter warning</a>
+<a name="60"><span class="lineNum">      60 </span>            :           trace</a>
+<a name="61"><span class="lineNum">      61 </span>            : #endif</a>
+<a name="62"><span class="lineNum">      62 </span>            :       = nullptr)</a>
+<a name="63"><span class="lineNum">      63 </span><span class="lineCov">   89506398 :       :</span></a>
+<a name="64"><span class="lineNum">      64 </span>            : #ifndef NDEBUG</a>
+<a name="65"><span class="lineNum">      65 </span><span class="lineCov">   89506398 :         trace_(trace),</span></a>
+<a name="66"><span class="lineNum">      66 </span>            : #endif</a>
+<a name="67"><span class="lineNum">      67 </span><span class="lineCov">   89506398 :         value_(init) {</span></a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">   89507926 :   }</span></a>
+<a name="69"><span class="lineNum">      69 </span>            : </a>
+<a name="70"><span class="lineNum">      70 </span>            :   // Increases the ref-count by `n`.</a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">   78013334 :   void Ref(Value n = 1) {</span></a>
+<a name="72"><span class="lineNum">      72 </span>            : #ifndef NDEBUG</a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">   78013334 :     const Value prior = value_.fetch_add(n, std::memory_order_relaxed);</span></a>
+<a name="74"><span class="lineNum">      74 </span><span class="lineCov">   78013334 :     if (trace_ != nullptr) {</span></a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineCov">      34610 :       gpr_log(GPR_INFO, &quot;%s:%p ref %&quot; PRIdPTR &quot; -&gt; %&quot; PRIdPTR, trace_, this,</span></a>
+<a name="76"><span class="lineNum">      76 </span>            :               prior, prior + n);</a>
+<a name="77"><span class="lineNum">      77 </span>            :     }</a>
+<a name="78"><span class="lineNum">      78 </span>            : #else</a>
+<a name="79"><span class="lineNum">      79 </span>            :     value_.fetch_add(n, std::memory_order_relaxed);</a>
+<a name="80"><span class="lineNum">      80 </span>            : #endif</a>
+<a name="81"><span class="lineNum">      81 </span><span class="lineCov">   78013334 :   }</span></a>
+<a name="82"><span class="lineNum">      82 </span><span class="lineCov">  152682210 :   void Ref(const DebugLocation&amp; location, const char* reason, Value n = 1) {</span></a>
+<a name="83"><span class="lineNum">      83 </span>            : #ifndef NDEBUG</a>
+<a name="84"><span class="lineNum">      84 </span><span class="lineCov">  152682210 :     const Value prior = value_.fetch_add(n, std::memory_order_relaxed);</span></a>
+<a name="85"><span class="lineNum">      85 </span><span class="lineCov">  152682210 :     if (trace_ != nullptr) {</span></a>
+<a name="86"><span class="lineNum">      86 </span><span class="lineCov">      20346 :       gpr_log(GPR_INFO, &quot;%s:%p %s:%d ref %&quot; PRIdPTR &quot; -&gt; %&quot; PRIdPTR &quot; %s&quot;,</span></a>
+<a name="87"><span class="lineNum">      87 </span>            :               trace_, this, location.file(), location.line(), prior, prior + n,</a>
+<a name="88"><span class="lineNum">      88 </span>            :               reason);</a>
+<a name="89"><span class="lineNum">      89 </span>            :     }</a>
+<a name="90"><span class="lineNum">      90 </span>            : #else</a>
+<a name="91"><span class="lineNum">      91 </span>            :     // Use conditionally-important parameters</a>
+<a name="92"><span class="lineNum">      92 </span>            :     (void)location;</a>
+<a name="93"><span class="lineNum">      93 </span>            :     (void)reason;</a>
+<a name="94"><span class="lineNum">      94 </span>            :     value_.fetch_add(n, std::memory_order_relaxed);</a>
+<a name="95"><span class="lineNum">      95 </span>            : #endif</a>
+<a name="96"><span class="lineNum">      96 </span><span class="lineCov">  152682210 :   }</span></a>
+<a name="97"><span class="lineNum">      97 </span>            : </a>
+<a name="98"><span class="lineNum">      98 </span>            :   // Similar to Ref() with an assert on the ref-count being non-zero.</a>
+<a name="99"><span class="lineNum">      99 </span>            :   void RefNonZero() {</a>
+<a name="100"><span class="lineNum">     100 </span>            : #ifndef NDEBUG</a>
+<a name="101"><span class="lineNum">     101 </span>            :     const Value prior = value_.fetch_add(1, std::memory_order_relaxed);</a>
+<a name="102"><span class="lineNum">     102 </span>            :     if (trace_ != nullptr) {</a>
+<a name="103"><span class="lineNum">     103 </span>            :       gpr_log(GPR_INFO, &quot;%s:%p ref %&quot; PRIdPTR &quot; -&gt; %&quot; PRIdPTR, trace_, this,</a>
+<a name="104"><span class="lineNum">     104 </span>            :               prior, prior + 1);</a>
+<a name="105"><span class="lineNum">     105 </span>            :     }</a>
+<a name="106"><span class="lineNum">     106 </span>            :     assert(prior &gt; 0);</a>
+<a name="107"><span class="lineNum">     107 </span>            : #else</a>
+<a name="108"><span class="lineNum">     108 </span>            :     value_.fetch_add(1, std::memory_order_relaxed);</a>
+<a name="109"><span class="lineNum">     109 </span>            : #endif</a>
+<a name="110"><span class="lineNum">     110 </span>            :   }</a>
+<a name="111"><span class="lineNum">     111 </span><span class="lineCov">  188785006 :   void RefNonZero(const DebugLocation&amp; location, const char* reason) {</span></a>
+<a name="112"><span class="lineNum">     112 </span>            : #ifndef NDEBUG</a>
+<a name="113"><span class="lineNum">     113 </span><span class="lineCov">  188785006 :     const Value prior = value_.fetch_add(1, std::memory_order_relaxed);</span></a>
+<a name="114"><span class="lineNum">     114 </span><span class="lineCov">  188785006 :     if (trace_ != nullptr) {</span></a>
+<a name="115"><span class="lineNum">     115 </span><span class="lineCov">       5193 :       gpr_log(GPR_INFO, &quot;%s:%p %s:%d ref %&quot; PRIdPTR &quot; -&gt; %&quot; PRIdPTR &quot; %s&quot;,</span></a>
+<a name="116"><span class="lineNum">     116 </span>            :               trace_, this, location.file(), location.line(), prior, prior + 1,</a>
+<a name="117"><span class="lineNum">     117 </span>            :               reason);</a>
+<a name="118"><span class="lineNum">     118 </span>            :     }</a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineCov">  189159593 :     assert(prior &gt; 0);</span></a>
+<a name="120"><span class="lineNum">     120 </span>            : #else</a>
+<a name="121"><span class="lineNum">     121 </span>            :     // Avoid unused-parameter warnings for debug-only parameters</a>
+<a name="122"><span class="lineNum">     122 </span>            :     (void)location;</a>
+<a name="123"><span class="lineNum">     123 </span>            :     (void)reason;</a>
+<a name="124"><span class="lineNum">     124 </span>            :     RefNonZero();</a>
+<a name="125"><span class="lineNum">     125 </span>            : #endif</a>
+<a name="126"><span class="lineNum">     126 </span><span class="lineCov">  189159593 :   }</span></a>
+<a name="127"><span class="lineNum">     127 </span>            : </a>
+<a name="128"><span class="lineNum">     128 </span><span class="lineCov">      47154 :   bool RefIfNonZero() {</span></a>
+<a name="129"><span class="lineNum">     129 </span>            : #ifndef NDEBUG</a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">      47154 :     if (trace_ != nullptr) {</span></a>
+<a name="131"><span class="lineNum">     131 </span><span class="lineNoCov">          0 :       const Value prior = get();</span></a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineNoCov">          0 :       gpr_log(GPR_INFO, &quot;%s:%p ref_if_non_zero %&quot; PRIdPTR &quot; -&gt; %&quot; PRIdPTR,</span></a>
+<a name="133"><span class="lineNum">     133 </span>            :               trace_, this, prior, prior + 1);</a>
+<a name="134"><span class="lineNum">     134 </span>            :     }</a>
+<a name="135"><span class="lineNum">     135 </span>            : #endif</a>
+<a name="136"><span class="lineNum">     136 </span><span class="lineCov">      47154 :     return IncrementIfNonzero(&amp;value_);</span></a>
+<a name="137"><span class="lineNum">     137 </span>            :   }</a>
+<a name="138"><span class="lineNum">     138 </span>            :   bool RefIfNonZero(const DebugLocation&amp; location, const char* reason) {</a>
+<a name="139"><span class="lineNum">     139 </span>            : #ifndef NDEBUG</a>
+<a name="140"><span class="lineNum">     140 </span>            :     if (trace_ != nullptr) {</a>
+<a name="141"><span class="lineNum">     141 </span>            :       const Value prior = get();</a>
+<a name="142"><span class="lineNum">     142 </span>            :       gpr_log(GPR_INFO,</a>
+<a name="143"><span class="lineNum">     143 </span>            :               &quot;%s:%p %s:%d ref_if_non_zero %&quot; PRIdPTR &quot; -&gt; %&quot; PRIdPTR &quot; %s&quot;,</a>
+<a name="144"><span class="lineNum">     144 </span>            :               trace_, this, location.file(), location.line(), prior, prior + 1,</a>
+<a name="145"><span class="lineNum">     145 </span>            :               reason);</a>
+<a name="146"><span class="lineNum">     146 </span>            :     }</a>
+<a name="147"><span class="lineNum">     147 </span>            : #endif</a>
+<a name="148"><span class="lineNum">     148 </span>            :     // Avoid unused-parameter warnings for debug-only parameters</a>
+<a name="149"><span class="lineNum">     149 </span>            :     (void)location;</a>
+<a name="150"><span class="lineNum">     150 </span>            :     (void)reason;</a>
+<a name="151"><span class="lineNum">     151 </span>            :     return IncrementIfNonzero(&amp;value_);</a>
+<a name="152"><span class="lineNum">     152 </span>            :   }</a>
+<a name="153"><span class="lineNum">     153 </span>            : </a>
+<a name="154"><span class="lineNum">     154 </span>            :   // Decrements the ref-count and returns true if the ref-count reaches 0.</a>
+<a name="155"><span class="lineNum">     155 </span><span class="lineCov">  151412140 :   bool Unref() {</span></a>
+<a name="156"><span class="lineNum">     156 </span>            : #ifndef NDEBUG</a>
+<a name="157"><span class="lineNum">     157 </span>            :     // Grab a copy of the trace flag before the atomic change, since we</a>
+<a name="158"><span class="lineNum">     158 </span>            :     // will no longer be holding a ref afterwards and therefore can't</a>
+<a name="159"><span class="lineNum">     159 </span>            :     // safely access it, since another thread might free us in the interim.</a>
+<a name="160"><span class="lineNum">     160 </span><span class="lineCov">  151412140 :     auto* trace = trace_;</span></a>
+<a name="161"><span class="lineNum">     161 </span>            : #endif</a>
+<a name="162"><span class="lineNum">     162 </span><span class="lineCov">  151412140 :     const Value prior = value_.fetch_sub(1, std::memory_order_acq_rel);</span></a>
+<a name="163"><span class="lineNum">     163 </span>            : #ifndef NDEBUG</a>
+<a name="164"><span class="lineNum">     164 </span><span class="lineCov">  151412140 :     if (trace != nullptr) {</span></a>
+<a name="165"><span class="lineNum">     165 </span><span class="lineCov">      39625 :       gpr_log(GPR_INFO, &quot;%s:%p unref %&quot; PRIdPTR &quot; -&gt; %&quot; PRIdPTR, trace, this,</span></a>
+<a name="166"><span class="lineNum">     166 </span>            :               prior, prior - 1);</a>
+<a name="167"><span class="lineNum">     167 </span>            :     }</a>
+<a name="168"><span class="lineNum">     168 </span><span class="lineCov">  151578088 :     GPR_DEBUG_ASSERT(prior &gt; 0);</span></a>
+<a name="169"><span class="lineNum">     169 </span>            : #endif</a>
+<a name="170"><span class="lineNum">     170 </span><span class="lineCov">  151578088 :     return prior == 1;</span></a>
+<a name="171"><span class="lineNum">     171 </span>            :   }</a>
+<a name="172"><span class="lineNum">     172 </span><span class="lineCov">  394340209 :   bool Unref(const DebugLocation&amp; location, const char* reason) {</span></a>
+<a name="173"><span class="lineNum">     173 </span>            : #ifndef NDEBUG</a>
+<a name="174"><span class="lineNum">     174 </span>            :     // Grab a copy of the trace flag before the atomic change, since we</a>
+<a name="175"><span class="lineNum">     175 </span>            :     // will no longer be holding a ref afterwards and therefore can't</a>
+<a name="176"><span class="lineNum">     176 </span>            :     // safely access it, since another thread might free us in the interim.</a>
+<a name="177"><span class="lineNum">     177 </span><span class="lineCov">  394340209 :     auto* trace = trace_;</span></a>
+<a name="178"><span class="lineNum">     178 </span>            : #endif</a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">  394340209 :     const Value prior = value_.fetch_sub(1, std::memory_order_acq_rel);</span></a>
+<a name="180"><span class="lineNum">     180 </span>            : #ifndef NDEBUG</a>
+<a name="181"><span class="lineNum">     181 </span><span class="lineCov">  394340209 :     if (trace != nullptr) {</span></a>
+<a name="182"><span class="lineNum">     182 </span><span class="lineCov">      30660 :       gpr_log(GPR_INFO, &quot;%s:%p %s:%d unref %&quot; PRIdPTR &quot; -&gt; %&quot; PRIdPTR &quot; %s&quot;,</span></a>
+<a name="183"><span class="lineNum">     183 </span>            :               trace, this, location.file(), location.line(), prior, prior - 1,</a>
+<a name="184"><span class="lineNum">     184 </span>            :               reason);</a>
+<a name="185"><span class="lineNum">     185 </span>            :     }</a>
+<a name="186"><span class="lineNum">     186 </span><span class="lineCov">  395441654 :     GPR_DEBUG_ASSERT(prior &gt; 0);</span></a>
+<a name="187"><span class="lineNum">     187 </span>            : #else</a>
+<a name="188"><span class="lineNum">     188 </span>            :     // Avoid unused-parameter warnings for debug-only parameters</a>
+<a name="189"><span class="lineNum">     189 </span>            :     (void)location;</a>
+<a name="190"><span class="lineNum">     190 </span>            :     (void)reason;</a>
+<a name="191"><span class="lineNum">     191 </span>            : #endif</a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">  395441654 :     return prior == 1;</span></a>
+<a name="193"><span class="lineNum">     193 </span>            :   }</a>
+<a name="194"><span class="lineNum">     194 </span>            : </a>
+<a name="195"><span class="lineNum">     195 </span>            :  private:</a>
+<a name="196"><span class="lineNum">     196 </span><span class="lineNoCov">          0 :   Value get() const { return value_.load(std::memory_order_relaxed); }</span></a>
+<a name="197"><span class="lineNum">     197 </span>            : </a>
+<a name="198"><span class="lineNum">     198 </span>            : #ifndef NDEBUG</a>
+<a name="199"><span class="lineNum">     199 </span>            :   const char* trace_;</a>
+<a name="200"><span class="lineNum">     200 </span>            : #endif</a>
+<a name="201"><span class="lineNum">     201 </span>            :   std::atomic&lt;Value&gt; value_{0};</a>
+<a name="202"><span class="lineNum">     202 </span>            : };</a>
+<a name="203"><span class="lineNum">     203 </span>            : </a>
+<a name="204"><span class="lineNum">     204 </span>            : // PolymorphicRefCount enforces polymorphic destruction of RefCounted.</a>
+<a name="205"><span class="lineNum">     205 </span>            : class PolymorphicRefCount {</a>
+<a name="206"><span class="lineNum">     206 </span>            :  public:</a>
+<a name="207"><span class="lineNum">     207 </span><span class="lineCov">   16784952 :   virtual ~PolymorphicRefCount() = default;</span></a>
+<a name="208"><span class="lineNum">     208 </span>            : };</a>
+<a name="209"><span class="lineNum">     209 </span>            : </a>
+<a name="210"><span class="lineNum">     210 </span>            : // NonPolymorphicRefCount does not enforce polymorphic destruction of</a>
+<a name="211"><span class="lineNum">     211 </span>            : // RefCounted. Please refer to RefCounted for more details, and</a>
+<a name="212"><span class="lineNum">     212 </span>            : // when in doubt use PolymorphicRefCount.</a>
+<a name="213"><span class="lineNum">     213 </span>            : class NonPolymorphicRefCount {</a>
+<a name="214"><span class="lineNum">     214 </span>            :  public:</a>
+<a name="215"><span class="lineNum">     215 </span>            :   ~NonPolymorphicRefCount() = default;</a>
+<a name="216"><span class="lineNum">     216 </span>            : };</a>
+<a name="217"><span class="lineNum">     217 </span>            : </a>
+<a name="218"><span class="lineNum">     218 </span>            : // Behavior of RefCounted&lt;&gt; upon ref count reaching 0.</a>
+<a name="219"><span class="lineNum">     219 </span>            : enum UnrefBehavior {</a>
+<a name="220"><span class="lineNum">     220 </span>            :   // Default behavior: Delete the object.</a>
+<a name="221"><span class="lineNum">     221 </span>            :   kUnrefDelete,</a>
+<a name="222"><span class="lineNum">     222 </span>            :   // Do not delete the object upon unref.  This is useful in cases where all</a>
+<a name="223"><span class="lineNum">     223 </span>            :   // existing objects must be tracked in a registry but the object's entry in</a>
+<a name="224"><span class="lineNum">     224 </span>            :   // the registry cannot be removed from the object's dtor due to</a>
+<a name="225"><span class="lineNum">     225 </span>            :   // synchronization issues.  In this case, the registry can be cleaned up</a>
+<a name="226"><span class="lineNum">     226 </span>            :   // later by identifying entries for which RefIfNonZero() returns null.</a>
+<a name="227"><span class="lineNum">     227 </span>            :   kUnrefNoDelete,</a>
+<a name="228"><span class="lineNum">     228 </span>            :   // Call the object's dtor but do not delete it.  This is useful for cases</a>
+<a name="229"><span class="lineNum">     229 </span>            :   // where the object is stored in memory allocated elsewhere (e.g., the call</a>
+<a name="230"><span class="lineNum">     230 </span>            :   // arena).</a>
+<a name="231"><span class="lineNum">     231 </span>            :   kUnrefCallDtor,</a>
+<a name="232"><span class="lineNum">     232 </span>            : };</a>
+<a name="233"><span class="lineNum">     233 </span>            : </a>
+<a name="234"><span class="lineNum">     234 </span>            : namespace internal {</a>
+<a name="235"><span class="lineNum">     235 </span>            : template &lt;typename T, UnrefBehavior UnrefBehaviorArg&gt;</a>
+<a name="236"><span class="lineNum">     236 </span>            : class Delete;</a>
+<a name="237"><span class="lineNum">     237 </span>            : template &lt;typename T&gt;</a>
+<a name="238"><span class="lineNum">     238 </span>            : class Delete&lt;T, kUnrefDelete&gt; {</a>
+<a name="239"><span class="lineNum">     239 </span>            :  public:</a>
+<a name="240"><span class="lineNum">     240 </span><span class="lineCov">    8162335 :   explicit Delete(T* t) { delete t; }</span></a>
+<a name="241"><span class="lineNum">     241 </span>            : };</a>
+<a name="242"><span class="lineNum">     242 </span>            : template &lt;typename T&gt;</a>
+<a name="243"><span class="lineNum">     243 </span>            : class Delete&lt;T, kUnrefNoDelete&gt; {</a>
+<a name="244"><span class="lineNum">     244 </span>            :  public:</a>
+<a name="245"><span class="lineNum">     245 </span><span class="lineCov">          6 :   explicit Delete(T* /*t*/) {}</span></a>
+<a name="246"><span class="lineNum">     246 </span>            : };</a>
+<a name="247"><span class="lineNum">     247 </span>            : template &lt;typename T&gt;</a>
+<a name="248"><span class="lineNum">     248 </span>            : class Delete&lt;T, kUnrefCallDtor&gt; {</a>
+<a name="249"><span class="lineNum">     249 </span>            :  public:</a>
+<a name="250"><span class="lineNum">     250 </span><span class="lineCov">   15259586 :   explicit Delete(T* t) { t-&gt;~T(); }</span></a>
+<a name="251"><span class="lineNum">     251 </span>            : };</a>
+<a name="252"><span class="lineNum">     252 </span>            : }  // namespace internal</a>
+<a name="253"><span class="lineNum">     253 </span>            : </a>
+<a name="254"><span class="lineNum">     254 </span>            : // A base class for reference-counted objects.</a>
+<a name="255"><span class="lineNum">     255 </span>            : // New objects should be created via new and start with a refcount of 1.</a>
+<a name="256"><span class="lineNum">     256 </span>            : // When the refcount reaches 0, executes the specified UnrefBehavior.</a>
+<a name="257"><span class="lineNum">     257 </span>            : //</a>
+<a name="258"><span class="lineNum">     258 </span>            : // This will commonly be used by CRTP (curiously-recurring template pattern)</a>
+<a name="259"><span class="lineNum">     259 </span>            : // e.g., class MyClass : public RefCounted&lt;MyClass&gt;</a>
+<a name="260"><span class="lineNum">     260 </span>            : //</a>
+<a name="261"><span class="lineNum">     261 </span>            : // Use PolymorphicRefCount and NonPolymorphicRefCount to select between</a>
+<a name="262"><span class="lineNum">     262 </span>            : // different implementations of RefCounted.</a>
+<a name="263"><span class="lineNum">     263 </span>            : //</a>
+<a name="264"><span class="lineNum">     264 </span>            : // Note that NonPolymorphicRefCount does not support polymorphic destruction.</a>
+<a name="265"><span class="lineNum">     265 </span>            : // So, use NonPolymorphicRefCount only when both of the following conditions</a>
+<a name="266"><span class="lineNum">     266 </span>            : // are guaranteed to hold:</a>
+<a name="267"><span class="lineNum">     267 </span>            : // (a) Child is a concrete leaf class in RefCounted&lt;Child&gt;, and</a>
+<a name="268"><span class="lineNum">     268 </span>            : // (b) you are guaranteed to call Unref only on concrete leaf classes and not</a>
+<a name="269"><span class="lineNum">     269 </span>            : //     their parents.</a>
+<a name="270"><span class="lineNum">     270 </span>            : //</a>
+<a name="271"><span class="lineNum">     271 </span>            : // The following example is illegal, because calling Unref() will not call</a>
+<a name="272"><span class="lineNum">     272 </span>            : // the dtor of Child.</a>
+<a name="273"><span class="lineNum">     273 </span>            : //</a>
+<a name="274"><span class="lineNum">     274 </span>            : //    class Parent : public RefCounted&lt;Parent, NonPolymorphicRefCount&gt; {}</a>
+<a name="275"><span class="lineNum">     275 </span>            : //    class Child : public Parent {}</a>
+<a name="276"><span class="lineNum">     276 </span>            : //</a>
+<a name="277"><span class="lineNum">     277 </span>            : //    Child* ch;</a>
+<a name="278"><span class="lineNum">     278 </span>            : //    ch-&gt;Unref();</a>
+<a name="279"><span class="lineNum">     279 </span>            : //</a>
+<a name="280"><span class="lineNum">     280 </span>            : template &lt;typename Child, typename Impl = PolymorphicRefCount,</a>
+<a name="281"><span class="lineNum">     281 </span>            :           UnrefBehavior UnrefBehaviorArg = kUnrefDelete&gt;</a>
+<a name="282"><span class="lineNum">     282 </span>            : class RefCounted : public Impl {</a>
+<a name="283"><span class="lineNum">     283 </span>            :  public:</a>
+<a name="284"><span class="lineNum">     284 </span>            :   using RefCountedChildType = Child;</a>
+<a name="285"><span class="lineNum">     285 </span>            : </a>
+<a name="286"><span class="lineNum">     286 </span>            :   // Note: Depending on the Impl used, this dtor can be implicitly virtual.</a>
+<a name="287"><span class="lineNum">     287 </span><span class="lineCov">   16619207 :   ~RefCounted() = default;</span></a>
+<a name="288"><span class="lineNum">     288 </span>            : </a>
+<a name="289"><span class="lineNum">     289 </span><span class="lineCov">   18871626 :   RefCountedPtr&lt;Child&gt; Ref() GRPC_MUST_USE_RESULT {</span></a>
+<a name="290"><span class="lineNum">     290 </span><span class="lineCov">   18871626 :     IncrementRefCount();</span></a>
+<a name="291"><span class="lineNum">     291 </span><span class="lineCov">   18874823 :     return RefCountedPtr&lt;Child&gt;(static_cast&lt;Child*&gt;(this));</span></a>
+<a name="292"><span class="lineNum">     292 </span>            :   }</a>
+<a name="293"><span class="lineNum">     293 </span>            : </a>
+<a name="294"><span class="lineNum">     294 </span><span class="lineCov">   13799725 :   RefCountedPtr&lt;Child&gt; Ref(const DebugLocation&amp; location,</span></a>
+<a name="295"><span class="lineNum">     295 </span>            :                            const char* reason) GRPC_MUST_USE_RESULT {</a>
+<a name="296"><span class="lineNum">     296 </span><span class="lineCov">   13799725 :     IncrementRefCount(location, reason);</span></a>
+<a name="297"><span class="lineNum">     297 </span><span class="lineCov">   13803124 :     return RefCountedPtr&lt;Child&gt;(static_cast&lt;Child*&gt;(this));</span></a>
+<a name="298"><span class="lineNum">     298 </span>            :   }</a>
+<a name="299"><span class="lineNum">     299 </span>            : </a>
+<a name="300"><span class="lineNum">     300 </span>            :   // TODO(roth): Once all of our code is converted to C++ and can use</a>
+<a name="301"><span class="lineNum">     301 </span>            :   // RefCountedPtr&lt;&gt; instead of manual ref-counting, make this method</a>
+<a name="302"><span class="lineNum">     302 </span>            :   // private, since it will only be used by RefCountedPtr&lt;&gt;, which is a</a>
+<a name="303"><span class="lineNum">     303 </span>            :   // friend of this class.</a>
+<a name="304"><span class="lineNum">     304 </span><span class="lineCov">   60143253 :   void Unref() {</span></a>
+<a name="305"><span class="lineNum">     305 </span><span class="lineCov">   60143253 :     if (GPR_UNLIKELY(refs_.Unref())) {</span></a>
+<a name="306"><span class="lineNum">     306 </span><span class="lineCov">   12003209 :       internal::Delete&lt;Child, UnrefBehaviorArg&gt;(static_cast&lt;Child*&gt;(this));</span></a>
+<a name="307"><span class="lineNum">     307 </span>            :     }</a>
+<a name="308"><span class="lineNum">     308 </span><span class="lineCov">   60150847 :   }</span></a>
+<a name="309"><span class="lineNum">     309 </span><span class="lineCov">   24037618 :   void Unref(const DebugLocation&amp; location, const char* reason) {</span></a>
+<a name="310"><span class="lineNum">     310 </span><span class="lineCov">   24037618 :     if (GPR_UNLIKELY(refs_.Unref(location, reason))) {</span></a>
+<a name="311"><span class="lineNum">     311 </span><span class="lineCov">    4855351 :       internal::Delete&lt;Child, UnrefBehaviorArg&gt;(static_cast&lt;Child*&gt;(this));</span></a>
+<a name="312"><span class="lineNum">     312 </span>            :     }</a>
+<a name="313"><span class="lineNum">     313 </span><span class="lineCov">   24038184 :   }</span></a>
+<a name="314"><span class="lineNum">     314 </span>            : </a>
+<a name="315"><span class="lineNum">     315 </span><span class="lineCov">      19761 :   RefCountedPtr&lt;Child&gt; RefIfNonZero() GRPC_MUST_USE_RESULT {</span></a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineCov">      19761 :     return RefCountedPtr&lt;Child&gt;(refs_.RefIfNonZero() ? static_cast&lt;Child*&gt;(this)</span></a>
+<a name="317"><span class="lineNum">     317 </span><span class="lineCov">      19761 :                                                      : nullptr);</span></a>
+<a name="318"><span class="lineNum">     318 </span>            :   }</a>
+<a name="319"><span class="lineNum">     319 </span>            :   RefCountedPtr&lt;Child&gt; RefIfNonZero(const DebugLocation&amp; location,</a>
+<a name="320"><span class="lineNum">     320 </span>            :                                     const char* reason) GRPC_MUST_USE_RESULT {</a>
+<a name="321"><span class="lineNum">     321 </span>            :     return RefCountedPtr&lt;Child&gt;(refs_.RefIfNonZero(location, reason)</a>
+<a name="322"><span class="lineNum">     322 </span>            :                                     ? static_cast&lt;Child*&gt;(this)</a>
+<a name="323"><span class="lineNum">     323 </span>            :                                     : nullptr);</a>
+<a name="324"><span class="lineNum">     324 </span>            :   }</a>
+<a name="325"><span class="lineNum">     325 </span>            : </a>
+<a name="326"><span class="lineNum">     326 </span>            :   // Not copyable nor movable.</a>
+<a name="327"><span class="lineNum">     327 </span>            :   RefCounted(const RefCounted&amp;) = delete;</a>
+<a name="328"><span class="lineNum">     328 </span>            :   RefCounted&amp; operator=(const RefCounted&amp;) = delete;</a>
+<a name="329"><span class="lineNum">     329 </span>            : </a>
+<a name="330"><span class="lineNum">     330 </span>            :  protected:</a>
+<a name="331"><span class="lineNum">     331 </span>            :   // Note: Tracing is a no-op on non-debug builds.</a>
+<a name="332"><span class="lineNum">     332 </span><span class="lineCov">   16721544 :   explicit RefCounted(const char* trace = nullptr,</span></a>
+<a name="333"><span class="lineNum">     333 </span>            :                       intptr_t initial_refcount = 1)</a>
+<a name="334"><span class="lineNum">     334 </span><span class="lineCov">   16721544 :       : refs_(initial_refcount, trace) {}</span></a>
+<a name="335"><span class="lineNum">     335 </span>            : </a>
+<a name="336"><span class="lineNum">     336 </span>            :  private:</a>
+<a name="337"><span class="lineNum">     337 </span>            :   // Allow RefCountedPtr&lt;&gt; to access IncrementRefCount().</a>
+<a name="338"><span class="lineNum">     338 </span>            :   template &lt;typename T&gt;</a>
+<a name="339"><span class="lineNum">     339 </span>            :   friend class RefCountedPtr;</a>
+<a name="340"><span class="lineNum">     340 </span>            : </a>
+<a name="341"><span class="lineNum">     341 </span><span class="lineCov">   41392495 :   void IncrementRefCount() { refs_.Ref(); }</span></a>
+<a name="342"><span class="lineNum">     342 </span><span class="lineCov">   13800495 :   void IncrementRefCount(const DebugLocation&amp; location, const char* reason) {</span></a>
+<a name="343"><span class="lineNum">     343 </span><span class="lineCov">   13800495 :     refs_.Ref(location, reason);</span></a>
+<a name="344"><span class="lineNum">     344 </span><span class="lineCov">   13803118 :   }</span></a>
+<a name="345"><span class="lineNum">     345 </span>            : </a>
+<a name="346"><span class="lineNum">     346 </span>            :   RefCount refs_;</a>
+<a name="347"><span class="lineNum">     347 </span>            : };</a>
+<a name="348"><span class="lineNum">     348 </span>            : </a>
+<a name="349"><span class="lineNum">     349 </span>            : }  // namespace grpc_core</a>
+<a name="350"><span class="lineNum">     350 </span>            : </a>
+<a name="351"><span class="lineNum">     351 </span>            : #endif /* GRPC_CORE_LIB_GPRPP_REF_COUNTED_H */</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>

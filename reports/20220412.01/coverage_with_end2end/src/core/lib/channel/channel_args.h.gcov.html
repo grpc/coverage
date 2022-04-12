@@ -1,0 +1,423 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+
+<html lang="en">
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>LCOV - _coverage_report.dat - src/core/lib/channel/channel_args.h</title>
+  <link rel="stylesheet" type="text/css" href="../../../../gcov.css">
+</head>
+
+<body>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="title">LCOV - code coverage report</td></tr>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+
+    <tr>
+      <td width="100%">
+        <table cellpadding=1 border=0 width="100%">
+          <tr>
+            <td width="10%" class="headerItem">Current view:</td>
+            <td width="35%" class="headerValue"><a href="../../../../index.html">top level</a> - <a href="index.html">src/core/lib/channel</a> - channel_args.h<span style="font-size: 80%;"> (source / <a href="channel_args.h.func-sort-c.html">functions</a>)</span></td>
+            <td width="5%"></td>
+            <td width="15%"></td>
+            <td width="10%" class="headerCovTableHead">Hit</td>
+            <td width="10%" class="headerCovTableHead">Total</td>
+            <td width="15%" class="headerCovTableHead">Coverage</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Test:</td>
+            <td class="headerValue">_coverage_report.dat</td>
+            <td></td>
+            <td class="headerItem">Lines:</td>
+            <td class="headerCovTableEntry">53</td>
+            <td class="headerCovTableEntry">60</td>
+            <td class="headerCovTableEntryMed">88.3 %</td>
+          </tr>
+          <tr>
+            <td class="headerItem">Date:</td>
+            <td class="headerValue">2022-04-12 14:35:39</td>
+            <td></td>
+            <td class="headerItem">Functions:</td>
+            <td class="headerCovTableEntry">76</td>
+            <td class="headerCovTableEntry">88</td>
+            <td class="headerCovTableEntryMed">86.4 %</td>
+          </tr>
+          <tr><td><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+        </table>
+      </td>
+    </tr>
+
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+  </table>
+
+  <table cellpadding=0 cellspacing=0 border=0>
+    <tr>
+      <td><br></td>
+    </tr>
+    <tr>
+      <td>
+<pre class="sourceHeading">          Line data    Source code</pre>
+<pre class="source">
+<a name="1"><span class="lineNum">       1 </span>            : /*</a>
+<a name="2"><span class="lineNum">       2 </span>            :  *</a>
+<a name="3"><span class="lineNum">       3 </span>            :  * Copyright 2015 gRPC authors.</a>
+<a name="4"><span class="lineNum">       4 </span>            :  *</a>
+<a name="5"><span class="lineNum">       5 </span>            :  * Licensed under the Apache License, Version 2.0 (the &quot;License&quot;);</a>
+<a name="6"><span class="lineNum">       6 </span>            :  * you may not use this file except in compliance with the License.</a>
+<a name="7"><span class="lineNum">       7 </span>            :  * You may obtain a copy of the License at</a>
+<a name="8"><span class="lineNum">       8 </span>            :  *</a>
+<a name="9"><span class="lineNum">       9 </span>            :  *     http://www.apache.org/licenses/LICENSE-2.0</a>
+<a name="10"><span class="lineNum">      10 </span>            :  *</a>
+<a name="11"><span class="lineNum">      11 </span>            :  * Unless required by applicable law or agreed to in writing, software</a>
+<a name="12"><span class="lineNum">      12 </span>            :  * distributed under the License is distributed on an &quot;AS IS&quot; BASIS,</a>
+<a name="13"><span class="lineNum">      13 </span>            :  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.</a>
+<a name="14"><span class="lineNum">      14 </span>            :  * See the License for the specific language governing permissions and</a>
+<a name="15"><span class="lineNum">      15 </span>            :  * limitations under the License.</a>
+<a name="16"><span class="lineNum">      16 </span>            :  *</a>
+<a name="17"><span class="lineNum">      17 </span>            :  */</a>
+<a name="18"><span class="lineNum">      18 </span>            : </a>
+<a name="19"><span class="lineNum">      19 </span>            : #ifndef GRPC_CORE_LIB_CHANNEL_CHANNEL_ARGS_H</a>
+<a name="20"><span class="lineNum">      20 </span>            : #define GRPC_CORE_LIB_CHANNEL_CHANNEL_ARGS_H</a>
+<a name="21"><span class="lineNum">      21 </span>            : </a>
+<a name="22"><span class="lineNum">      22 </span>            : #include &lt;grpc/support/port_platform.h&gt;</a>
+<a name="23"><span class="lineNum">      23 </span>            : </a>
+<a name="24"><span class="lineNum">      24 </span>            : #include &lt;string&gt;</a>
+<a name="25"><span class="lineNum">      25 </span>            : </a>
+<a name="26"><span class="lineNum">      26 </span>            : #include &quot;absl/strings/string_view.h&quot;</a>
+<a name="27"><span class="lineNum">      27 </span>            : #include &quot;absl/types/optional.h&quot;</a>
+<a name="28"><span class="lineNum">      28 </span>            : #include &quot;absl/types/variant.h&quot;</a>
+<a name="29"><span class="lineNum">      29 </span>            : #include &quot;absl/utility/utility.h&quot;</a>
+<a name="30"><span class="lineNum">      30 </span>            : </a>
+<a name="31"><span class="lineNum">      31 </span>            : #include &lt;grpc/impl/codegen/grpc_types.h&gt;</a>
+<a name="32"><span class="lineNum">      32 </span>            : </a>
+<a name="33"><span class="lineNum">      33 </span>            : #include &quot;src/core/lib/avl/avl.h&quot;</a>
+<a name="34"><span class="lineNum">      34 </span>            : #include &quot;src/core/lib/gpr/useful.h&quot;</a>
+<a name="35"><span class="lineNum">      35 </span>            : #include &quot;src/core/lib/gprpp/dual_ref_counted.h&quot;</a>
+<a name="36"><span class="lineNum">      36 </span>            : #include &quot;src/core/lib/gprpp/ref_counted.h&quot;</a>
+<a name="37"><span class="lineNum">      37 </span>            : #include &quot;src/core/lib/gprpp/ref_counted_ptr.h&quot;</a>
+<a name="38"><span class="lineNum">      38 </span>            : #include &quot;src/core/lib/gprpp/time.h&quot;</a>
+<a name="39"><span class="lineNum">      39 </span>            : #include &quot;src/core/lib/surface/channel_stack_type.h&quot;</a>
+<a name="40"><span class="lineNum">      40 </span>            : </a>
+<a name="41"><span class="lineNum">      41 </span>            : // Channel args are intentionally immutable, to avoid the need for locking.</a>
+<a name="42"><span class="lineNum">      42 </span>            : </a>
+<a name="43"><span class="lineNum">      43 </span>            : namespace grpc_core {</a>
+<a name="44"><span class="lineNum">      44 </span>            : </a>
+<a name="45"><span class="lineNum">      45 </span>            : // Define a traits object for vtable lookup - allows us to integrate with</a>
+<a name="46"><span class="lineNum">      46 </span>            : // existing code easily (just define the trait!) and allows some magic in</a>
+<a name="47"><span class="lineNum">      47 </span>            : // ChannelArgs to automatically derive a vtable from a T*.</a>
+<a name="48"><span class="lineNum">      48 </span>            : // To participate as a pointer, instances should expose the function:</a>
+<a name="49"><span class="lineNum">      49 </span>            : //   // Gets the vtable for this type</a>
+<a name="50"><span class="lineNum">      50 </span>            : //   static const grpc_channel_arg_vtable* VTable();</a>
+<a name="51"><span class="lineNum">      51 </span>            : //   // Performs any mutations required for channel args to own a pointer</a>
+<a name="52"><span class="lineNum">      52 </span>            : //   // Only needed if ChannelArgs::Set is to be called with a raw pointer.</a>
+<a name="53"><span class="lineNum">      53 </span>            : //   static void* TakeUnownedPointer(T* p);</a>
+<a name="54"><span class="lineNum">      54 </span>            : template &lt;typename T, typename Ignored = void /* for SFINAE */&gt;</a>
+<a name="55"><span class="lineNum">      55 </span>            : struct ChannelArgTypeTraits;</a>
+<a name="56"><span class="lineNum">      56 </span>            : </a>
+<a name="57"><span class="lineNum">      57 </span>            : // Specialization for ref-counted pointers.</a>
+<a name="58"><span class="lineNum">      58 </span>            : // Types should expose:</a>
+<a name="59"><span class="lineNum">      59 </span>            : // static int ChannelArgsCompare(const T* a, const T* b);</a>
+<a name="60"><span class="lineNum">      60 </span>            : template &lt;typename T&gt;</a>
+<a name="61"><span class="lineNum">      61 </span>            : struct ChannelArgTypeTraits&lt;</a>
+<a name="62"><span class="lineNum">      62 </span>            :     T,</a>
+<a name="63"><span class="lineNum">      63 </span>            :     absl::enable_if_t&lt;</a>
+<a name="64"><span class="lineNum">      64 </span>            :         std::is_base_of&lt;RefCounted&lt;T&gt;, T&gt;::value ||</a>
+<a name="65"><span class="lineNum">      65 </span>            :             std::is_base_of&lt;RefCounted&lt;T, NonPolymorphicRefCount&gt;, T&gt;::value ||</a>
+<a name="66"><span class="lineNum">      66 </span>            :             std::is_base_of&lt;DualRefCounted&lt;T&gt;, T&gt;::value,</a>
+<a name="67"><span class="lineNum">      67 </span>            :         void&gt;&gt; {</a>
+<a name="68"><span class="lineNum">      68 </span><span class="lineCov">     198170 :   static const grpc_arg_pointer_vtable* VTable() {</span></a>
+<a name="69"><span class="lineNum">      69 </span><span class="lineCov">     198170 :     static const grpc_arg_pointer_vtable tbl = {</span></a>
+<a name="70"><span class="lineNum">      70 </span>            :         // copy</a>
+<a name="71"><span class="lineNum">      71 </span><span class="lineCov">    4828647 :         [](void* p) -&gt; void* { return static_cast&lt;T*&gt;(p)-&gt;Ref().release(); },</span></a>
+<a name="72"><span class="lineNum">      72 </span>            :         // destroy</a>
+<a name="73"><span class="lineNum">      73 </span><span class="lineCov">    5019373 :         [](void* p) { static_cast&lt;T*&gt;(p)-&gt;Unref(); },</span></a>
+<a name="74"><span class="lineNum">      74 </span>            :         // compare</a>
+<a name="75"><span class="lineNum">      75 </span><span class="lineNoCov">          0 :         [](void* p1, void* p2) {</span></a>
+<a name="76"><span class="lineNum">      76 </span><span class="lineNoCov">          0 :           return T::ChannelArgsCompare(static_cast&lt;const T*&gt;(p1),</span></a>
+<a name="77"><span class="lineNum">      77 </span><span class="lineNoCov">          0 :                                        static_cast&lt;const T*&gt;(p2));</span></a>
+<a name="78"><span class="lineNum">      78 </span>            :         },</a>
+<a name="79"><span class="lineNum">      79 </span>            :     };</a>
+<a name="80"><span class="lineNum">      80 </span><span class="lineCov">     198171 :     return &amp;tbl;</span></a>
+<a name="81"><span class="lineNum">      81 </span>            :   };</a>
+<a name="82"><span class="lineNum">      82 </span>            : };</a>
+<a name="83"><span class="lineNum">      83 </span>            : </a>
+<a name="84"><span class="lineNum">      84 </span>            : template &lt;typename T&gt;</a>
+<a name="85"><span class="lineNum">      85 </span>            : struct ChannelArgTypeTraits&lt;T,</a>
+<a name="86"><span class="lineNum">      86 </span>            :                             absl::void_t&lt;typename T::RawPointerChannelArgTag&gt;&gt; {</a>
+<a name="87"><span class="lineNum">      87 </span><span class="lineCov">          2 :   static void* TakeUnownedPointer(T* p) { return p; }</span></a>
+<a name="88"><span class="lineNum">      88 </span><span class="lineCov">          2 :   static const grpc_arg_pointer_vtable* VTable() {</span></a>
+<a name="89"><span class="lineNum">      89 </span><span class="lineCov">          2 :     static const grpc_arg_pointer_vtable tbl = {</span></a>
+<a name="90"><span class="lineNum">      90 </span>            :         // copy</a>
+<a name="91"><span class="lineNum">      91 </span><span class="lineNoCov">          0 :         [](void* p) -&gt; void* { return p; },</span></a>
+<a name="92"><span class="lineNum">      92 </span>            :         // destroy</a>
+<a name="93"><span class="lineNum">      93 </span><span class="lineCov">          2 :         [](void*) {},</span></a>
+<a name="94"><span class="lineNum">      94 </span>            :         // compare</a>
+<a name="95"><span class="lineNum">      95 </span><span class="lineNoCov">          0 :         [](void* p1, void* p2) { return QsortCompare(p1, p2); },</span></a>
+<a name="96"><span class="lineNum">      96 </span>            :     };</a>
+<a name="97"><span class="lineNum">      97 </span><span class="lineCov">          2 :     return &amp;tbl;</span></a>
+<a name="98"><span class="lineNum">      98 </span>            :   };</a>
+<a name="99"><span class="lineNum">      99 </span>            : };</a>
+<a name="100"><span class="lineNum">     100 </span>            : </a>
+<a name="101"><span class="lineNum">     101 </span>            : class ChannelArgs {</a>
+<a name="102"><span class="lineNum">     102 </span>            :  public:</a>
+<a name="103"><span class="lineNum">     103 </span>            :   class Pointer {</a>
+<a name="104"><span class="lineNum">     104 </span>            :    public:</a>
+<a name="105"><span class="lineNum">     105 </span><span class="lineCov">    1491454 :     Pointer(void* p, const grpc_arg_pointer_vtable* vtable)</span></a>
+<a name="106"><span class="lineNum">     106 </span><span class="lineCov">    1491454 :         : p_(p), vtable_(vtable == nullptr ? EmptyVTable() : vtable) {}</span></a>
+<a name="107"><span class="lineNum">     107 </span><span class="lineCov">   26331622 :     ~Pointer() { vtable_-&gt;destroy(p_); }</span></a>
+<a name="108"><span class="lineNum">     108 </span>            : </a>
+<a name="109"><span class="lineNum">     109 </span><span class="lineCov">    5705769 :     Pointer(const Pointer&amp; other)</span></a>
+<a name="110"><span class="lineNum">     110 </span><span class="lineCov">    5705769 :         : p_(other.vtable_-&gt;copy(other.p_)), vtable_(other.vtable_) {}</span></a>
+<a name="111"><span class="lineNum">     111 </span>            :     Pointer&amp; operator=(Pointer other) {</a>
+<a name="112"><span class="lineNum">     112 </span>            :       std::swap(p_, other.p_);</a>
+<a name="113"><span class="lineNum">     113 </span>            :       std::swap(vtable_, other.vtable_);</a>
+<a name="114"><span class="lineNum">     114 </span>            :       return *this;</a>
+<a name="115"><span class="lineNum">     115 </span>            :     }</a>
+<a name="116"><span class="lineNum">     116 </span><span class="lineCov">   19144303 :     Pointer(Pointer&amp;&amp; other) noexcept : p_(other.p_), vtable_(other.vtable_) {</span></a>
+<a name="117"><span class="lineNum">     117 </span><span class="lineCov">   19144303 :       other.p_ = nullptr;</span></a>
+<a name="118"><span class="lineNum">     118 </span><span class="lineCov">   19144303 :       other.vtable_ = EmptyVTable();</span></a>
+<a name="119"><span class="lineNum">     119 </span><span class="lineCov">   19143628 :     }</span></a>
+<a name="120"><span class="lineNum">     120 </span>            :     Pointer&amp; operator=(Pointer&amp;&amp; other) noexcept {</a>
+<a name="121"><span class="lineNum">     121 </span>            :       std::swap(p_, other.p_);</a>
+<a name="122"><span class="lineNum">     122 </span>            :       std::swap(vtable_, other.vtable_);</a>
+<a name="123"><span class="lineNum">     123 </span>            :       return *this;</a>
+<a name="124"><span class="lineNum">     124 </span>            :     }</a>
+<a name="125"><span class="lineNum">     125 </span>            : </a>
+<a name="126"><span class="lineNum">     126 </span>            :     bool operator==(const Pointer&amp; rhs) const;</a>
+<a name="127"><span class="lineNum">     127 </span>            :     bool operator&lt;(const Pointer&amp; rhs) const;</a>
+<a name="128"><span class="lineNum">     128 </span>            :     bool operator!=(const Pointer&amp; rhs) const { return !(*this == rhs); }</a>
+<a name="129"><span class="lineNum">     129 </span>            : </a>
+<a name="130"><span class="lineNum">     130 </span><span class="lineCov">     330110 :     void* c_pointer() const { return p_; }</span></a>
+<a name="131"><span class="lineNum">     131 </span>            : </a>
+<a name="132"><span class="lineNum">     132 </span><span class="lineCov">     206734 :     const grpc_arg_pointer_vtable* c_vtable() const { return vtable_; }</span></a>
+<a name="133"><span class="lineNum">     133 </span>            : </a>
+<a name="134"><span class="lineNum">     134 </span>            :    private:</a>
+<a name="135"><span class="lineNum">     135 </span><span class="lineCov">   19144202 :     static const grpc_arg_pointer_vtable* EmptyVTable() {</span></a>
+<a name="136"><span class="lineNum">     136 </span>            :       static const grpc_arg_pointer_vtable vtable = {</a>
+<a name="137"><span class="lineNum">     137 </span>            :           // copy</a>
+<a name="138"><span class="lineNum">     138 </span><span class="lineNoCov">          0 :           [](void* p) { return p; },</span></a>
+<a name="139"><span class="lineNum">     139 </span>            :           // destroy</a>
+<a name="140"><span class="lineNum">     140 </span><span class="lineCov">   19152344 :           [](void*) {},</span></a>
+<a name="141"><span class="lineNum">     141 </span>            :           // cmp</a>
+<a name="142"><span class="lineNum">     142 </span><span class="lineNoCov">          0 :           [](void* p1, void* p2) -&gt; int { return QsortCompare(p1, p2); },</span></a>
+<a name="143"><span class="lineNum">     143 </span><span class="lineCov">   19144202 :       };</span></a>
+<a name="144"><span class="lineNum">     144 </span><span class="lineCov">   19144398 :       return &amp;vtable;</span></a>
+<a name="145"><span class="lineNum">     145 </span>            :     }</a>
+<a name="146"><span class="lineNum">     146 </span>            : </a>
+<a name="147"><span class="lineNum">     147 </span>            :     void* p_;</a>
+<a name="148"><span class="lineNum">     148 </span>            :     const grpc_arg_pointer_vtable* vtable_;</a>
+<a name="149"><span class="lineNum">     149 </span>            :   };</a>
+<a name="150"><span class="lineNum">     150 </span>            :   using Value = absl::variant&lt;int, std::string, Pointer&gt;;</a>
+<a name="151"><span class="lineNum">     151 </span>            : </a>
+<a name="152"><span class="lineNum">     152 </span>            :   ChannelArgs();</a>
+<a name="153"><span class="lineNum">     153 </span>            : </a>
+<a name="154"><span class="lineNum">     154 </span>            :   static ChannelArgs FromC(const grpc_channel_args* args);</a>
+<a name="155"><span class="lineNum">     155 </span>            :   // Construct a new grpc_channel_args struct which the caller will own.</a>
+<a name="156"><span class="lineNum">     156 </span>            :   // It should be destroyed with grpc_channel_args_destroy.</a>
+<a name="157"><span class="lineNum">     157 </span>            :   const grpc_channel_args* ToC() const;</a>
+<a name="158"><span class="lineNum">     158 </span>            : </a>
+<a name="159"><span class="lineNum">     159 </span><span class="lineCov">     821415 :   const Value* Get(absl::string_view name) const { return args_.Lookup(name); }</span></a>
+<a name="160"><span class="lineNum">     160 </span>            :   GRPC_MUST_USE_RESULT ChannelArgs Set(absl::string_view name,</a>
+<a name="161"><span class="lineNum">     161 </span>            :                                        Value value) const;</a>
+<a name="162"><span class="lineNum">     162 </span>            :   GRPC_MUST_USE_RESULT ChannelArgs Set(absl::string_view name,</a>
+<a name="163"><span class="lineNum">     163 </span>            :                                        absl::string_view value) const;</a>
+<a name="164"><span class="lineNum">     164 </span>            :   GRPC_MUST_USE_RESULT ChannelArgs Set(absl::string_view name,</a>
+<a name="165"><span class="lineNum">     165 </span>            :                                        std::string value) const;</a>
+<a name="166"><span class="lineNum">     166 </span>            :   GRPC_MUST_USE_RESULT ChannelArgs Set(absl::string_view name,</a>
+<a name="167"><span class="lineNum">     167 </span>            :                                        const char* value) const;</a>
+<a name="168"><span class="lineNum">     168 </span>            :   GRPC_MUST_USE_RESULT ChannelArgs Set(grpc_arg arg) const;</a>
+<a name="169"><span class="lineNum">     169 </span>            :   template &lt;typename T&gt;</a>
+<a name="170"><span class="lineNum">     170 </span>            :   GRPC_MUST_USE_RESULT absl::enable_if_t&lt;</a>
+<a name="171"><span class="lineNum">     171 </span>            :       std::is_same&lt;const grpc_arg_pointer_vtable*,</a>
+<a name="172"><span class="lineNum">     172 </span>            :                    decltype(ChannelArgTypeTraits&lt;T&gt;::VTable())&gt;::value,</a>
+<a name="173"><span class="lineNum">     173 </span>            :       ChannelArgs&gt;</a>
+<a name="174"><span class="lineNum">     174 </span><span class="lineCov">          2 :   Set(absl::string_view name, T* value) const {</span></a>
+<a name="175"><span class="lineNum">     175 </span><span class="lineCov">          4 :     return Set(name, Pointer(ChannelArgTypeTraits&lt;T&gt;::TakeUnownedPointer(value),</span></a>
+<a name="176"><span class="lineNum">     176 </span><span class="lineCov">          4 :                              ChannelArgTypeTraits&lt;T&gt;::VTable()));</span></a>
+<a name="177"><span class="lineNum">     177 </span>            :   }</a>
+<a name="178"><span class="lineNum">     178 </span>            :   template &lt;typename T&gt;</a>
+<a name="179"><span class="lineNum">     179 </span><span class="lineCov">     192539 :   GRPC_MUST_USE_RESULT auto Set(absl::string_view name,</span></a>
+<a name="180"><span class="lineNum">     180 </span>            :                                 const RefCountedPtr&lt;T&gt;&amp; value) const</a>
+<a name="181"><span class="lineNum">     181 </span>            :       -&gt; absl::enable_if_t&lt;</a>
+<a name="182"><span class="lineNum">     182 </span>            :           std::is_same&lt;</a>
+<a name="183"><span class="lineNum">     183 </span>            :               const grpc_arg_pointer_vtable*,</a>
+<a name="184"><span class="lineNum">     184 </span>            :               decltype(ChannelArgTypeTraits&lt;absl::remove_cvref_t&lt;</a>
+<a name="185"><span class="lineNum">     185 </span>            :                            decltype(*value-&gt;Ref())&gt;&gt;::VTable())&gt;::value,</a>
+<a name="186"><span class="lineNum">     186 </span>            :           ChannelArgs&gt; {</a>
+<a name="187"><span class="lineNum">     187 </span><span class="lineCov">     192539 :     auto store_value = value-&gt;Ref();</span></a>
+<a name="188"><span class="lineNum">     188 </span>            :     return Set(</a>
+<a name="189"><span class="lineNum">     189 </span>            :         name,</a>
+<a name="190"><span class="lineNum">     190 </span><span class="lineCov">     192548 :         Pointer(store_value.release(),</span></a>
+<a name="191"><span class="lineNum">     191 </span>            :                 ChannelArgTypeTraits&lt;</a>
+<a name="192"><span class="lineNum">     192 </span><span class="lineCov">     385065 :                     absl::remove_cvref_t&lt;decltype(*store_value)&gt;&gt;::VTable()));</span></a>
+<a name="193"><span class="lineNum">     193 </span><span class="lineCov">     192522 :   }</span></a>
+<a name="194"><span class="lineNum">     194 </span>            :   GRPC_MUST_USE_RESULT ChannelArgs Remove(absl::string_view name) const;</a>
+<a name="195"><span class="lineNum">     195 </span><span class="lineCov">     140043 :   bool Contains(absl::string_view name) const { return Get(name) != nullptr; }</span></a>
+<a name="196"><span class="lineNum">     196 </span>            : </a>
+<a name="197"><span class="lineNum">     197 </span>            :   absl::optional&lt;int&gt; GetInt(absl::string_view name) const;</a>
+<a name="198"><span class="lineNum">     198 </span>            :   absl::optional&lt;absl::string_view&gt; GetString(absl::string_view name) const;</a>
+<a name="199"><span class="lineNum">     199 </span>            :   void* GetVoidPointer(absl::string_view name) const;</a>
+<a name="200"><span class="lineNum">     200 </span>            :   template &lt;typename T&gt;</a>
+<a name="201"><span class="lineNum">     201 </span><span class="lineCov">     315995 :   T* GetPointer(absl::string_view name) const {</span></a>
+<a name="202"><span class="lineNum">     202 </span><span class="lineCov">     315995 :     return static_cast&lt;T*&gt;(GetVoidPointer(name));</span></a>
+<a name="203"><span class="lineNum">     203 </span>            :   }</a>
+<a name="204"><span class="lineNum">     204 </span>            :   absl::optional&lt;Duration&gt; GetDurationFromIntMillis(</a>
+<a name="205"><span class="lineNum">     205 </span>            :       absl::string_view name) const;</a>
+<a name="206"><span class="lineNum">     206 </span>            : </a>
+<a name="207"><span class="lineNum">     207 </span>            :   // Object based get/set.</a>
+<a name="208"><span class="lineNum">     208 </span>            :   // Deal with the common case that we set a pointer to an object under</a>
+<a name="209"><span class="lineNum">     209 </span>            :   // the same name in every usage.</a>
+<a name="210"><span class="lineNum">     210 </span>            :   // Expects ChannelArgTypeTraits to exist for T, and T to expose:</a>
+<a name="211"><span class="lineNum">     211 </span>            :   //   static string_view ChannelArgName();</a>
+<a name="212"><span class="lineNum">     212 </span>            :   template &lt;typename T&gt;</a>
+<a name="213"><span class="lineNum">     213 </span><span class="lineCov">          2 :   GRPC_MUST_USE_RESULT ChannelArgs SetObject(T* p) const {</span></a>
+<a name="214"><span class="lineNum">     214 </span><span class="lineCov">          2 :     return Set(T::ChannelArgName(), p);</span></a>
+<a name="215"><span class="lineNum">     215 </span>            :   }</a>
+<a name="216"><span class="lineNum">     216 </span>            :   template &lt;typename T&gt;</a>
+<a name="217"><span class="lineNum">     217 </span><span class="lineCov">     192545 :   GRPC_MUST_USE_RESULT ChannelArgs SetObject(RefCountedPtr&lt;T&gt; p) const {</span></a>
+<a name="218"><span class="lineNum">     218 </span><span class="lineCov">     192545 :     return Set(T::ChannelArgName(), std::move(p));</span></a>
+<a name="219"><span class="lineNum">     219 </span>            :   }</a>
+<a name="220"><span class="lineNum">     220 </span>            :   template &lt;typename T&gt;</a>
+<a name="221"><span class="lineNum">     221 </span><span class="lineCov">     315980 :   T* GetObject() {</span></a>
+<a name="222"><span class="lineNum">     222 </span><span class="lineCov">     315980 :     return GetPointer&lt;T&gt;(T::ChannelArgName());</span></a>
+<a name="223"><span class="lineNum">     223 </span>            :   }</a>
+<a name="224"><span class="lineNum">     224 </span>            : </a>
+<a name="225"><span class="lineNum">     225 </span>            :   bool operator&lt;(const ChannelArgs&amp; other) const { return args_ &lt; other.args_; }</a>
+<a name="226"><span class="lineNum">     226 </span><span class="lineCov">          1 :   bool operator==(const ChannelArgs&amp; other) const {</span></a>
+<a name="227"><span class="lineNum">     227 </span><span class="lineCov">          1 :     return args_ == other.args_;</span></a>
+<a name="228"><span class="lineNum">     228 </span>            :   }</a>
+<a name="229"><span class="lineNum">     229 </span>            : </a>
+<a name="230"><span class="lineNum">     230 </span>            :  private:</a>
+<a name="231"><span class="lineNum">     231 </span><span class="lineCov">    2356419 :   explicit ChannelArgs(AVL&lt;std::string, Value&gt; args) : args_(std::move(args)) {}</span></a>
+<a name="232"><span class="lineNum">     232 </span>            : </a>
+<a name="233"><span class="lineNum">     233 </span>            :   AVL&lt;std::string, Value&gt; args_;</a>
+<a name="234"><span class="lineNum">     234 </span>            : };</a>
+<a name="235"><span class="lineNum">     235 </span>            : </a>
+<a name="236"><span class="lineNum">     236 </span>            : }  // namespace grpc_core</a>
+<a name="237"><span class="lineNum">     237 </span>            : </a>
+<a name="238"><span class="lineNum">     238 </span>            : /** Copy the arguments in \a src into a new instance */</a>
+<a name="239"><span class="lineNum">     239 </span>            : grpc_channel_args* grpc_channel_args_copy(const grpc_channel_args* src);</a>
+<a name="240"><span class="lineNum">     240 </span>            : </a>
+<a name="241"><span class="lineNum">     241 </span>            : /** Copy the arguments in \a src into a new instance, stably sorting keys */</a>
+<a name="242"><span class="lineNum">     242 </span>            : grpc_channel_args* grpc_channel_args_normalize(const grpc_channel_args* src);</a>
+<a name="243"><span class="lineNum">     243 </span>            : </a>
+<a name="244"><span class="lineNum">     244 </span>            : /** Copy the arguments in \a src and append \a to_add. If \a to_add is NULL, it</a>
+<a name="245"><span class="lineNum">     245 </span>            :  * is equivalent to calling \a grpc_channel_args_copy. */</a>
+<a name="246"><span class="lineNum">     246 </span>            : grpc_channel_args* grpc_channel_args_copy_and_add(const grpc_channel_args* src,</a>
+<a name="247"><span class="lineNum">     247 </span>            :                                                   const grpc_arg* to_add,</a>
+<a name="248"><span class="lineNum">     248 </span>            :                                                   size_t num_to_add);</a>
+<a name="249"><span class="lineNum">     249 </span>            : </a>
+<a name="250"><span class="lineNum">     250 </span>            : /** Copies the arguments in \a src except for those whose keys are in</a>
+<a name="251"><span class="lineNum">     251 </span>            :     \a to_remove. */</a>
+<a name="252"><span class="lineNum">     252 </span>            : grpc_channel_args* grpc_channel_args_copy_and_remove(</a>
+<a name="253"><span class="lineNum">     253 </span>            :     const grpc_channel_args* src, const char** to_remove, size_t num_to_remove);</a>
+<a name="254"><span class="lineNum">     254 </span>            : </a>
+<a name="255"><span class="lineNum">     255 </span>            : /** Copies the arguments from \a src except for those whose keys are in</a>
+<a name="256"><span class="lineNum">     256 </span>            :     \a to_remove and appends the arguments in \a to_add. */</a>
+<a name="257"><span class="lineNum">     257 </span>            : grpc_channel_args* grpc_channel_args_copy_and_add_and_remove(</a>
+<a name="258"><span class="lineNum">     258 </span>            :     const grpc_channel_args* src, const char** to_remove, size_t num_to_remove,</a>
+<a name="259"><span class="lineNum">     259 </span>            :     const grpc_arg* to_add, size_t num_to_add);</a>
+<a name="260"><span class="lineNum">     260 </span>            : </a>
+<a name="261"><span class="lineNum">     261 </span>            : /** Perform the union of \a a and \a b, prioritizing \a a entries */</a>
+<a name="262"><span class="lineNum">     262 </span>            : grpc_channel_args* grpc_channel_args_union(const grpc_channel_args* a,</a>
+<a name="263"><span class="lineNum">     263 </span>            :                                            const grpc_channel_args* b);</a>
+<a name="264"><span class="lineNum">     264 </span>            : </a>
+<a name="265"><span class="lineNum">     265 </span>            : /** Destroy arguments created by \a grpc_channel_args_copy */</a>
+<a name="266"><span class="lineNum">     266 </span>            : void grpc_channel_args_destroy(grpc_channel_args* a);</a>
+<a name="267"><span class="lineNum">     267 </span><span class="lineCov">    1721564 : inline void grpc_channel_args_destroy(const grpc_channel_args* a) {</span></a>
+<a name="268"><span class="lineNum">     268 </span><span class="lineCov">    1721564 :   grpc_channel_args_destroy(const_cast&lt;grpc_channel_args*&gt;(a));</span></a>
+<a name="269"><span class="lineNum">     269 </span><span class="lineCov">    1721551 : }</span></a>
+<a name="270"><span class="lineNum">     270 </span>            : </a>
+<a name="271"><span class="lineNum">     271 </span>            : int grpc_channel_args_compare(const grpc_channel_args* a,</a>
+<a name="272"><span class="lineNum">     272 </span>            :                               const grpc_channel_args* b);</a>
+<a name="273"><span class="lineNum">     273 </span>            : </a>
+<a name="274"><span class="lineNum">     274 </span>            : /** Returns the value of argument \a name from \a args, or NULL if not found. */</a>
+<a name="275"><span class="lineNum">     275 </span>            : const grpc_arg* grpc_channel_args_find(const grpc_channel_args* args,</a>
+<a name="276"><span class="lineNum">     276 </span>            :                                        const char* name);</a>
+<a name="277"><span class="lineNum">     277 </span>            : </a>
+<a name="278"><span class="lineNum">     278 </span>            : bool grpc_channel_args_want_minimal_stack(const grpc_channel_args* args);</a>
+<a name="279"><span class="lineNum">     279 </span>            : </a>
+<a name="280"><span class="lineNum">     280 </span>            : typedef struct grpc_integer_options {</a>
+<a name="281"><span class="lineNum">     281 </span>            :   int default_value;  // Return this if value is outside of expected bounds.</a>
+<a name="282"><span class="lineNum">     282 </span>            :   int min_value;</a>
+<a name="283"><span class="lineNum">     283 </span>            :   int max_value;</a>
+<a name="284"><span class="lineNum">     284 </span>            : } grpc_integer_options;</a>
+<a name="285"><span class="lineNum">     285 </span>            : </a>
+<a name="286"><span class="lineNum">     286 </span>            : /** Returns the value of \a arg, subject to the constraints in \a options. */</a>
+<a name="287"><span class="lineNum">     287 </span>            : int grpc_channel_arg_get_integer(const grpc_arg* arg,</a>
+<a name="288"><span class="lineNum">     288 </span>            :                                  const grpc_integer_options options);</a>
+<a name="289"><span class="lineNum">     289 </span>            : /** Similar to the above, but needs to find the arg from \a args by the name</a>
+<a name="290"><span class="lineNum">     290 </span>            :  * first. */</a>
+<a name="291"><span class="lineNum">     291 </span>            : int grpc_channel_args_find_integer(const grpc_channel_args* args,</a>
+<a name="292"><span class="lineNum">     292 </span>            :                                    const char* name,</a>
+<a name="293"><span class="lineNum">     293 </span>            :                                    const grpc_integer_options options);</a>
+<a name="294"><span class="lineNum">     294 </span>            : </a>
+<a name="295"><span class="lineNum">     295 </span>            : /** Returns the value of \a arg if \a arg is of type GRPC_ARG_STRING.</a>
+<a name="296"><span class="lineNum">     296 </span>            :     Otherwise, emits a warning log, and returns nullptr.</a>
+<a name="297"><span class="lineNum">     297 </span>            :     If arg is nullptr, returns nullptr, and does not emit a warning. */</a>
+<a name="298"><span class="lineNum">     298 </span>            : char* grpc_channel_arg_get_string(const grpc_arg* arg);</a>
+<a name="299"><span class="lineNum">     299 </span>            : /** Similar to the above, but needs to find the arg from \a args by the name</a>
+<a name="300"><span class="lineNum">     300 </span>            :  * first. */</a>
+<a name="301"><span class="lineNum">     301 </span>            : char* grpc_channel_args_find_string(const grpc_channel_args* args,</a>
+<a name="302"><span class="lineNum">     302 </span>            :                                     const char* name);</a>
+<a name="303"><span class="lineNum">     303 </span>            : /** If \a arg is of type GRPC_ARG_INTEGER, returns true if it's non-zero.</a>
+<a name="304"><span class="lineNum">     304 </span>            :  * Returns \a default_value if \a arg is of other types. */</a>
+<a name="305"><span class="lineNum">     305 </span>            : bool grpc_channel_arg_get_bool(const grpc_arg* arg, bool default_value);</a>
+<a name="306"><span class="lineNum">     306 </span>            : /** Similar to the above, but needs to find the arg from \a args by the name</a>
+<a name="307"><span class="lineNum">     307 </span>            :  * first. */</a>
+<a name="308"><span class="lineNum">     308 </span>            : bool grpc_channel_args_find_bool(const grpc_channel_args* args,</a>
+<a name="309"><span class="lineNum">     309 </span>            :                                  const char* name, bool default_value);</a>
+<a name="310"><span class="lineNum">     310 </span>            : </a>
+<a name="311"><span class="lineNum">     311 </span>            : template &lt;typename T&gt;</a>
+<a name="312"><span class="lineNum">     312 </span><span class="lineCov">     914688 : T* grpc_channel_args_find_pointer(const grpc_channel_args* args,</span></a>
+<a name="313"><span class="lineNum">     313 </span>            :                                   const char* name) {</a>
+<a name="314"><span class="lineNum">     314 </span><span class="lineCov">     914688 :   const grpc_arg* arg = grpc_channel_args_find(args, name);</span></a>
+<a name="315"><span class="lineNum">     315 </span><span class="lineCov">     914719 :   if (arg == nullptr || arg-&gt;type != GRPC_ARG_POINTER) return nullptr;</span></a>
+<a name="316"><span class="lineNum">     316 </span><span class="lineCov">     805349 :   return static_cast&lt;T*&gt;(arg-&gt;value.pointer.p);</span></a>
+<a name="317"><span class="lineNum">     317 </span>            : }</a>
+<a name="318"><span class="lineNum">     318 </span>            : </a>
+<a name="319"><span class="lineNum">     319 </span>            : // Helpers for creating channel args.</a>
+<a name="320"><span class="lineNum">     320 </span>            : grpc_arg grpc_channel_arg_string_create(char* name, char* value);</a>
+<a name="321"><span class="lineNum">     321 </span>            : grpc_arg grpc_channel_arg_integer_create(char* name, int value);</a>
+<a name="322"><span class="lineNum">     322 </span>            : grpc_arg grpc_channel_arg_pointer_create(char* name, void* value,</a>
+<a name="323"><span class="lineNum">     323 </span>            :                                          const grpc_arg_pointer_vtable* vtable);</a>
+<a name="324"><span class="lineNum">     324 </span>            : </a>
+<a name="325"><span class="lineNum">     325 </span>            : // Returns a string representing channel args in human-readable form.</a>
+<a name="326"><span class="lineNum">     326 </span>            : std::string grpc_channel_args_string(const grpc_channel_args* args);</a>
+<a name="327"><span class="lineNum">     327 </span>            : </a>
+<a name="328"><span class="lineNum">     328 </span>            : namespace grpc_core {</a>
+<a name="329"><span class="lineNum">     329 </span>            : // Ensure no duplicate channel args (with some backwards compatibility hacks).</a>
+<a name="330"><span class="lineNum">     330 </span>            : // Eliminate any grpc.internal.* args.</a>
+<a name="331"><span class="lineNum">     331 </span>            : // Return a C++ object.</a>
+<a name="332"><span class="lineNum">     332 </span>            : ChannelArgs ChannelArgsBuiltinPrecondition(const grpc_channel_args* src);</a>
+<a name="333"><span class="lineNum">     333 </span>            : }  // namespace grpc_core</a>
+<a name="334"><span class="lineNum">     334 </span>            : </a>
+<a name="335"><span class="lineNum">     335 </span>            : // Takes ownership of the old_args</a>
+<a name="336"><span class="lineNum">     336 </span>            : typedef grpc_channel_args* (*grpc_channel_args_client_channel_creation_mutator)(</a>
+<a name="337"><span class="lineNum">     337 </span>            :     const char* target, grpc_channel_args* old_args,</a>
+<a name="338"><span class="lineNum">     338 </span>            :     grpc_channel_stack_type type);</a>
+<a name="339"><span class="lineNum">     339 </span>            : </a>
+<a name="340"><span class="lineNum">     340 </span>            : // Should be called only once globaly before grpc is init'ed.</a>
+<a name="341"><span class="lineNum">     341 </span>            : void grpc_channel_args_set_client_channel_creation_mutator(</a>
+<a name="342"><span class="lineNum">     342 </span>            :     grpc_channel_args_client_channel_creation_mutator cb);</a>
+<a name="343"><span class="lineNum">     343 </span>            : // This will be called at the creation of each channel.</a>
+<a name="344"><span class="lineNum">     344 </span>            : grpc_channel_args_client_channel_creation_mutator</a>
+<a name="345"><span class="lineNum">     345 </span>            : grpc_channel_args_get_client_channel_creation_mutator();</a>
+<a name="346"><span class="lineNum">     346 </span>            : </a>
+<a name="347"><span class="lineNum">     347 </span>            : #endif /* GRPC_CORE_LIB_CHANNEL_CHANNEL_ARGS_H */</a>
+</pre>
+      </td>
+    </tr>
+  </table>
+  <br>
+
+  <table width="100%" border=0 cellspacing=0 cellpadding=0>
+    <tr><td class="ruler"><img src="../../../../glass.png" width=3 height=3 alt=""></td></tr>
+    <tr><td class="versionInfo">Generated by: <a href="http://ltp.sourceforge.net/coverage/lcov.php" target="_parent">LCOV version 1.14</a></td></tr>
+  </table>
+  <br>
+
+</body>
+</html>
